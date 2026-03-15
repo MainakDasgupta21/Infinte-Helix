@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Infinite Helix – Architecture & Plan</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0f0f12;--surface:#1a1a22;--card:#22222e;--accent:#c084fc;--accent2:#f472b6;--accent3:#38bdf8;--text:#e8e4f0;--muted:#9490a8;--border:#2e2e3c}
+*{margin:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding:0;overflow-x:hidden}
+.hero{padding:64px 40px 40px;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:-120px;left:50%;transform:translateX(-50%);width:600px;height:600px;background:radial-gradient(circle,rgba(192,132,252,.15),rgba(244,114,182,.08),transparent 70%);border-radius:50%;pointer-events:none;z-index:0}
+.hero h1{font-family:'Playfair Display',serif;font-size:3.2rem;font-weight:900;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;position:relative;z-index:1}
+.hero p{color:var(--muted);font-size:1.05rem;max-width:640px;margin:12px auto 0;position:relative;z-index:1}
+.badge{display:inline-block;padding:4px 16px;border-radius:999px;font-size:.75rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px;position:relative;z-index:1}
+.badge--purple{background:rgba(192,132,252,.15);color:var(--accent)}
+section{padding:24px 40px 48px}
+section h2{font-family:'Playfair Display',serif;font-size:1.8rem;margin-bottom:24px;color:var(--text)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;transition:transform .2s,box-shadow .2s}
+.card:hover{transform:translateY(-3px);box-shadow:0 8px 32px rgba(192,132,252,.08)}
+.card h3{font-size:1.1rem;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.card p,.card ul{color:var(--muted);font-size:.9rem}
+.card ul{padding-left:18px;margin-top:6px}
+.card ul li{margin-bottom:3px}
+.arch-flow{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;padding:32px 16px}
+.arch-box{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px 24px;text-align:center;min-width:160px}
+.arch-box strong{display:block;font-size:.95rem;margin-bottom:4px}
+.arch-box small{color:var(--muted);font-size:.78rem}
+.arrow{font-size:1.4rem;color:var(--accent);opacity:.7}
+.tree{background:var(--surface);border-radius:16px;padding:28px 32px;border:1px solid var(--border);font-family:'Courier New',monospace;font-size:.82rem;line-height:1.7;white-space:pre;overflow-x:auto;color:var(--muted)}
+.tree .folder{color:var(--accent);font-weight:700}
+.tree .file{color:var(--text)}
+.tree .comment{color:#666;font-style:italic}
+.screen-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}
+.screen-card{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.screen-card__header{padding:14px 20px 10px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.screen-card__header span:first-child{width:10px;height:10px;border-radius:50%}
+.screen-card__body{padding:20px}
+.screen-card__body h4{margin-bottom:8px;font-size:1rem}
+.screen-card__body p{color:var(--muted);font-size:.85rem}
+.screen-card__body ul{color:var(--muted);font-size:.85rem;padding-left:18px;margin-top:6px}
+.screen-card__body ul li{margin-bottom:3px}
+.wireframe{background:var(--surface);border:1px dashed var(--border);border-radius:10px;padding:16px;margin-top:12px;font-size:.78rem;color:var(--muted)}
+.wireframe .row{display:flex;gap:8px;margin-bottom:8px;align-items:center}
+.wireframe .block{background:var(--border);border-radius:6px;padding:8px 12px;flex:1;text-align:center;font-size:.72rem;color:var(--muted)}
+.wireframe .block--accent{background:rgba(192,132,252,.12);color:var(--accent)}
+.wireframe .block--pink{background:rgba(244,114,182,.12);color:var(--accent2)}
+.wireframe .block--blue{background:rgba(56,189,248,.12);color:var(--accent3)}
+.wireframe .block--tall{height:80px;display:flex;align-items:center;justify-content:center}
+.wireframe .block--wide{flex:2}
+table{width:100%;border-collapse:collapse;margin-top:8px}
+th,td{padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);font-size:.85rem}
+th{color:var(--accent);font-weight:600;font-size:.78rem;text-transform:uppercase;letter-spacing:.05em}
+td{color:var(--muted)}
+code{background:var(--surface);padding:2px 8px;border-radius:6px;font-size:.82rem;color:var(--accent3)}
+.phase-timeline{display:flex;gap:0;margin-top:16px;flex-wrap:wrap}
+.phase{flex:1;padding:18px;position:relative;border-left:3px solid var(--border);min-width:200px}
+.phase:first-child{border-left:3px solid var(--accent)}
+.phase:nth-child(2){border-left:3px solid var(--accent2)}
+.phase:nth-child(3){border-left:3px solid var(--accent3)}
+.phase:nth-child(4){border-left:3px solid #34d399}
+.phase h4{font-size:.9rem;margin-bottom:6px}
+.phase ul{padding-left:16px;font-size:.8rem;color:var(--muted)}
+.phase ul li{margin-bottom:2px}
+.divider{border:none;border-top:1px solid var(--border);margin:32px 40px}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <span class="badge badge--purple">Project Blueprint</span>
+  <h1>Infinite Helix</h1>
+  <p>AI Micro Wellness Assistant &mdash; A gentle background companion for women employees, supporting emotional balance, healthy work habits, and mindful productivity.</p>
+</div>
+
+<hr class="divider">
+
+<section>
+  <h2>System Architecture</h2>
+  <div class="arch-flow">
+    <div class="arch-box" style="border-color:var(--accent)"><strong>React Frontend</strong><small>Dashboard &middot; Journal &middot; Reports</small></div>
+    <span class="arrow">&harr;</span>
+    <div class="arch-box" style="border-color:var(--accent2)"><strong>Flask Backend</strong><small>REST APIs &middot; AI Engine &middot; Scheduler</small></div>
+    <span class="arrow">&harr;</span>
+    <div class="arch-box" style="border-color:var(--accent3)"><strong>Firebase</strong><small>Firestore &middot; Auth &middot; Cloud Functions</small></div>
+  </div>
+  <div class="arch-flow" style="margin-top:0">
+    <div class="arch-box" style="border-color:#34d399"><strong>Background Tracker</strong><small>psutil &middot; pynput &middot; System Tray</small></div>
+    <span class="arrow">&nearr;</span>
+    <div class="arch-box" style="border-color:#fbbf24"><strong>AI Layer</strong><small>HuggingFace Transformers<br>Emotion + Sentiment Models</small></div>
+    <span class="arrow">&nearr;</span>
+    <div class="arch-box" style="border-color:#f97316"><strong>Google Calendar</strong><small>API v3 &middot; Meeting Detection</small></div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<section>
+  <h2>Data Flow</h2>
+  <div class="card" style="max-width:900px">
+    <table>
+      <thead><tr><th>Source</th><th>Data</th><th>Processing</th><th>Output</th></tr></thead>
+      <tbody>
+        <tr><td>Keyboard / Mouse</td><td>Activity intensity, idle gaps</td><td>Fatigue pattern analysis</td><td>Break / hydration nudge</td></tr>
+        <tr><td>Mood Journal</td><td>Free-form text entries</td><td>Emotion + sentiment AI</td><td>Supportive reframing</td></tr>
+        <tr><td>Google Calendar</td><td>Upcoming meetings</td><td>Time-delta check</td><td>Pre-meeting calm nudge</td></tr>
+        <tr><td>Cycle Log (opt.)</td><td>Cycle phase</td><td>Energy-mapping engine</td><td>Adapted wellness tips</td></tr>
+        <tr><td>Screen Time</td><td>Active window duration</td><td>Session length rules</td><td>Focus score + report</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<hr class="divider">
+
+<section>
+  <h2>Screen Templates</h2>
+  <div class="screen-grid">
+
+    <div class="screen-card">
+      <div class="screen-card__header"><span style="background:var(--accent)"></span> <strong>1. Daily Wellness Dashboard</strong></div>
+      <div class="screen-card__body">
+        <h4>Route: <code>/dashboard</code></h4>
+        <p>The main landing screen. At-a-glance wellness metrics for the current day.</p>
+        <ul>
+          <li>Screen time donut chart</li>
+          <li>Focus session timeline</li>
+          <li>Break balance progress bar</li>
+          <li>Productivity score gauge</li>
+          <li>Hydration tracker drops</li>
+          <li>Recent nudges feed</li>
+        </ul>
+        <div class="wireframe">
+          <div class="row"><div class="block block--accent">Screen Time</div><div class="block block--pink">Focus Score</div><div class="block block--blue">Break Balance</div></div>
+          <div class="row"><div class="block block--wide block--tall">Focus Session Timeline (Chart.js Line)</div><div class="block block--tall">Hydration Drops</div></div>
+          <div class="row"><div class="block">Recent Nudges Feed</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen-card">
+      <div class="screen-card__header"><span style="background:var(--accent2)"></span> <strong>2. Mood Journal</strong></div>
+      <div class="screen-card__body">
+        <h4>Route: <code>/journal</code></h4>
+        <p>Free-form text entry for thoughts & feelings. AI analyzes emotion in real-time.</p>
+        <ul>
+          <li>Text area with calming placeholder</li>
+          <li>Real-time emotion badge (joy, sadness, anger...)</li>
+          <li>AI supportive response card</li>
+          <li>Past entries timeline</li>
+          <li>Mood trend mini-chart</li>
+        </ul>
+        <div class="wireframe">
+          <div class="row"><div class="block block--wide block--tall">Textarea: "How are you feeling?"</div></div>
+          <div class="row"><div class="block block--accent">Emotion: Joy</div><div class="block block--pink">Sentiment: Positive</div></div>
+          <div class="row"><div class="block">AI Response: supportive message</div></div>
+          <div class="row"><div class="block">Past Entries List</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen-card">
+      <div class="screen-card__header"><span style="background:var(--accent3)"></span> <strong>3. Weekly Report Card</strong></div>
+      <div class="screen-card__body">
+        <h4>Route: <code>/reports</code></h4>
+        <p>Weekly summary with trends, streaks, and AI-generated insights.</p>
+        <ul>
+          <li>Total work hours bar chart</li>
+          <li>Stress pattern heatmap</li>
+          <li>Hydration frequency graph</li>
+          <li>Break balance radar chart</li>
+          <li>Emotional insights summary</li>
+          <li>AI-generated weekly tip</li>
+        </ul>
+        <div class="wireframe">
+          <div class="row"><div class="block block--accent">Work Hours Bar</div><div class="block block--pink">Stress Heatmap</div></div>
+          <div class="row"><div class="block block--blue">Hydration Graph</div><div class="block">Break Radar</div></div>
+          <div class="row"><div class="block block--wide">AI Insight: "You focused deeply but skipped breaks on Wed"</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen-card">
+      <div class="screen-card__header"><span style="background:#34d399"></span> <strong>4. Cycle Energy Mode</strong></div>
+      <div class="screen-card__body">
+        <h4>Route: <code>/cycle-mode</code></h4>
+        <p>Optional & private. Log cycle phase to receive energy-adapted suggestions.</p>
+        <ul>
+          <li>Phase selector (menstrual, follicular, ovulation, luteal)</li>
+          <li>Energy level indicator</li>
+          <li>Adapted task suggestions</li>
+          <li>Wellness tips for current phase</li>
+          <li>Privacy lock toggle</li>
+        </ul>
+        <div class="wireframe">
+          <div class="row"><div class="block block--pink">Menstrual</div><div class="block block--accent">Follicular</div><div class="block block--blue">Ovulation</div><div class="block">Luteal</div></div>
+          <div class="row"><div class="block block--wide block--tall">Energy & Wellness Suggestions</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen-card">
+      <div class="screen-card__header"><span style="background:#fbbf24"></span> <strong>5. Calendar & Meeting Prep</strong></div>
+      <div class="screen-card__body">
+        <h4>Route: <code>/calendar</code></h4>
+        <p>Google Calendar integration. Pre-meeting calm nudges and schedule awareness.</p>
+        <ul>
+          <li>Today's meeting timeline</li>
+          <li>Next meeting countdown</li>
+          <li>"Confidence breath" mini-exercise</li>
+          <li>Meeting density indicator</li>
+        </ul>
+        <div class="wireframe">
+          <div class="row"><div class="block block--wide block--tall">Meeting Timeline (vertical)</div><div class="block block--tall block--accent">Next Meeting<br>in 15min</div></div>
+          <div class="row"><div class="block block--pink">30s Confidence Breath</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen-card">
+      <div class="screen-card__header"><span style="background:#f97316"></span> <strong>6. Settings & Profile</strong></div>
+      <div class="screen-card__body">
+        <h4>Route: <code>/settings</code></h4>
+        <p>Personalization, privacy controls, and notification preferences.</p>
+        <ul>
+          <li>Profile info (name, avatar)</li>
+          <li>Notification frequency slider</li>
+          <li>Cycle mode on/off toggle</li>
+          <li>Google Calendar connect</li>
+          <li>Data privacy & export</li>
+          <li>Work hours configuration</li>
+        </ul>
+        <div class="wireframe">
+          <div class="row"><div class="block block--accent">Profile</div><div class="block">Notifications</div></div>
+          <div class="row"><div class="block block--pink">Cycle Mode</div><div class="block block--blue">Calendar Link</div></div>
+          <div class="row"><div class="block">Privacy & Data Export</div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<hr class="divider">
+
+<section>
+  <h2>Core Feature Modules</h2>
+  <div class="grid3">
+    <div class="card"><h3>Work Behavior Tracker</h3><p>Background Python service using psutil & pynput. Tracks keyboard activity, idle time, screen time, and typing intensity.</p></div>
+    <div class="card"><h3>AI Emotion Engine</h3><p>HuggingFace distilroberta for emotion detection, RoBERTa for sentiment. Real-time analysis of journal entries.</p></div>
+    <div class="card"><h3>Smart Hydration</h3><p>Behavior-based reminders triggered after long tasks, intense typing, or 2-hour gaps. Not time-based.</p></div>
+    <div class="card"><h3>Calendar Integration</h3><p>Google Calendar API v3. Detects meetings 10-15 min ahead and triggers pre-meeting calm nudges.</p></div>
+    <div class="card"><h3>Cycle Energy Mode</h3><p>Optional, private cycle phase logging. Adjusts wellness recommendations based on energy patterns.</p></div>
+    <div class="card"><h3>Notification System</h3><p>Browser Notification API + desktop toast. Calm, non-intrusive nudges with configurable frequency.</p></div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<section>
+  <h2>Implementation Phases</h2>
+  <div class="phase-timeline">
+    <div class="phase"><h4>Phase 1 &mdash; Foundation</h4><ul><li>Project scaffolding</li><li>React + Tailwind setup</li><li>Flask backend skeleton</li><li>Firebase connection</li><li>Routing & layout</li></ul></div>
+    <div class="phase"><h4>Phase 2 &mdash; Core AI</h4><ul><li>Behavior tracker service</li><li>Emotion detection API</li><li>Sentiment analysis API</li><li>Nudge generation engine</li><li>Mood journal UI</li></ul></div>
+    <div class="phase"><h4>Phase 3 &mdash; Integrations</h4><ul><li>Google Calendar API</li><li>Pre-meeting nudges</li><li>Cycle energy mode</li><li>Smart hydration logic</li><li>Notification system</li></ul></div>
+    <div class="phase"><h4>Phase 4 &mdash; Polish</h4><ul><li>Dashboard charts</li><li>Weekly report card</li><li>Background service tray</li><li>Privacy & data export</li><li>Testing & docs</li></ul></div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<section>
+  <h2>API Endpoints</h2>
+  <div class="card" style="max-width:900px">
+    <table>
+      <thead><tr><th>Method</th><th>Endpoint</th><th>Purpose</th></tr></thead>
+      <tbody>
+        <tr><td><code>POST</code></td><td><code>/api/emotion/analyze</code></td><td>Analyze text for emotion</td></tr>
+        <tr><td><code>POST</code></td><td><code>/api/sentiment/analyze</code></td><td>Analyze text for sentiment</td></tr>
+        <tr><td><code>POST</code></td><td><code>/api/journal/entry</code></td><td>Save mood journal entry</td></tr>
+        <tr><td><code>GET</code></td><td><code>/api/journal/history</code></td><td>Get past journal entries</td></tr>
+        <tr><td><code>GET</code></td><td><code>/api/dashboard/today</code></td><td>Daily wellness metrics</td></tr>
+        <tr><td><code>GET</code></td><td><code>/api/reports/weekly</code></td><td>Weekly wellness report</td></tr>
+        <tr><td><code>POST</code></td><td><code>/api/tracker/activity</code></td><td>Log work activity data</td></tr>
+        <tr><td><code>GET</code></td><td><code>/api/tracker/status</code></td><td>Current tracking status</td></tr>
+        <tr><td><code>POST</code></td><td><code>/api/nudge/generate</code></td><td>Generate context-aware nudge</td></tr>
+        <tr><td><code>GET</code></td><td><code>/api/calendar/meetings</code></td><td>Fetch upcoming meetings</td></tr>
+        <tr><td><code>POST</code></td><td><code>/api/cycle/log</code></td><td>Log cycle phase</td></tr>
+        <tr><td><code>GET</code></td><td><code>/api/cycle/suggestions</code></td><td>Energy-based suggestions</td></tr>
+        <tr><td><code>POST</code></td><td><code>/api/hydration/log</code></td><td>Log hydration event</td></tr>
+        <tr><td><code>GET</code></td><td><code>/api/user/settings</code></td><td>Get user preferences</td></tr>
+        <tr><td><code>PUT</code></td><td><code>/api/user/settings</code></td><td>Update user preferences</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<hr class="divider">
+
+<section>
+  <h2>Tech Stack Summary</h2>
+  <div class="grid2">
+    <div class="card"><h3>Frontend</h3><ul><li>React 18 + React Router</li><li>Tailwind CSS</li><li>Chart.js (react-chartjs-2)</li><li>Axios for API calls</li><li>Browser Notification API</li></ul></div>
+    <div class="card"><h3>Backend</h3><ul><li>Python 3.10+</li><li>Flask + Flask-CORS</li><li>HuggingFace Transformers</li><li>psutil + pynput</li><li>Google API Client</li></ul></div>
+    <div class="card"><h3>Database</h3><ul><li>Firebase Firestore</li><li>Firebase Authentication</li><li>firebase-admin (Python)</li><li>firebase SDK (React)</li></ul></div>
+    <div class="card"><h3>AI Models</h3><ul><li>j-hartmann/emotion-english-distilroberta-base</li><li>cardiffnlp/twitter-roberta-base-sentiment</li><li>PyTorch runtime</li></ul></div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<section>
+  <h2>Firebase Collections Schema</h2>
+  <div class="grid2">
+    <div class="card"><h3>users</h3><ul><li>uid, name, email, avatar</li><li>settings: { notifications, cycleMode, workHours }</li><li>calendarConnected: boolean</li><li>createdAt, updatedAt</li></ul></div>
+    <div class="card"><h3>mood_logs</h3><ul><li>userId, text, emotion, sentiment</li><li>aiResponse, confidence</li><li>timestamp</li></ul></div>
+    <div class="card"><h3>work_sessions</h3><ul><li>userId, startTime, endTime</li><li>keystrokes, idleTime</li><li>focusScore, breaks[]</li></ul></div>
+    <div class="card"><h3>hydration_logs</h3><ul><li>userId, trigger (task/time/typing)</li><li>completed: boolean</li><li>timestamp</li></ul></div>
+    <div class="card"><h3>cycle_logs</h3><ul><li>userId, phase, date</li><li>energyLevel, notes</li><li>encrypted: boolean</li></ul></div>
+    <div class="card"><h3>wellness_reports</h3><ul><li>userId, weekStart, weekEnd</li><li>totalHours, stressPatterns</li><li>hydrationCount, breakBalance</li><li>aiInsights, emotionalSummary</li></ul></div>
+  </div>
+</section>
+
+</body>
+</html>
