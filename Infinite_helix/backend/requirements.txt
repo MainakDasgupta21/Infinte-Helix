@@ -1,0 +1,25 @@
+# Infinite Helix – Backend Dependencies
+
+# Web Framework
+flask>=3.0.0
+flask-cors>=4.0.0
+
+# AI / ML
+transformers>=4.36.0
+torch>=2.1.0
+
+# Work Behavior Tracking
+psutil>=5.9.0
+pynput>=1.7.6
+
+# Firebase
+firebase-admin>=6.2.0
+
+# Google Calendar
+google-api-python-client>=2.108.0
+google-auth-httplib2>=0.1.1
+google-auth-oauthlib>=1.1.0
+
+# Utilities
+python-dotenv>=1.0.0
+apscheduler>=3.10.4
