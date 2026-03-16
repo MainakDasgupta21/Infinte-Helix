@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>API Documentation | Infinite Helix</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<div class="hero">
+  <span class="badge">14 Endpoints</span>
+  <h1>REST API Reference</h1>
+  <p>All endpoints with curl examples and mock responses. <a href="../index.html">← Live Demo</a></p>
+</div>
+
+<div class="container" style="padding:60px 20px;">
+  <table style="width:100%;background:var(--card);border-radius:24px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+    <thead>
+      <tr style="background:var(--accent);color:white;">
+        <th>Method</th><th>Endpoint</th><th>Input</th><th>Response</th><th>Test</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>POST</td><td><code>/api/emotion/analyze</code></td><td>{"text":"Feeling stressed"}</td><td>{"emotion":"fear","confidence":0.87}</td><td><button class="mock-btn" onclick="testAPI('emotion')">Test</button></td></tr>
+      <tr><td>POST</td><td><code>/api/sentiment/analyze</code></td><td>{"text":"Great progress!"</td><td>{"sentiment":"positive","score":0.92}</td><td><button class="mock-btn" onclick="testAPI('sentiment')">Test</button></td></tr>
+      <tr><td>GET</td><td><code>/api/dashboard/today</code></td><td>-</td><td>{productivity:87,screenTime:"4h23m",hydration:"6/8"}</td><td><button class="mock-btn" onclick="testAPI('dashboard')">Test</button></td></tr>
+      <tr><td>POST</td><td><code>/api/nudge/generate</code></td><td>{"context":{breaks:2}}</td><td>{"nudge":"Time for water 💧"}</td><td><button class="mock-btn" onclick="testAPI('nudge')">Test</button></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+function testAPI(endpoint) {
+    alert(`🧪 Mock ${endpoint.toUpperCase()} API Response:\n\n` +
+          `✅ 200 OK\n` +
+          `📄 Response body generated!\n\n` +
+          `(Full implementation in backend Flask server)`);
+}
+</script>
+</body>
+</html>
+

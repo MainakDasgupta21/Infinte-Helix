@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinite Helix - Hackathon Demo | AI Wellness Assistant</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="assets/helix-logo.svg">
+</head>
+<body>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="badge">Hackathon Prototype</div>
+            <h1 class="title">Infinite Helix</h1>
+            <p class="subtitle">Gentle AI companion for women employees. Tracks work behavior, analyzes emotions, delivers calm nudges. Supports cycle awareness, meeting prep, hydration - privately and supportively.</p>
+            <div class="cta">
+                <button class="btn-primary" onclick="scrollTo('features')">Live Demo</button>
+                <button class="btn-secondary" onclick="scrollTo('architecture')">Architecture</button>
+            </div>
+            <div class="qr">📱 Scan for Repo</div>
+        </div>
+    </section>
+
+    <!-- Features Carousel -->
+    <section id="features" class="features">
+        <div class="container">
+            <h2>Key Features <span class="accent">Live Demo</span></h2>
+            <div class="carousel" id="featureCarousel">
+                <div class="slide active">
+                    <div class="demo-card dashboard-demo">
+                        <h3>Daily Dashboard</h3>
+                        <div class="metric-grid">
+                            <div class="metric">
+                                <div class="value">87%</div>
+                                <div class="label">Productivity</div>
+                            </div>
+                            <div class="metric">
+                                <div class="value">4h 23m</div>
+                                <div class="label">Screen Time</div>
+                            </div>
+                            <div class="metric">
+                                <div class="value">6/8</div>
+                                <div class="label">Hydration</div>
+                            </div>
+                        </div>
+                        <button class="mock-btn" onclick="mockApi('dashboard')">Refresh Metrics</button>
+                    </div>
+                </div>
+                <div class="slide">
+                    <div class="demo-card journal-demo">
+                        <h3>AI Emotion Journal</h3>
+                        <textarea placeholder="How are you feeling today?..." id="journalInput"></textarea>
+                        <div class="emotion-result" id="emotionResult" style="display:none;">
+                            <span class="emotion-badge joy">JOY 92%</span>
+                            <div class="ai-response">🌟 Great to hear you're feeling joyful! Channel this energy into focused work while staying hydrated.</div>
+                        </div>
+                        <button class="mock-btn" onclick="analyzeJournal()">Analyze Emotion</button>
+                    </div>
+                </div>
+                <div class="slide">
+                    <div class="demo-card nudge-demo">
+                        <h3>Smart Nudge Generator</h3>
+                        <div class="context">
+                            <label>Screen time: <span id="screenTime">3h 45m</span></label>
+                            <label>Breaks: <span id="breaks">1/5</span></label>
+                            <label>Next meeting: <span id="meeting">15min</span></label>
+                        </div>
+                        <div class="nudge-result" id="nudgeResult"></div>
+                        <button class="mock-btn" onclick="generateNudge()">Generate Nudge</button>
+                    </div>
+                </div>
+            </div>
+            <div class="carousel-nav">
+                <button onclick="prevSlide()">&#8249;</button>
+                <button onclick="nextSlide()">&#8250;</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Screen Gallery -->
+    <section class="screens">
+        <div class="container">
+            <h2>All Screens</h2>
+            <div class="screen-grid">
+                <div class="screen-card">
+                    <div class="screen-header purple">Dashboard</div>
+                    <div class="screen-mock">Metrics • Charts • Nudges</div>
+                </div>
+                <div class="screen-card">
+                    <div class="screen-header pink">Journal</div>
+                    <div class="screen-mock">Emotion AI • Support Messages</div>
+                </div>
+                <div class="screen-card">
+                    <div class="screen-header blue">Reports</div>
+                    <div class="screen-mock">Weekly Trends • Insights</div>
+                </div>
+                <div class="screen-card">
+                    <div class="screen-header green">Cycle Mode</div>
+                    <div class="screen-mock">Phase-Aware Energy Tips</div>
+                </div>
+                <div class="screen-card">
+                    <div class="screen-header orange">Calendar</div>
+                    <div class="screen-mock">Meeting Prep Nudges</div>
+                </div>
+                <div class="screen-card">
+                    <div class="screen-header yellow">Settings</div>
+                    <div class="screen-mock">Privacy • Preferences</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Architecture -->
+    <section id="architecture" class="architecture">
+        <div class="container">
+            <h2>Architecture Overview</h2>
+            <div class="arch-diagram">
+                <div class="arch-node react">React Frontend</div>
+                <div class="arch-arrow"></div>
+                <div class="arch-node flask">Flask APIs</div>
+                <div class="arch-arrow"></div>
+                <div class="arch-node firebase">Firebase</div>
+                <div class="arch-node ai">🤖 HuggingFace AI</div>
+                <div class="arch-node tracker">👁️ Behavior Tracker</div>
+            </div>
+            <a href="docs/architecture.html" class="btn-primary">Full Blueprint →</a>
+        </div>
+    </section>
+
+    <!-- Tech Stack -->
+    <section class="stack">
+        <div class="container">
+            <h2>Tech Stack</h2>
+            <div class="stack-grid">
+                <div class="stack-item">React + Tailwind</div>
+                <div class="stack-item">Flask Python</div>
+                <div class="stack-item">HuggingFace AI</div>
+                <div class="stack-item">Firebase</div>
+                <div class="stack-item">Google Calendar</div>
+                <div class="stack-item">psutil Tracker</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pitch CTA -->
+    <section class="pitch">
+        <div class="container">
+            <h2>Ready to Demo?</h2>
+            <p>3-minute walkthrough: Problem → Solution → Live Mocks → Impact</p>
+            <div class="cta">
+                <a href="docs/hackathon-pitch.md" class="btn-primary">Pitch Script</a>
+                <a href="docs/setup-demo.md" class="btn-secondary">Setup Guide</a>
+            </div>
+        </div>
+    </section>
+
+    <script src="script.js"></script>
+</body>
+</html>
+

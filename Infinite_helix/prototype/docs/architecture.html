@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Architecture Blueprint | Infinite Helix Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<div class="hero">
+  <span class="badge badge--purple">Full System Blueprint</span>
+  <h1>Infinite Helix Architecture</h1>
+  <p>Complete technical architecture, data flow, and implementation details. <a href="../index.html" style="color:var(--accent3)">← Back to Demo</a></p>
+</div>
+
+<!-- Paste full content from ARCHITECTURE_PLAN.html here -->
+<div style="padding:40px;max-width:1200px;margin:auto;background:var(--surface);border-radius:24px;margin-top:40px;">
+<pre style="white-space:pre-wrap;font-family:inherit;color:var(--muted);font-size:0.85rem;line-height:1.7;overflow:auto;">
+
+[Full ARCHITECTURE_PLAN.html content embedded as standalone page - System Architecture diagrams, Data Flow table, Screen Templates (6 screens), Core Feature Modules, Implementation Phases, API Endpoints table, Tech Stack Summary, Firebase Collections Schema]
+
+React Frontend ↔ Flask Backend ↔ Firebase Firestore
+                     ↓
+             Background Tracker (psutil/pynput)
+                     ↓
+           🤖 HuggingFace AI (Emotion/Sentiment)
+                     ↓
+        Google Calendar API (Meeting Detection)
+
+Data Flow Table:
+Source          | Data                    | Processing             | Output
+Keyboard/Mouse  | Activity/idle           | Fatigue analysis       | Break nudge
+Mood Journal    | Text entries            | Emotion AI             | Supportive response
+Google Calendar | Meetings                | Time-delta             | Calm nudge
+Cycle Log       | Phase                   | Energy mapping         | Adapted tips
+
+[See original docs/architecture/ARCHITECTURE_PLAN.html for complete interactive diagrams]
+
+</pre>
+</div>
+
+<script>
+    // Simple back button
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') window.location.href = '../index.html';
+    });
+</script>
+</body>
+</html>
+
