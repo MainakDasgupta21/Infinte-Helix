@@ -1,34 +1,26 @@
-# Application Settings
-#
-# All configuration loaded from environment variables via python-dotenv.
-# See .env.example for required variables.
-#
-# Settings groups:
-#
-# FLASK:
-#   FLASK_ENV          = development | production
-#   FLASK_PORT         = 5000
-#   FLASK_DEBUG        = True
-#   SECRET_KEY         = <random-secret>
-#
-# FIREBASE:
-#   FIREBASE_CREDENTIALS_PATH = ./config/firebase-credentials.json
-#
-# GOOGLE CALENDAR:
-#   GOOGLE_CLIENT_ID      = <oauth-client-id>
-#   GOOGLE_CLIENT_SECRET  = <oauth-client-secret>
-#   GOOGLE_REDIRECT_URI   = http://localhost:5000/api/calendar/callback
-#
-# AI MODELS:
-#   EMOTION_MODEL    = j-hartmann/emotion-english-distilroberta-base
-#   SENTIMENT_MODEL  = cardiffnlp/twitter-roberta-base-sentiment
-#   MODEL_CACHE_DIR  = ./model_cache
-#
-# TRACKER:
-#   TRACKER_INTERVAL_SECONDS   = 30
-#   NUDGE_COOLDOWN_MINUTES     = 30
-#   IDLE_THRESHOLD_SECONDS     = 60
-#   FATIGUE_THRESHOLD_MINUTES  = 120
+import os
+from dotenv import load_dotenv
 
-# TODO: Load from .env using python-dotenv
-# TODO: Define Config class with defaults
+load_dotenv()
+
+
+class Config:
+    FLASK_ENV = os.getenv('FLASK_ENV', 'development')
+    FLASK_PORT = int(os.getenv('FLASK_PORT', 5000))
+    FLASK_DEBUG = os.getenv('FLASK_DEBUG', 'True').lower() == 'true'
+    SECRET_KEY = os.getenv('SECRET_KEY', 'helix-dev-secret-key-change-in-production')
+
+    FIREBASE_CREDENTIALS_PATH = os.getenv('FIREBASE_CREDENTIALS_PATH', './config/firebase-credentials.json')
+
+    GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID', '')
+    GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET', '')
+    GOOGLE_REDIRECT_URI = os.getenv('GOOGLE_REDIRECT_URI', 'http://localhost:5000/api/calendar/callback')
+
+    EMOTION_MODEL = os.getenv('EMOTION_MODEL', 'j-hartmann/emotion-english-distilroberta-base')
+    SENTIMENT_MODEL = os.getenv('SENTIMENT_MODEL', 'cardiffnlp/twitter-roberta-base-sentiment')
+    MODEL_CACHE_DIR = os.getenv('MODEL_CACHE_DIR', './model_cache')
+
+    TRACKER_INTERVAL_SECONDS = int(os.getenv('TRACKER_INTERVAL_SECONDS', 30))
+    NUDGE_COOLDOWN_MINUTES = int(os.getenv('NUDGE_COOLDOWN_MINUTES', 30))
+    IDLE_THRESHOLD_SECONDS = int(os.getenv('IDLE_THRESHOLD_SECONDS', 60))
+    FATIGUE_THRESHOLD_MINUTES = int(os.getenv('FATIGUE_THRESHOLD_MINUTES', 120))

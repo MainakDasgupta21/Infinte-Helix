@@ -1,22 +1,38 @@
-# Nudge Routes — /api/nudge/*
-#
-# POST /api/nudge/generate
-#   Request:  { "context": "long_session", "workMinutes": 120, "lastBreak": "..." }
-#   Response: { "nudge": {
-#     "type": "hydration",
-#     "message": "You just finished a long report — this is a good moment to hydrate.",
-#     "priority": "gentle",
-#     "exercise": null
-#   }}
-#
-# Nudge types: hydration, stretch, eyes, breathing, meeting_prep, emotional
-# Priority levels: gentle (can dismiss), moderate (persistent), important (with exercise)
-#
-# Context-aware logic:
-#   - After 2+ hours continuous → hydration + stretch
-#   - High typing intensity     → eye relaxation
-#   - Pre-meeting (10-15 min)   → confidence breath
-#   - Negative journal entry    → emotional support
+from flask import Blueprint, request, jsonify
+from app.ai.nudge_engine import NudgeEngine
+from app.notifications.notification_manager import notification_manager
 
-# TODO: Blueprint registration
-# TODO: generate() — context-aware nudge generation engine
+nudge_bp = Blueprint('nudge', __name__)
+nudge_engine = NudgeEngine()
+
+
+@nudge_bp.route('/generate', methods=['POST'])
+def generate_nudge():
+    context = request.get_json() or {}
+    nudge = nudge_engine.generate(context)
+
+    if nudge:
+        notification_manager.send(
+            nudge_type=nudge['type'],
+            message=nudge['message'],
+            priority=nudge['priority'],
+            user_id=context.get('user_id'),
+        )
+        return jsonify(nudge)
+
+    return jsonify({'message': 'No nudge needed right now'}), 204
+
+
+@nudge_bp.route('/pending', methods=['GET'])
+def get_pending():
+    user_id = request.args.get('user_id')
+    pending = notification_manager.get_pending(user_id)
+    return jsonify(pending)
+
+
+@nudge_bp.route('/<int:nudge_id>/dismiss', methods=['POST'])
+def dismiss_nudge(nudge_id):
+    success = notification_manager.dismiss(nudge_id)
+    if success:
+        return jsonify({'status': 'dismissed'})
+    return jsonify({'error': 'Nudge not found'}), 404

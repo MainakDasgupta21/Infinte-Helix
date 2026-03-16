@@ -1,23 +1,59 @@
-# NotificationManager — Desktop & Browser Notification Dispatcher
-#
-# Manages all outgoing wellness nudge notifications.
-#
-# Channels:
-#   1. In-app (via API → frontend toast)
-#   2. Browser Notification API (via frontend service worker)
-#   3. Desktop toast (via plyer or win10toast on Windows)
-#
-# Throttling rules:
-#   - Max 1 nudge per 30 minutes (gentle mode)
-#   - Max 1 nudge per 60 minutes (quiet mode)
-#   - No nudges during configured quiet hours
-#   - No duplicate nudge types within 2 hours
-#
-# Nudge queue:
-#   Pending nudges are queued and delivered at optimal moments
-#   (e.g., during natural work pauses detected by activity monitor)
+import time
+import json
 
-# TODO: Implement throttling logic
-# TODO: Quiet hours enforcement
-# TODO: Nudge queue with priority ordering
-# TODO: Multi-channel dispatch
+
+class NotificationManager:
+    """
+    Multi-channel notification manager.
+    Supports in-app notifications and can be extended for desktop/push.
+    """
+
+    def __init__(self):
+        self._queue = []
+        self._history = []
+        self._id_counter = 0
+
+    def send(self, nudge_type, message, priority='gentle', user_id=None):
+        self._id_counter += 1
+        notification = {
+            'id': self._id_counter,
+            'type': nudge_type,
+            'message': message,
+            'priority': priority,
+            'user_id': user_id,
+            'timestamp': time.time(),
+            'read': False,
+            'dismissed': False,
+        }
+        self._queue.append(notification)
+        return notification
+
+    def get_pending(self, user_id=None):
+        return [
+            n for n in self._queue
+            if not n['dismissed'] and (user_id is None or n.get('user_id') == user_id)
+        ]
+
+    def dismiss(self, notification_id):
+        for n in self._queue:
+            if n['id'] == notification_id:
+                n['dismissed'] = True
+                self._history.append(n)
+                return True
+        return False
+
+    def dismiss_all(self, user_id=None):
+        for n in self._queue:
+            if not n['dismissed'] and (user_id is None or n.get('user_id') == user_id):
+                n['dismissed'] = True
+                self._history.append(n)
+
+    def get_history(self, user_id=None, limit=50):
+        history = [
+            n for n in self._history
+            if user_id is None or n.get('user_id') == user_id
+        ]
+        return sorted(history, key=lambda x: x['timestamp'], reverse=True)[:limit]
+
+
+notification_manager = NotificationManager()

@@ -1,14 +1,28 @@
-// useWellnessPolling — Polls backend for wellness updates
-//
-// Interval: 30 seconds (configurable)
-//
-// Fetches:
-//   - Tracker status (is background service running?)
-//   - Pending nudges
-//   - Updated metrics
-//
-// Usage:
-//   const { metrics, nudges, isTrackerRunning } = useWellnessPolling(intervalMs);
+import { useEffect, useRef, useCallback } from 'react';
+import { useWellness } from '../context/WellnessContext';
 
-// TODO: Implement polling with useEffect + setInterval
-// TODO: Handle connection errors gracefully
+export default function useWellnessPolling(intervalMs = 30000) {
+  const { refreshMetrics } = useWellness();
+  const timerRef = useRef(null);
+
+  const startPolling = useCallback(() => {
+    if (timerRef.current) return;
+    timerRef.current = setInterval(() => {
+      refreshMetrics();
+    }, intervalMs);
+  }, [intervalMs, refreshMetrics]);
+
+  const stopPolling = useCallback(() => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    startPolling();
+    return stopPolling;
+  }, [startPolling, stopPolling]);
+
+  return { startPolling, stopPolling };
+}

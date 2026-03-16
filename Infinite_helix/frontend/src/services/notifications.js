@@ -1,17 +1,43 @@
-// Notification Service — Browser Notification API wrapper
-//
-// Functions:
-//   - requestPermission(): ask user for notification permission
-//   - sendNudge(title, body, options): show browser notification
-//   - isSupported(): check if browser supports notifications
-//
-// Nudge types and their icons:
-//   - hydration:  water drop icon
-//   - stretch:    person stretching icon
-//   - eyes:       eye icon
-//   - breathing:  wind icon
-//   - meeting:    calendar icon
-//   - emotional:  heart icon
+export async function requestPermission() {
+  if (!('Notification' in window)) {
+    console.warn('Notifications not supported');
+    return false;
+  }
+  const permission = await Notification.requestPermission();
+  return permission === 'granted';
+}
 
-// TODO: Implement notification permission request
-// TODO: Implement nudge display with type-specific styling
+export function showDesktopNotification(title, body, options = {}) {
+  if (Notification.permission !== 'granted') return;
+
+  const notification = new Notification(title, {
+    body,
+    icon: '/favicon.ico',
+    badge: '/favicon.ico',
+    tag: options.tag || 'helix-nudge',
+    silent: options.silent || false,
+    ...options,
+  });
+
+  if (options.autoClose !== false) {
+    setTimeout(() => notification.close(), options.duration || 5000);
+  }
+
+  return notification;
+}
+
+export function showNudgeNotification(nudge) {
+  const titles = {
+    hydration: '💧 Hydration Reminder',
+    stretch: '🌿 Stretch Break',
+    eyes: '👀 Eye Rest',
+    meeting: '🧘 Pre-Meeting Calm',
+    emotional: '💜 Wellness Check',
+  };
+
+  return showDesktopNotification(
+    titles[nudge.type] || '✨ Wellness Nudge',
+    nudge.message,
+    { tag: `helix-${nudge.type}-${nudge.id}` }
+  );
+}

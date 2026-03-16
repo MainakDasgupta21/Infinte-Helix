@@ -1,26 +1,49 @@
-# EmotionDetector — HuggingFace Emotion Detection Service
-#
-# Model: j-hartmann/emotion-english-distilroberta-base
-# Pipeline: text-classification
-#
-# Input:  "I feel so frustrated with this project"
-# Output: { "emotion": "anger", "confidence": 0.82,
-#            "all_emotions": [
-#              {"label": "anger", "score": 0.82},
-#              {"label": "sadness", "score": 0.10},
-#              {"label": "fear", "score": 0.04},
-#              {"label": "neutral", "score": 0.02},
-#              {"label": "joy", "score": 0.01},
-#              {"label": "surprise", "score": 0.005},
-#              {"label": "disgust", "score": 0.005}
-#            ]}
-#
-# Usage:
-#   detector = EmotionDetector()
-#   result = detector.analyze("I feel overwhelmed")
-#
-# The model is loaded once at startup and cached in memory.
+from transformers import pipeline
 
-# TODO: Load model with transformers pipeline
-# TODO: Implement analyze(text) method
-# TODO: Return top emotion + all scores
+
+class EmotionDetector:
+    """
+    HuggingFace emotion detection using j-hartmann/emotion-english-distilroberta-base.
+    Detects: anger, disgust, fear, joy, neutral, sadness, surprise.
+    """
+
+    def __init__(self, model_name=None, cache_dir=None):
+        self.model_name = model_name or 'j-hartmann/emotion-english-distilroberta-base'
+        self.cache_dir = cache_dir or './model_cache'
+        self._pipeline = None
+
+    def _load(self):
+        if self._pipeline is None:
+            self._pipeline = pipeline(
+                'text-classification',
+                model=self.model_name,
+                top_k=None,
+                model_kwargs={'cache_dir': self.cache_dir}
+            )
+        return self._pipeline
+
+    def analyze(self, text):
+        """
+        Analyze text for emotions.
+
+        Returns dict with:
+            emotion: dominant emotion label
+            confidence: score of dominant emotion
+            all_emotions: list of {label, score} sorted by score desc
+        """
+        if not text or not text.strip():
+            return {'emotion': 'neutral', 'confidence': 1.0, 'all_emotions': [{'label': 'neutral', 'score': 1.0}]}
+
+        pipe = self._load()
+        results = pipe(text[:512])[0]
+
+        sorted_results = sorted(results, key=lambda x: x['score'], reverse=True)
+
+        return {
+            'emotion': sorted_results[0]['label'],
+            'confidence': round(sorted_results[0]['score'], 4),
+            'all_emotions': [
+                {'label': r['label'], 'score': round(r['score'], 4)}
+                for r in sorted_results
+            ]
+        }

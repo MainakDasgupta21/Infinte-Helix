@@ -1,14 +1,27 @@
-# Hydration Routes — /api/hydration/*
-#
-# POST /api/hydration/log
-#   Request:  { "userId": "...", "trigger": "long_task", "completed": true }
-#   Response: { "status": "logged", "todayCount": 6, "target": 8 }
-#
-# Triggers (behavior-based, not time-based):
-#   - "long_task"      → after completing a long work session
-#   - "two_hours"      → after 2 hours since last hydration
-#   - "intense_typing" → after high typing intensity period
-#   - "manual"         → user-initiated log
+from flask import Blueprint, request, jsonify
+from app.services.firebase_service import log_hydration, get_hydration_today
 
-# TODO: Blueprint registration
-# TODO: log_hydration() — save + return daily progress
+hydration_bp = Blueprint('hydration', __name__)
+
+
+@hydration_bp.route('/log', methods=['POST'])
+def log_water():
+    user_id = request.get_json().get('user_id', 'demo-user-001') if request.is_json else 'demo-user-001'
+    entry = log_hydration(user_id)
+    count = get_hydration_today(user_id)
+    return jsonify({
+        'status': 'logged',
+        'glasses_today': count,
+        'entry': entry,
+    })
+
+
+@hydration_bp.route('/today', methods=['GET'])
+def get_today():
+    user_id = request.args.get('user_id', 'demo-user-001')
+    count = get_hydration_today(user_id)
+    return jsonify({
+        'glasses': count,
+        'goal': 8,
+        'progress': round(count / 8 * 100, 1),
+    })

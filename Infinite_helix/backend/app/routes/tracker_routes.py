@@ -1,14 +1,26 @@
-# Tracker Routes — /api/tracker/*
-#
-# POST /api/tracker/activity
-#   Request:  { "userId": "...", "keystrokes": 1200, "idleSeconds": 45,
-#               "activeMinutes": 25, "typingIntensity": "high" }
-#   Response: { "status": "logged", "shouldNudge": true, "nudgeType": "hydration" }
-#   Side effect: Saves to Firebase work_sessions collection
-#
-# GET /api/tracker/status
-#   Response: { "running": true, "uptime": 14400, "lastActivity": "2026-03-15T10:30:00" }
+from flask import Blueprint, jsonify
+from app.tracker.screen_tracker import ScreenTracker
 
-# TODO: Blueprint registration
-# TODO: log_activity() — save + check nudge triggers
-# TODO: get_status() — background service health check
+tracker_bp = Blueprint('tracker', __name__)
+screen_tracker = ScreenTracker()
+
+
+@tracker_bp.route('/status', methods=['GET'])
+def get_status():
+    screen_data = screen_tracker.get_screen_time()
+    system_data = screen_tracker.get_system_stats()
+    return jsonify({
+        'status': 'active',
+        'screen': screen_data,
+        'system': system_data,
+    })
+
+
+@tracker_bp.route('/start', methods=['POST'])
+def start_tracker():
+    return jsonify({'status': 'tracking_started'})
+
+
+@tracker_bp.route('/stop', methods=['POST'])
+def stop_tracker():
+    return jsonify({'status': 'tracking_stopped'})

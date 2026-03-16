@@ -1,23 +1,25 @@
-# MoodLog Model — Firestore document schema
-#
-# Collection: mood_logs
-#
-# Schema:
-#   {
-#     "id": string (auto),
-#     "userId": string,
-#     "text": string,
-#     "emotion": {
-#       "label": string,  (joy, sadness, anger, fear, surprise, disgust, neutral)
-#       "confidence": float
-#     },
-#     "sentiment": {
-#       "label": string,  (positive, neutral, negative)
-#       "confidence": float
-#     },
-#     "aiResponse": string,
-#     "timestamp": timestamp
-#   }
+"""
+Firestore Mood Log document schema.
 
-# TODO: Define data class
-# TODO: Validation
+Collection: mood_logs
+Auto-generated document ID
+
+Fields:
+    user_id         str     Firebase Auth UID
+    emotion         str     Detected emotion (joy, sadness, anger, fear, surprise, disgust, neutral)
+    confidence      float   Model confidence (0-1)
+    sentiment       str     positive | neutral | negative
+    source          str     'journal' | 'auto-detect'
+    timestamp       str     ISO timestamp
+"""
+
+
+def create_mood_log(user_id, emotion, confidence, sentiment, source='journal'):
+    return {
+        'user_id': user_id,
+        'emotion': emotion,
+        'confidence': confidence,
+        'sentiment': sentiment,
+        'source': source,
+        'timestamp': None,
+    }

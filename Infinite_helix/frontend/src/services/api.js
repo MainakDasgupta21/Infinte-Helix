@@ -1,23 +1,67 @@
-// API Service — Axios instance configured for Flask backend
-//
-// Base URL: http://localhost:5000/api
-//
-// Endpoints:
-//   emotion.analyze(text)           → POST /api/emotion/analyze
-//   sentiment.analyze(text)         → POST /api/sentiment/analyze
-//   journal.create(entry)           → POST /api/journal/entry
-//   journal.history(userId)         → GET  /api/journal/history
-//   dashboard.today(userId)         → GET  /api/dashboard/today
-//   reports.weekly(userId, week)    → GET  /api/reports/weekly
-//   tracker.logActivity(data)       → POST /api/tracker/activity
-//   tracker.status()                → GET  /api/tracker/status
-//   nudge.generate(context)         → POST /api/nudge/generate
-//   calendar.meetings(userId)       → GET  /api/calendar/meetings
-//   cycle.log(phase)                → POST /api/cycle/log
-//   cycle.suggestions(userId)       → GET  /api/cycle/suggestions
-//   hydration.log(event)            → POST /api/hydration/log
-//   user.getSettings(userId)        → GET  /api/user/settings
-//   user.updateSettings(settings)   → PUT  /api/user/settings
+import axios from 'axios';
 
-// TODO: Create axios instance with base URL and auth interceptor
-// TODO: Export grouped API functions
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+
+const api = axios.create({
+  baseURL: API_URL,
+  timeout: 15000,
+  headers: { 'Content-Type': 'application/json' },
+});
+
+api.interceptors.response.use(
+  response => response,
+  error => {
+    console.warn('API Error:', error.message);
+    return Promise.reject(error);
+  }
+);
+
+export const emotionAPI = {
+  analyze: (text) => api.post('/emotion/analyze', { text }),
+};
+
+export const sentimentAPI = {
+  analyze: (text) => api.post('/sentiment/analyze', { text }),
+};
+
+export const dashboardAPI = {
+  getToday: () => api.get('/dashboard/today'),
+};
+
+export const journalAPI = {
+  create: (entry) => api.post('/journal', entry),
+  list: (params) => api.get('/journal', { params }),
+  getById: (id) => api.get(`/journal/${id}`),
+};
+
+export const reportsAPI = {
+  getWeekly: () => api.get('/reports/weekly'),
+};
+
+export const trackerAPI = {
+  getStatus: () => api.get('/tracker/status'),
+  start: () => api.post('/tracker/start'),
+  stop: () => api.post('/tracker/stop'),
+};
+
+export const nudgeAPI = {
+  generate: (context) => api.post('/nudge/generate', context),
+  dismiss: (id) => api.post(`/nudge/${id}/dismiss`),
+};
+
+export const calendarAPI = {
+  getMeetings: () => api.get('/calendar/meetings'),
+  authorize: () => api.get('/calendar/authorize'),
+};
+
+export const cycleAPI = {
+  getSuggestions: (phase) => api.get(`/cycle/suggestions/${phase}`),
+  setPhase: (phase) => api.post('/cycle/phase', { phase }),
+};
+
+export const hydrationAPI = {
+  log: () => api.post('/hydration/log'),
+  getToday: () => api.get('/hydration/today'),
+};
+
+export default api;

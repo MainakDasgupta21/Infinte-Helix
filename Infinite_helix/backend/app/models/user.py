@@ -1,27 +1,35 @@
-# User Model — Firestore document schema
-#
-# Collection: users
-# Document ID: Firebase Auth UID
-#
-# Schema:
-#   {
-#     "uid": string,
-#     "name": string,
-#     "email": string,
-#     "avatar": string (URL),
-#     "settings": {
-#       "notifications": {
-#         "frequency": "gentle" | "moderate" | "minimal",
-#         "quietHours": { "start": "22:00", "end": "08:00" }
-#       },
-#       "cycleMode": { "enabled": boolean },
-#       "workHours": { "start": "09:00", "end": "18:00" }
-#     },
-#     "calendarConnected": boolean,
-#     "createdAt": timestamp,
-#     "updatedAt": timestamp
-#   }
+"""
+Firestore User document schema.
 
-# TODO: Define data class or Pydantic model
-# TODO: Validation helpers
-# TODO: to_dict() / from_dict() methods
+Collection: users
+Document ID: Firebase Auth UID
+
+Fields:
+    display_name    str     User's display name
+    email           str     Email address
+    settings        dict    User preferences
+        notifications       bool    Enable notifications
+        nudge_frequency     str     'minimal' | 'balanced' | 'frequent'
+        hydration_goal      int     Daily glass target
+        cycle_mode_enabled  bool    Enable cycle energy mode
+        cycle_phase         str     Current phase or None
+    created_at      str     ISO timestamp
+    updated_at      str     ISO timestamp
+"""
+
+
+def default_user(uid, display_name, email):
+    return {
+        'uid': uid,
+        'display_name': display_name,
+        'email': email,
+        'settings': {
+            'notifications': True,
+            'nudge_frequency': 'balanced',
+            'hydration_goal': 8,
+            'cycle_mode_enabled': False,
+            'cycle_phase': None,
+        },
+        'created_at': None,
+        'updated_at': None,
+    }

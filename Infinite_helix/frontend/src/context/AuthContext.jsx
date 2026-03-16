@@ -1,19 +1,20 @@
-// AuthContext — Firebase authentication state
-//
-// Provides:
-//   - user: current Firebase user object
-//   - loading: auth state loading
-//   - signIn(): Firebase Google sign-in
-//   - signOut(): Firebase sign-out
-
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 
 const AuthContext = createContext(null);
 
+const DEMO_USER = {
+  uid: 'demo-user-001',
+  displayName: 'Ananya Sharma',
+  email: 'ananya.sharma@company.com',
+  photoURL: null,
+  initials: 'AS',
+};
+
 export function AuthProvider({ children }) {
-  // TODO: Firebase onAuthStateChanged listener
-  // TODO: Google sign-in flow
-  const value = {};
+  const [user] = useState(DEMO_USER);
+  const [loading] = useState(false);
+
+  const value = { user, loading, signIn: () => {}, signOut: () => {} };
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
