@@ -69,6 +69,13 @@ export const calendarAPI = {
   disconnect: () => api.post('/calendar/disconnect'),
 };
 
+export const chatAPI = {
+  sendMessage: (message, user_id) => api.post('/chat/message', { message, user_id }),
+  getHistory: (user_id, limit) => api.get('/chat/history', { params: { user_id, limit } }),
+  clearHistory: (user_id) => api.delete('/chat/history', { data: { user_id } }),
+  getQuickReplies: (user_id) => api.get('/chat/quick-replies', { params: { user_id } }),
+};
+
 export const cycleAPI = {
   getSuggestions: (phase) => api.get(`/cycle/suggestions/${phase}`),
   setPhase: (phase) => api.post('/cycle/phase', { phase }),

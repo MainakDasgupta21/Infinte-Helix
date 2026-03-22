@@ -11,7 +11,14 @@ activity_monitor = None
 def create_app():
     app = Flask(__name__)
     app.config.from_object('config.settings.Config')
-    CORS(app, resources={r"/api/*": {"origins": "*"}})
+    CORS(app, resources={r"/api/*": {"origins": "*", "supports_credentials": True}})
+
+    @app.after_request
+    def add_cors_headers(response):
+        response.headers['Access-Control-Allow-Origin'] = '*'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+        response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+        return response
 
     from app.routes.auth_routes import auth_bp
     from app.routes.emotion_routes import emotion_bp
@@ -28,6 +35,7 @@ def create_app():
     from app.routes.privatecare_routes import privatecare_bp
     from app.routes.todo_routes import todo_bp
     from app.routes.user_routes import user_bp
+    from app.routes.chatbot_routes import chatbot_bp
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(emotion_bp, url_prefix='/api/emotion')
@@ -44,6 +52,7 @@ def create_app():
     app.register_blueprint(privatecare_bp, url_prefix='/api/privatecare')
     app.register_blueprint(todo_bp, url_prefix='/api/todos')
     app.register_blueprint(user_bp, url_prefix='/api/user')
+    app.register_blueprint(chatbot_bp, url_prefix='/api/chat')
 
     @app.route('/api/health')
     def health():

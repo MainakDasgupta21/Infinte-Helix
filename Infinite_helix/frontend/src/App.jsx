@@ -12,6 +12,7 @@ import AuthPage from './pages/AuthPage';
 
 import Sidebar from './components/Common/Sidebar';
 import NotificationOverlay from './components/Notifications/NotificationOverlay';
+import ChatBot from './components/ChatBot/ChatBot';
 
 import { WellnessProvider } from './context/WellnessContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -166,6 +167,7 @@ function AppRoutes() {
         </main>
         <NotificationOverlay />
         <OfflineBanner />
+        <ChatBot />
       </div>
     </WellnessProvider>
   );

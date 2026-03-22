@@ -1,7 +1,10 @@
 import os
+import logging
 import requests
 from datetime import datetime, timezone
 from urllib.parse import urlencode
+
+logger = logging.getLogger(__name__)
 
 GRAPH_BASE = 'https://graph.microsoft.com/v1.0'
 SCOPES = 'Calendars.Read User.Read offline_access'
@@ -70,6 +73,15 @@ class CalendarService:
 
     def get_authorize_url(self):
         if not self._is_configured:
+            logger.warning("Microsoft OAuth not configured: MS_CLIENT_ID or MS_CLIENT_SECRET missing")
+            return None
+
+        tenant = os.getenv('MS_TENANT_ID', 'common')
+        if tenant.startswith('your-') or not tenant:
+            logger.error(
+                "MS_TENANT_ID is not set (current value: '%s'). "
+                "Set it to your Azure AD tenant ID, or 'common' for multi-tenant apps.", tenant
+            )
             return None
 
         params = {
@@ -78,16 +90,21 @@ class CalendarService:
             'redirect_uri': self._redirect_uri,
             'scope': SCOPES,
             'response_mode': 'query',
-            'prompt': 'consent',
+            'prompt': 'select_account',
         }
-        return f"{_auth_base()}/authorize?{urlencode(params)}"
+        url = f"{_auth_base()}/authorize?{urlencode(params)}"
+        logger.info("Generated authorize URL for tenant: %s", tenant)
+        return url
 
     def handle_callback(self, auth_code):
         """Exchange authorization code for access + refresh tokens."""
         if not self._is_configured:
             return False, 'Microsoft OAuth not configured'
 
-        resp = requests.post(f"{_auth_base()}/token", data={
+        token_url = f"{_auth_base()}/token"
+        logger.info("Exchanging auth code at: %s", token_url)
+
+        resp = requests.post(token_url, data={
             'client_id': self._client_id,
             'client_secret': self._client_secret,
             'code': auth_code,
@@ -97,7 +114,19 @@ class CalendarService:
         })
 
         if resp.status_code != 200:
-            return False, resp.json().get('error_description', 'Token exchange failed')
+            error_body = resp.json()
+            error_desc = error_body.get('error_description', 'Token exchange failed')
+            error_code = error_body.get('error', 'unknown')
+            logger.error(
+                "Token exchange failed (HTTP %s): [%s] %s",
+                resp.status_code, error_code, error_desc
+            )
+            if 'invalid_client' in error_code:
+                logger.error(
+                    "HINT: 'invalid_client' usually means MS_CLIENT_SECRET is wrong. "
+                    "Make sure you are using the Secret 'Value' (not the 'Secret ID') from Azure portal."
+                )
+            return False, error_desc
 
         data = resp.json()
         user_info = self._fetch_user_profile(data['access_token'])
@@ -109,11 +138,13 @@ class CalendarService:
             'expires_at': datetime.now(timezone.utc).timestamp() + data.get('expires_in', 3600),
             'user': user_info,
         }
+        logger.info("Successfully connected Microsoft account: %s", user_key)
         return True, user_key
 
     def _refresh_access_token(self, user_key):
         token_data = self._tokens.get(user_key)
         if not token_data or not token_data.get('refresh_token'):
+            logger.warning("No refresh token available for user: %s", user_key)
             return False
 
         resp = requests.post(f"{_auth_base()}/token", data={
@@ -125,12 +156,14 @@ class CalendarService:
         })
 
         if resp.status_code != 200:
+            logger.error("Token refresh failed (HTTP %s): %s", resp.status_code, resp.text)
             return False
 
         data = resp.json()
         token_data['access_token'] = data['access_token']
         token_data['refresh_token'] = data.get('refresh_token', token_data['refresh_token'])
         token_data['expires_at'] = datetime.now(timezone.utc).timestamp() + data.get('expires_in', 3600)
+        logger.info("Successfully refreshed token for user: %s", user_key)
         return True
 
     def _get_valid_token(self, user_key='default'):
@@ -153,8 +186,9 @@ class CalendarService:
             if resp.status_code == 200:
                 d = resp.json()
                 return {'name': d.get('displayName'), 'mail': d.get('mail') or d.get('userPrincipalName')}
-        except Exception:
-            pass
+            logger.error("Failed to fetch user profile (HTTP %s): %s", resp.status_code, resp.text)
+        except Exception as e:
+            logger.error("Exception fetching user profile: %s", e)
         return None
 
     def get_connection_status(self):
@@ -185,9 +219,11 @@ class CalendarService:
             if token:
                 try:
                     return self._fetch_from_microsoft(token)
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.error("Failed to fetch meetings from Microsoft Graph for '%s': %s", key, e)
 
+        if not self._tokens:
+            logger.debug("No connected accounts, returning demo meetings")
         return self._demo_with_status()
 
     def get_next_meeting(self):
@@ -242,7 +278,7 @@ class CalendarService:
 
             is_teams = (
                 e.get('isOnlineMeeting', False)
-                and e.get('onlineMeetingProvider', '').lower() in ('teamsForBusiness', 'teams', 'teamsforbusiness')
+                and e.get('onlineMeetingProvider', '').lower() in ('teamsforbusiness', 'teams')
             ) or bool(e.get('onlineMeeting', {}).get('joinUrl'))
 
             join_url = None

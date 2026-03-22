@@ -7,6 +7,8 @@ flask-cors>=4.0.0
 # AI / ML
 transformers>=4.36.0
 torch>=2.1.0
+google-genai>=1.0.0
+groq>=1.0.0
 
 # Work Behavior Tracking
 psutil>=5.9.0
