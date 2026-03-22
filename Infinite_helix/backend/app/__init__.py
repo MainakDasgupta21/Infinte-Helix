@@ -24,6 +24,9 @@ def create_app():
     from app.routes.calendar_routes import calendar_bp
     from app.routes.cycle_routes import cycle_bp
     from app.routes.hydration_routes import hydration_bp
+    from app.routes.selfcare_routes import selfcare_bp
+    from app.routes.privatecare_routes import privatecare_bp
+    from app.routes.todo_routes import todo_bp
     from app.routes.user_routes import user_bp
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
@@ -37,6 +40,9 @@ def create_app():
     app.register_blueprint(calendar_bp, url_prefix='/api/calendar')
     app.register_blueprint(cycle_bp, url_prefix='/api/cycle')
     app.register_blueprint(hydration_bp, url_prefix='/api/hydration')
+    app.register_blueprint(selfcare_bp, url_prefix='/api/selfcare')
+    app.register_blueprint(privatecare_bp, url_prefix='/api/privatecare')
+    app.register_blueprint(todo_bp, url_prefix='/api/todos')
     app.register_blueprint(user_bp, url_prefix='/api/user')
 
     @app.route('/api/health')
@@ -81,8 +87,6 @@ def _init_ai_models(app):
         app.sentiment_analyzer = _DemoSentimentAnalyzer()
 
 
-import random
-
 class _DemoEmotionDetector:
     """Fast mock emotion detector for demo/hackathon mode."""
 
@@ -122,7 +126,8 @@ class _DemoEmotionDetector:
         for mood, keywords in self._KEYWORDS.items():
             if any(kw in lower for kw in keywords):
                 return self._PROFILES[mood]
-        return self._PROFILES[random.choice(['neutral', 'happy'])]
+        # No keyword match: stable neutral (not random) so generic text isn't mislabeled as joy
+        return self._PROFILES['neutral']
 
 
 class _DemoSentimentAnalyzer:

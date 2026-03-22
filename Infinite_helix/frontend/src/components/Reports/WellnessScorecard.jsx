@@ -8,15 +8,10 @@ import {
   HiOutlineFire,
 } from 'react-icons/hi';
 
-const MOOD_EMOJI = {
-  joy: '\u{1F60A}',
-  focused: '\u{1F3AF}',
-  neutral: '\u{1F610}',
-  sadness: '\u{1F614}',
-  anger: '\u{1F620}',
-  fear: '\u{1F630}',
-  surprise: '\u{1F632}',
-};
+function moodLabel(m) {
+  if (!m) return '—';
+  return String(m).replace(/_/g, ' ');
+}
 
 export default function WellnessScorecard({ score, summary, dailyScores }) {
   if (!score || !summary) return null;
@@ -85,8 +80,8 @@ export default function WellnessScorecard({ score, summary, dailyScores }) {
             <svg width="140" height="140" viewBox="0 0 120 120">
               <defs>
                 <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#c084fc" />
-                  <stop offset="100%" stopColor="#f472b6" />
+                  <stop offset="0%" stopColor="#6b8cff" />
+                  <stop offset="100%" stopColor="#5eb0d8" />
                 </linearGradient>
               </defs>
               <circle cx="60" cy="60" r="54" fill="none" stroke="#2e2e3c" strokeWidth="10" />
@@ -150,13 +145,15 @@ export default function WellnessScorecard({ score, summary, dailyScores }) {
                     <span className="text-xs text-helix-muted w-8 text-right">{d.day}</span>
                     <div className="flex-1 h-5 bg-helix-bg/60 rounded-full overflow-hidden">
                       <div
-                        className="h-full rounded-full bg-gradient-to-r from-helix-accent/80 to-helix-pink/70 transition-all duration-700 flex items-center justify-end pr-2"
+                        className="h-full rounded-full bg-gradient-to-r from-helix-accent/80 to-helix-sky/70 transition-all duration-700 flex items-center justify-end pr-2"
                         style={{ width: `${d.score}%` }}
                       >
                         <span className="text-[10px] font-medium text-white/90">{d.score}</span>
                       </div>
                     </div>
-                    <span className="text-sm w-6" title={d.mood}>{MOOD_EMOJI[d.mood] || '\u{1F610}'}</span>
+                    <span className="text-xs text-helix-muted w-16 text-right capitalize truncate" title={d.mood}>
+                      {moodLabel(d.mood)}
+                    </span>
                   </div>
                 ))}
               </div>

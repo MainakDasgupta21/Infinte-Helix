@@ -38,6 +38,8 @@ function mapFirebaseUser(fbUser) {
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  /** While true, AuthPage should not auto-redirect to dashboard (email sign-up creates a session briefly before we sign out). */
+  const [registrationInProgress, setRegistrationInProgress] = useState(false);
 
   useEffect(() => {
     if (!auth) {
@@ -71,18 +73,28 @@ export function AuthProvider({ children }) {
 
   const signUp = useCallback(async (email, password, displayName) => {
     if (!auth) throw new Error('Firebase not configured');
-    const cred = await createUserWithEmailAndPassword(auth, email, password);
-    if (displayName) {
-      await updateProfile(cred.user, { displayName });
-    }
-    setUser(mapFirebaseUser({ ...cred.user, displayName }));
+    setRegistrationInProgress(true);
     try {
-      const token = await cred.user.getIdToken();
-      await authAPI.register(token, { displayName, email });
-    } catch {
-      // backend registration is best-effort
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      if (displayName) {
+        await updateProfile(cred.user, { displayName });
+      }
+      try {
+        const token = await cred.user.getIdToken();
+        await authAPI.register(token, { displayName, email });
+      } catch {
+        // backend registration is best-effort
+      }
+      await firebaseSignOut(auth);
+      return { registered: true };
+    } catch (err) {
+      if (auth?.currentUser) {
+        await firebaseSignOut(auth).catch(() => {});
+      }
+      throw err;
+    } finally {
+      setRegistrationInProgress(false);
     }
-    return mapFirebaseUser(cred.user);
   }, []);
 
   const signInWithGoogleHandler = useCallback(async () => {
@@ -99,6 +111,7 @@ export function AuthProvider({ children }) {
   const value = {
     user,
     loading,
+    registrationInProgress,
     signIn,
     signUp,
     signInWithGoogle: signInWithGoogleHandler,

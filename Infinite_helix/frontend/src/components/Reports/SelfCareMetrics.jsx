@@ -32,7 +32,7 @@ const METRICS_CONFIG = [
     key: 'stretches',
     label: 'Stretch Breaks',
     icon: HiOutlineRefresh,
-    color: 'from-helix-accent to-purple-400',
+    color: 'from-helix-accent to-indigo-500',
     textColor: 'text-helix-accent',
     format: (d) => ({
       value: `${d.done} / ${d.suggested}`,

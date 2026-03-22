@@ -1,6 +1,12 @@
 import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
-import { dashboardAPI, hydrationAPI, nudgeAPI } from '../services/api';
-import { showNudgeNotification, requestPermission } from '../services/notifications';
+import toast from 'react-hot-toast';
+import { dashboardAPI, hydrationAPI, nudgeAPI, selfCareAPI } from '../services/api';
+
+import { useAuth } from './AuthContext';
+import { showNudgeNotification, requestPermission, isPermissionGranted } from '../services/notifications';
+import { startMealReminderScheduler } from '../services/mealReminders';
+import { startEyeRestScheduler } from '../services/eyeRestReminder';
+import { startPrivateCareScheduler } from '../services/privateCareReminder';
 
 const WellnessContext = createContext(null);
 
@@ -9,6 +15,7 @@ const INITIAL_METRICS = {
   focusSessions: [],
   breaks: { taken: 0, suggested: 6, lastBreak: '--:--', avgDuration: 0 },
   hydration: { ml_today: 0, goal_ml: 2000, default_amount_ml: 250 },
+  selfCare: { stretch: 0, eye_rest: 0, goals: { stretch: 25, eye_rest: 30 } },
   score: 0,
   mood: 'neutral',
   streakDays: 0,
@@ -16,15 +23,20 @@ const INITIAL_METRICS = {
 };
 
 export function WellnessProvider({ children }) {
+  const { user } = useAuth();
+  const userId = user?.uid || null;
   const [todayMetrics, setTodayMetrics] = useState(INITIAL_METRICS);
+  const [screenHistory, setScreenHistory] = useState([]);
   const [nudges, setNudges] = useState([]);
   const [trackerStatus, setTrackerStatus] = useState('connecting');
+  const [dashboardLoading, setDashboardLoading] = useState(true);
   const pollRef = useRef(null);
   const permissionAsked = useRef(false);
+  const firstLoad = useRef(true);
 
   const fetchDashboard = useCallback(async () => {
     try {
-      const res = await dashboardAPI.getToday();
+      const res = await dashboardAPI.getToday(userId);
       const d = res.data;
       setTodayMetrics({
         screenTime: d.screenTime || INITIAL_METRICS.screenTime,
@@ -35,27 +47,46 @@ export function WellnessProvider({ children }) {
           goal_ml: d.hydration?.goal_ml || 2000,
           default_amount_ml: d.hydration?.default_amount_ml || 250,
         },
+        selfCare: d.selfCare || INITIAL_METRICS.selfCare,
         score: d.score || 0,
         mood: d.mood || 'neutral',
         streakDays: d.streakDays || 0,
         activity: d.activity || {},
       });
       setTrackerStatus('connected');
+      if (firstLoad.current) {
+        firstLoad.current = false;
+        setDashboardLoading(false);
+      }
     } catch {
       setTrackerStatus('offline');
+      if (firstLoad.current) {
+        firstLoad.current = false;
+        setDashboardLoading(false);
+      }
     }
-  }, []);
+  }, [userId]);
 
   const refreshMetrics = useCallback(() => {
     fetchDashboard();
   }, [fetchDashboard]);
 
+  const fetchScreenHistory = useCallback(async (days = 7) => {
+    try {
+      const res = await dashboardAPI.getScreenHistory(userId, days);
+      setScreenHistory(res.data?.history || []);
+    } catch {
+      setScreenHistory([]);
+    }
+  }, [userId]);
+
   const addHydration = useCallback(async (amount_ml) => {
     const ml = amount_ml || 250;
     try {
-      await hydrationAPI.log(ml);
+      await hydrationAPI.log(ml, userId);
+      toast.success(`+${ml} ml logged \u{1F4A7}`);
     } catch {
-      // offline fallback
+      toast.success(`+${ml} ml logged (offline)`);
     }
     setTodayMetrics(prev => ({
       ...prev,
@@ -64,7 +95,25 @@ export function WellnessProvider({ children }) {
         ml_today: prev.hydration.ml_today + ml,
       },
     }));
-  }, []);
+  }, [userId]);
+
+  const logSelfCare = useCallback(async (action) => {
+    const label = action === 'stretch' ? 'Stretch break' : 'Eye rest';
+    const emoji = action === 'stretch' ? '\u{1F9D8}' : '\u{1F441}\uFE0F';
+    try {
+      await selfCareAPI.log(action, userId);
+      toast.success(`${label} logged ${emoji}`);
+    } catch {
+      toast.success(`${label} logged (offline)`);
+    }
+    setTodayMetrics(prev => ({
+      ...prev,
+      selfCare: {
+        ...prev.selfCare,
+        [action]: (prev.selfCare[action] || 0) + 1,
+      },
+    }));
+  }, [userId]);
 
   const dismissNudge = useCallback(async (id) => {
     setNudges(prev => prev.map(n => n.id === id ? { ...n, dismissed: true } : n));
@@ -94,22 +143,42 @@ export function WellnessProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    if (!permissionAsked.current) {
-      permissionAsked.current = true;
-      requestPermission();
+    let stopMeals = null;
+    let stopEyeRest = null;
+    let cancelled = false;
+
+    async function init() {
+      if (!permissionAsked.current) {
+        permissionAsked.current = true;
+        await requestPermission();
+      }
+      if (!cancelled) {
+        stopMeals = startMealReminderScheduler(30000);
+        stopEyeRest = startEyeRestScheduler();
+        startPrivateCareScheduler();
+      }
     }
 
+    init();
     fetchDashboard();
     pollRef.current = setInterval(fetchDashboard, 30000);
-    return () => clearInterval(pollRef.current);
+    return () => {
+      cancelled = true;
+      clearInterval(pollRef.current);
+      if (stopMeals) stopMeals();
+      if (stopEyeRest) stopEyeRest();
+    };
   }, [fetchDashboard]);
 
   useEffect(() => {
     const nudgeInterval = setInterval(() => {
       const activity = todayMetrics.activity || {};
+      const continuous = activity.continuous_work_minutes || 0;
       generateNudge({
-        continuous_work_minutes: activity.continuous_work_minutes || 0,
+        continuous_work_minutes: continuous,
         typing_intensity: activity.typing_intensity || 0,
+        minutes_since_break: continuous,
+        recent_emotion: todayMetrics.mood || 'neutral',
         ml_today: todayMetrics.hydration?.ml_today || 0,
         hour_of_day: new Date().getHours(),
       });
@@ -119,11 +188,15 @@ export function WellnessProvider({ children }) {
 
   const value = {
     todayMetrics,
+    screenHistory,
     nudges,
     trackerStatus,
+    dashboardLoading,
     refreshMetrics,
+    fetchScreenHistory,
     dismissNudge,
     addHydration,
+    logSelfCare,
     generateNudge,
   };
 

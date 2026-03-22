@@ -4,39 +4,39 @@
 
 @layer base {
   html, body, * {
-    font-family: 'Roboto', sans-serif;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
   * {
     scrollbar-width: thin;
-    scrollbar-color: #2e2e3c #0f0f12;
+    scrollbar-color: #26262f #030304;
   }
   *::-webkit-scrollbar {
     width: 6px;
   }
   *::-webkit-scrollbar-track {
-    background: #0f0f12;
+    background: #030304;
   }
   *::-webkit-scrollbar-thumb {
-    background-color: #2e2e3c;
+    background-color: #36363f;
     border-radius: 3px;
   }
 }
 
 @layer components {
   .glass-card {
-    @apply bg-helix-card/60 backdrop-blur-xl border border-helix-border/40 rounded-2xl;
+    @apply bg-helix-card/60 backdrop-blur-xl border border-helix-border/40 rounded-[20px];
   }
   .glow-accent {
-    box-shadow: 0 0 20px rgba(192, 132, 252, 0.15), 0 0 60px rgba(192, 132, 252, 0.05);
+    box-shadow: 0 0 24px rgba(107, 140, 255, 0.12), 0 0 0 1px rgba(107, 140, 255, 0.06);
   }
   .glow-pink {
-    box-shadow: 0 0 20px rgba(244, 114, 182, 0.15), 0 0 60px rgba(244, 114, 182, 0.05);
+    box-shadow: 0 0 20px rgba(201, 123, 154, 0.12), 0 0 0 1px rgba(201, 123, 154, 0.05);
   }
   .glow-mint {
-    box-shadow: 0 0 20px rgba(52, 211, 153, 0.15), 0 0 60px rgba(52, 211, 153, 0.05);
+    box-shadow: 0 0 20px rgba(61, 184, 154, 0.12), 0 0 0 1px rgba(61, 184, 154, 0.05);
   }
   .gradient-text {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-helix-accent via-helix-pink to-helix-sky;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-helix-accent via-helix-sky to-helix-mint;
   }
 }
 
@@ -55,4 +55,8 @@
 @keyframes breathe {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.15); }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }

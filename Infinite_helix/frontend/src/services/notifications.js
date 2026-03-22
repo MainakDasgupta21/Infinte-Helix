@@ -1,5 +1,9 @@
 let _permissionGranted = false;
 
+export function isPermissionGranted() {
+  return _permissionGranted || (typeof Notification !== 'undefined' && Notification.permission === 'granted');
+}
+
 export async function requestPermission() {
   if (!('Notification' in window)) {
     console.warn('Notifications not supported in this browser');
@@ -18,7 +22,10 @@ export async function requestPermission() {
 }
 
 export function showDesktopNotification(title, body, options = {}) {
-  if (!_permissionGranted && Notification.permission !== 'granted') return null;
+  if (!_permissionGranted && Notification.permission !== 'granted') {
+    console.warn('[Helix] Desktop notification skipped — permission:', Notification.permission);
+    return null;
+  }
 
   try {
     const notification = new Notification(title, {
@@ -35,30 +42,26 @@ export function showDesktopNotification(title, body, options = {}) {
     }
 
     return notification;
-  } catch {
+  } catch (err) {
+    console.error('[Helix] Desktop notification failed:', err);
     return null;
   }
 }
 
 const NUDGE_TITLES = {
-  hydration: 'Hydration Reminder',
-  stretch: 'Stretch Break',
-  eyes: 'Eye Rest',
-  meeting: 'Pre-Meeting Calm',
-  emotional: 'Wellness Check',
-};
-
-const NUDGE_ICONS = {
-  hydration: '💧',
-  stretch: '🌿',
-  eyes: '👀',
-  meeting: '🧘',
-  emotional: '💜',
+  hydration: 'Hydration Check',
+  stretch: 'Move Your Body!',
+  eyes: 'Eye Rest (20-20-20)',
+  posture: 'Posture Police',
+  meeting: 'Meeting Incoming',
+  emotional: 'Vibe Check',
+  winddown: 'Log Off Already!',
+  morning: 'Good Morning!',
+  streak: 'Achievement Unlocked',
 };
 
 export function showNudgeNotification(nudge) {
-  const icon = NUDGE_ICONS[nudge.type] || '✨';
-  const title = `${icon} ${NUDGE_TITLES[nudge.type] || 'Wellness Nudge'}`;
+  const title = NUDGE_TITLES[nudge.type] || 'Wellness nudge';
 
   return showDesktopNotification(
     title,

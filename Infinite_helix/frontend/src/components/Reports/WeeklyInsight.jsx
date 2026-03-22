@@ -15,10 +15,10 @@ const INSIGHT_STYLES = {
 };
 
 const PHASE_INFO = {
-  menstrual: { emoji: '\u{1F319}', label: 'Menstrual', color: 'text-helix-pink', bg: 'bg-helix-pink/15' },
-  follicular: { emoji: '\u{1F331}', label: 'Follicular', color: 'text-helix-mint', bg: 'bg-helix-mint/15' },
-  ovulatory: { emoji: '\u2728', label: 'Ovulatory', color: 'text-helix-amber', bg: 'bg-helix-amber/15' },
-  luteal: { emoji: '\u{1F33F}', label: 'Luteal', color: 'text-helix-accent', bg: 'bg-helix-accent/15' },
+  menstrual: { label: 'Menstrual', color: 'text-helix-pink', bg: 'bg-helix-pink/15' },
+  follicular: { label: 'Follicular', color: 'text-helix-mint', bg: 'bg-helix-mint/15' },
+  ovulatory: { label: 'Ovulatory', color: 'text-helix-amber', bg: 'bg-helix-amber/15' },
+  luteal: { label: 'Luteal', color: 'text-helix-accent', bg: 'bg-helix-accent/15' },
 };
 
 export default function WeeklyInsight({ insights, recommendations, affirmation, cycleInsights }) {
@@ -31,7 +31,7 @@ export default function WeeklyInsight({ insights, recommendations, affirmation, 
             <HiOutlineSparkles className="w-4 h-4 text-helix-pink" />
             <h3 className="text-sm font-medium text-helix-muted">Cycle-Aware Insights</h3>
             <span className="text-xs px-2 py-0.5 rounded-full bg-helix-pink/15 text-helix-pink font-medium">
-              {PHASE_INFO[cycleInsights.current_phase]?.emoji} {PHASE_INFO[cycleInsights.current_phase]?.label} Phase
+              {PHASE_INFO[cycleInsights.current_phase]?.label} phase
             </span>
           </div>
 
@@ -44,11 +44,10 @@ export default function WeeklyInsight({ insights, recommendations, affirmation, 
                   key={phase}
                   className={`rounded-xl p-3 text-center border transition-all ${isCurrent ? `${info.bg} border-current/20 ring-1 ring-current/10` : 'bg-helix-bg/40 border-helix-border/10'}`}
                 >
-                  <span className="text-lg">{info.emoji}</span>
-                  <p className={`text-lg font-display font-bold mt-1 ${isCurrent ? info.color : 'text-helix-text'}`}>
+                  <p className={`text-lg font-display font-bold ${isCurrent ? info.color : 'text-helix-text'}`}>
                     {score}
                   </p>
-                  <p className="text-[10px] text-helix-muted capitalize">{info.label}</p>
+                  <p className="text-[10px] text-helix-muted capitalize mt-1">{info.label}</p>
                 </div>
               );
             })}
@@ -93,7 +92,7 @@ export default function WeeklyInsight({ insights, recommendations, affirmation, 
           <div className="space-y-3">
             {recommendations.map((rec, i) => (
               <div key={i} className="flex gap-3 bg-helix-bg/40 rounded-xl p-4 border border-helix-border/10">
-                <div className="flex-shrink-0 w-7 h-7 rounded-lg bg-gradient-to-br from-helix-accent/20 to-helix-pink/20 flex items-center justify-center">
+                <div className="flex-shrink-0 w-7 h-7 rounded-lg bg-gradient-to-br from-helix-accent/20 to-helix-sky/20 flex items-center justify-center">
                   <span className="text-xs font-bold text-helix-accent">{i + 1}</span>
                 </div>
                 <div className="flex-1 min-w-0">

@@ -1,9 +1,8 @@
 from flask import Blueprint, jsonify
-from app.tracker.screen_tracker import ScreenTracker
+from app.tracker.screen_tracker import screen_tracker
 import app as app_module
 
 tracker_bp = Blueprint('tracker', __name__)
-screen_tracker = ScreenTracker()
 
 
 @tracker_bp.route('/status', methods=['GET'])

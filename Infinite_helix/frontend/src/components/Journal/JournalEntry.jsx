@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { HiOutlinePaperAirplane } from 'react-icons/hi';
+import { HiOutlinePaperAirplane, HiOutlinePencilAlt } from 'react-icons/hi';
 
 const PROMPTS = [
   "How are you feeling right now?",
@@ -22,10 +22,10 @@ export default function JournalEntry({ onSubmit, isAnalyzing }) {
   };
 
   return (
-    <div className="glass-card p-6 glow-accent">
+    <div className="glass-card p-6 border border-helix-border/40">
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-helix-accent to-helix-pink flex items-center justify-center">
-          <span className="text-sm">✍</span>
+        <div className="w-8 h-8 rounded-xl bg-helix-accent/15 border border-helix-accent/25 flex items-center justify-center">
+          <HiOutlinePencilAlt className="w-4 h-4 text-helix-accent" />
         </div>
         <div>
           <h3 className="text-sm font-medium text-helix-text">Emotion Journal</h3>
@@ -52,7 +52,7 @@ export default function JournalEntry({ onSubmit, isAnalyzing }) {
         <button
           type="submit"
           disabled={!text.trim() || isAnalyzing}
-          className="mt-3 w-full py-3 rounded-xl bg-gradient-to-r from-helix-accent to-helix-pink text-white
+          className="mt-3 w-full py-3 rounded-xl bg-gradient-to-r from-helix-accent to-helix-sky text-white
                      text-sm font-medium flex items-center justify-center gap-2 hover:opacity-90 transition-all
                      disabled:opacity-40 disabled:cursor-not-allowed"
         >

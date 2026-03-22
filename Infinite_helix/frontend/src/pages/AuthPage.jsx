@@ -33,13 +33,16 @@ export default function AuthPage() {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [serverError, setServerError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
 
-  const { user, signIn, signUp, signInWithGoogle, loading } = useAuth();
+  const { user, signIn, signUp, signInWithGoogle, loading, registrationInProgress } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user) navigate('/dashboard', { replace: true });
-  }, [user, navigate]);
+    if (user && !registrationInProgress) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [user, navigate, registrationInProgress]);
 
   const isRegister = mode === 'register';
 
@@ -77,9 +80,16 @@ export default function AuthPage() {
     if (!validate()) return;
 
     setIsSubmitting(true);
+    setSuccessMsg('');
     try {
       if (isRegister) {
-        await signUp(email, password, displayName);
+        const result = await signUp(email, password, displayName);
+        if (result?.registered) {
+          setMode('login');
+          setPassword('');
+          setConfirmPassword('');
+          setSuccessMsg('Account created. Please sign in with your email and password.');
+        }
       } else {
         await signIn(email, password);
       }
@@ -117,6 +127,7 @@ export default function AuthPage() {
     setMode(isRegister ? 'login' : 'register');
     setErrors({});
     setServerError('');
+    setSuccessMsg('');
     setPassword('');
     setConfirmPassword('');
   }
@@ -140,8 +151,8 @@ export default function AuthPage() {
       <div className="relative z-10 w-full max-w-md animate-slide-up">
         {/* Brand */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-helix-accent to-helix-pink mb-4 glow-accent">
-            <span className="text-white font-display font-bold text-3xl">∞</span>
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-helix-accent to-helix-sky mb-4 glow-accent">
+            <span className="text-white font-display font-bold text-xl tracking-tight">IH</span>
           </div>
           <h1 className="font-display text-3xl font-bold text-helix-text">Infinite Helix</h1>
           <p className="text-helix-muted text-sm mt-1">Your AI Wellness Companion</p>
@@ -156,7 +167,7 @@ export default function AuthPage() {
               onClick={() => mode !== 'login' && switchMode()}
               className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all duration-300 ${
                 !isRegister
-                  ? 'bg-gradient-to-r from-helix-accent to-helix-pink text-white shadow-lg'
+                  ? 'bg-gradient-to-r from-helix-accent to-helix-sky text-white shadow-lg'
                   : 'text-helix-muted hover:text-helix-text'
               }`}
             >
@@ -167,7 +178,7 @@ export default function AuthPage() {
               onClick={() => mode !== 'register' && switchMode()}
               className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all duration-300 ${
                 isRegister
-                  ? 'bg-gradient-to-r from-helix-accent to-helix-pink text-white shadow-lg'
+                  ? 'bg-gradient-to-r from-helix-accent to-helix-sky text-white shadow-lg'
                   : 'text-helix-muted hover:text-helix-text'
               }`}
             >
@@ -182,6 +193,15 @@ export default function AuthPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               {serverError}
+            </div>
+          )}
+
+          {successMsg && (
+            <div className="mb-6 p-3 rounded-xl bg-helix-mint/10 border border-helix-mint/30 text-helix-mint text-sm flex items-start gap-2">
+              <svg className="w-5 h-5 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+              </svg>
+              {successMsg}
             </div>
           )}
 
@@ -312,7 +332,7 @@ export default function AuthPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-helix-accent to-helix-pink text-white font-semibold text-sm
+              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-helix-accent to-helix-sky text-white font-semibold text-sm
                          hover:shadow-lg hover:shadow-helix-accent/25 active:scale-[0.98] transition-all duration-200
                          disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none
                          flex items-center justify-center gap-2"

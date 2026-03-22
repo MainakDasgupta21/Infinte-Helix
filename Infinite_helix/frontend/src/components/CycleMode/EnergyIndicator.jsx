@@ -1,19 +1,47 @@
 import React from 'react';
 
-const ENERGY_LEVELS = {
-  menstrual: { level: 25, label: 'Low Energy', color: '#f472b6', suggestion: 'Take it easy. Focus on lighter tasks and self-care.' },
-  follicular: { level: 65, label: 'Rising Energy', color: '#34d399', suggestion: 'Great time for creative work and planning new projects.' },
-  ovulatory: { level: 95, label: 'Peak Energy', color: '#fbbf24', suggestion: 'Your peak! Schedule important presentations and hard tasks.' },
-  luteal: { level: 45, label: 'Winding Down', color: '#c084fc', suggestion: 'Wrap up tasks and organize. Be gentle with yourself.' },
-};
+function configForCycleDay(cycleDay) {
+  const d = cycleDay;
+  if (d >= 1 && d <= 5) {
+    return {
+      level: 25,
+      label: 'Rest and restore',
+      color: '#c97b9a',
+      suggestion: 'Go easy on yourself today. Shorter tasks and cozy breaks will feel better than pushing hard.',
+    };
+  }
+  if (d >= 6 && d <= 13) {
+    return {
+      level: 74,
+      label: 'Good focus window',
+      color: '#3db89a',
+      suggestion: 'Your head may feel clearer—good for planning, learning something new, or ticking off medium tasks.',
+    };
+  }
+  if (d >= 14 && d <= 16) {
+    return {
+      level: 92,
+      label: 'Peak performance',
+      color: '#fbbf24',
+      suggestion: 'You might feel extra sharp—use it for things that need confidence, focus, or speaking up.',
+    };
+  }
+  return {
+    level: 52,
+    label: 'Wind down mode',
+    color: '#6b8cff',
+    suggestion: 'Finishing and tidying up may feel easier than starting big new things. Small wins still count.',
+  };
+}
 
-export default function EnergyIndicator({ phase }) {
-  const config = ENERGY_LEVELS[phase] || ENERGY_LEVELS.follicular;
+export default function EnergyIndicator({ cycleDay }) {
+  const day = Math.min(28, Math.max(1, Number(cycleDay) || 1));
+  const config = configForCycleDay(day);
   const segments = 10;
 
   return (
     <div className="glass-card p-6">
-      <h3 className="text-sm font-medium text-helix-muted mb-4">Energy Level</h3>
+      <h3 className="text-sm font-medium text-helix-muted mb-4">How your energy may feel</h3>
 
       <div className="flex items-center justify-center gap-1.5 mb-4">
         {Array.from({ length: segments }).map((_, i) => {
@@ -38,7 +66,7 @@ export default function EnergyIndicator({ phase }) {
       </div>
 
       <div className="bg-helix-bg/50 rounded-xl p-4 border border-helix-border/20">
-        <p className="text-xs text-helix-accent font-medium mb-1">AI Suggestion</p>
+        <p className="text-xs text-helix-accent font-medium mb-1">Tips for you</p>
         <p className="text-sm text-helix-text leading-relaxed">{config.suggestion}</p>
       </div>
     </div>

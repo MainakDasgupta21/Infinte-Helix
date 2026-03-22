@@ -35,7 +35,9 @@ export const sentimentAPI = {
 };
 
 export const dashboardAPI = {
-  getToday: () => api.get('/dashboard/today'),
+  getToday: (userId) => api.get('/dashboard/today', userId ? { params: { user_id: userId } } : undefined),
+  getScreenHistory: (userId, days = 7) =>
+    api.get('/dashboard/screen-history', { params: { ...(userId && { user_id: userId }), days } }),
 };
 
 export const journalAPI = {
@@ -45,7 +47,7 @@ export const journalAPI = {
 };
 
 export const reportsAPI = {
-  getWeekly: () => api.get('/reports/weekly'),
+  getWeekly: (userId) => api.get('/reports/weekly', userId ? { params: { user_id: userId } } : undefined),
 };
 
 export const trackerAPI = {
@@ -73,8 +75,32 @@ export const cycleAPI = {
 };
 
 export const hydrationAPI = {
-  log: (amount_ml = 250) => api.post('/hydration/log', { amount_ml }),
-  getToday: () => api.get('/hydration/today'),
+  log: (amount_ml = 250, userId) => api.post('/hydration/log', { amount_ml, ...(userId && { user_id: userId }) }),
+  getToday: (userId) => api.get('/hydration/today', userId ? { params: { user_id: userId } } : undefined),
+};
+
+export const selfCareAPI = {
+  log: (action, userId) => api.post('/selfcare/log', { action, ...(userId && { user_id: userId }) }),
+  getToday: (userId) => api.get('/selfcare/today', userId ? { params: { user_id: userId } } : undefined),
+};
+
+export const todoAPI = {
+  create: (text, remindAt, userId) =>
+    api.post('/todos', { text, remind_at: remindAt || null, ...(userId && { user_id: userId }) }),
+  getToday: (userId) =>
+    api.get('/todos/today', userId ? { params: { user_id: userId } } : undefined),
+  toggle: (todoId, userId) =>
+    api.post(`/todos/${todoId}/toggle`, { ...(userId && { user_id: userId }) }),
+  remove: (todoId, userId) =>
+    api.delete(`/todos/${todoId}`, { data: { ...(userId && { user_id: userId }) } }),
+};
+
+export const privateCareAPI = {
+  log: (type, note, userId) => api.post('/privatecare/log', { type, note, ...(userId && { user_id: userId }) }),
+  getHistory: (userId, days = 90) =>
+    api.get('/privatecare/history', { params: { ...(userId && { user_id: userId }), days } }),
+  getPeriodHistory: (userId, start, end) =>
+    api.get('/privatecare/period-history', { params: { ...(userId && { user_id: userId }), start, end } }),
 };
 
 export default api;

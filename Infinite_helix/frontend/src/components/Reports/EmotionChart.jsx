@@ -5,23 +5,13 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 const EMOTION_COLORS = {
-  joy: '#34d399',
-  neutral: '#38bdf8',
-  sadness: '#a78bfa',
-  surprise: '#fbbf24',
-  anger: '#f87171',
-  fear: '#f472b6',
-  disgust: '#9490a8',
-};
-
-const EMOTION_EMOJI = {
-  joy: '\u{1F60A}',
-  neutral: '\u{1F610}',
-  sadness: '\u{1F614}',
-  surprise: '\u{1F632}',
-  anger: '\u{1F621}',
-  fear: '\u{1F630}',
-  disgust: '\u{1F616}',
+  joy: '#3db89a',
+  neutral: '#5eb0d8',
+  sadness: '#7c8cdb',
+  surprise: '#d4a84b',
+  anger: '#e07070',
+  fear: '#c97b9a',
+  disgust: '#8f8f9a',
 };
 
 export default function EmotionChart({ distribution }) {
@@ -73,9 +63,11 @@ export default function EmotionChart({ distribution }) {
         {/* Doughnut */}
         <div className="relative w-44 h-44 flex-shrink-0">
           <Doughnut data={data} options={options} />
-          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-            <span className="text-2xl">{EMOTION_EMOJI[topEmotion?.[0]] || '\u{1F610}'}</span>
-            <span className="text-xs text-helix-muted mt-0.5 capitalize">{topEmotion?.[0]}</span>
+          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none px-2 text-center">
+            <span className="text-lg font-semibold text-helix-text capitalize leading-tight">
+              {topEmotion?.[0] || '—'}
+            </span>
+            <span className="text-xs text-helix-muted mt-1">{topEmotion?.[1] != null ? `${topEmotion[1]}%` : ''}</span>
           </div>
         </div>
 

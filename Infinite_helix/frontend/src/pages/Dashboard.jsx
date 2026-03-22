@@ -7,6 +7,8 @@ import BreakBalance from '../components/Dashboard/BreakBalance';
 import HydrationTracker from '../components/Dashboard/HydrationTracker';
 import FocusTimeline from '../components/Dashboard/FocusTimeline';
 import NudgeFeed from '../components/Dashboard/NudgeFeed';
+import SelfCareTracker from '../components/Dashboard/SelfCareTracker';
+import TodayTasks from '../components/Dashboard/TodayTasks';
 
 function getGreeting() {
   const h = new Date().getHours();
@@ -15,63 +17,130 @@ function getGreeting() {
   return 'Good evening';
 }
 
+function wellnessStatusLine(score) {
+  const s = Number(score) || 0;
+  if (s >= 80) return "You're having a strong day.";
+  if (s >= 60) return 'Steady progress today — keep it up';
+  return "Let's make the rest of the day count";
+}
+
+function typingActivityLabel(keystrokes) {
+  const k = Number(keystrokes) || 0;
+  if (k >= 5000) return 'High';
+  if (k >= 1800) return 'Moderate';
+  if (k >= 400) return 'Light';
+  return 'Low';
+}
+
+function workIntensityLabel(typingIntensity) {
+  const i = Number(typingIntensity) || 0;
+  if (i >= 32) return 'High';
+  if (i >= 14) return 'Moderate';
+  return 'Light';
+}
+
+function DashboardSkeleton() {
+  return (
+    <div className="max-w-7xl mx-auto space-y-6 animate-pulse">
+      <div className="bg-helix-card/40 rounded-[20px] h-24" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[1, 2, 3, 4].map(i => (
+          <div key={i} className="bg-helix-card/40 rounded-[20px] h-52" />
+        ))}
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        <div className="bg-helix-card/40 rounded-[20px] h-64 col-span-2" />
+        <div className="bg-helix-card/40 rounded-[20px] h-64" />
+        <div className="bg-helix-card/40 rounded-[20px] h-64" />
+      </div>
+      <div className="bg-helix-card/40 rounded-[20px] h-14" />
+    </div>
+  );
+}
+
 export default function Dashboard() {
-  const { todayMetrics, trackerStatus } = useWellness();
+  const { todayMetrics, trackerStatus, dashboardLoading } = useWellness();
   const { user } = useAuth();
+  const ks = todayMetrics.activity?.keystrokes ?? 0;
+  const intensity = todayMetrics.activity?.typing_intensity ?? 0;
+
+  if (dashboardLoading) return <DashboardSkeleton />;
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 animate-slide-up">
-      <div className="bg-mesh rounded-2xl p-6 border border-helix-border/30">
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <div>
+      <div className="bg-mesh rounded-[20px] p-6 border border-helix-border/30">
+        <div className="flex items-start justify-between flex-wrap gap-4">
+          <div className="min-w-0 flex-1">
             <h1 className="text-2xl font-display font-semibold text-helix-text">
               {getGreeting()}, {user?.displayName?.split(' ')[0] || 'there'}
             </h1>
-            <p className="text-sm text-helix-muted mt-1">
-              Here's your wellness snapshot for today. You're on a {todayMetrics.streakDays}-day streak!
+            <p className="text-sm text-helix-muted mt-1.5 leading-relaxed">
+              {wellnessStatusLine(todayMetrics.score)}
             </p>
           </div>
-          <div className="flex gap-3">
-            <div className="glass-card px-4 py-2 text-center">
-              <p className="text-xs text-helix-muted">Focus Sessions</p>
-              <p className="text-lg font-semibold text-helix-accent">{todayMetrics.focusSessions.length}</p>
-            </div>
-            <div className="glass-card px-4 py-2 text-center">
-              <p className="text-xs text-helix-muted">Breaks Taken</p>
-              <p className="text-lg font-semibold text-helix-sky">{todayMetrics.breaks.taken}</p>
-            </div>
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-helix-accent/25 bg-helix-accent/10 px-3 py-1.5 text-xs font-medium text-helix-accent">
+              <span className="text-helix-muted font-normal">Focus</span>
+              <span className="tabular-nums">{todayMetrics.focusSessions.length}</span>
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-helix-sky/25 bg-helix-sky/10 px-3 py-1.5 text-xs font-medium text-helix-sky">
+              <span className="text-helix-muted font-normal">Breaks</span>
+              <span className="tabular-nums">{todayMetrics.breaks?.taken ?? 0}</span>
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-helix-pink/25 bg-helix-pink/10 px-3 py-1.5 text-xs font-medium text-helix-pink">
+              <span className="text-helix-muted font-normal">Eye Rest</span>
+              <span className="tabular-nums">{todayMetrics.selfCare?.eye_rest ?? 0}</span>
+            </span>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
         <ProductivityScore
           score={todayMetrics.score}
           streakDays={todayMetrics.streakDays}
           mood={todayMetrics.mood}
+          breaks={todayMetrics.breaks}
         />
         <ScreenTimeChart screenTime={todayMetrics.screenTime} />
         <BreakBalance breaks={todayMetrics.breaks} />
         <HydrationTracker />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 items-stretch">
         <FocusTimeline sessions={todayMetrics.focusSessions} />
         <NudgeFeed />
+        <SelfCareTracker />
       </div>
 
-      <div className="glass-card p-4">
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <div className="flex items-center gap-3">
-            <div className={`w-2 h-2 rounded-full ${trackerStatus === 'connected' ? 'bg-helix-mint animate-pulse' : 'bg-helix-red'}`} />
-            <span className="text-xs text-helix-muted">
-              AI Wellness Engine {trackerStatus === 'connected' ? 'Active' : 'Connecting...'}
-            </span>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
+        <TodayTasks />
+      </div>
+
+      <div className="glass-card p-4 rounded-[20px]">
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center gap-2.5">
+            {trackerStatus === 'connected' ? (
+              <>
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-helix-mint opacity-60" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-helix-mint" />
+                </span>
+                <span className="text-xs text-helix-muted">
+                  AI Wellness Engine Active
+                </span>
+              </>
+            ) : (
+              <>
+                <div className="w-2 h-2 rounded-full bg-helix-red" />
+                <span className="text-xs text-helix-muted">AI Wellness Engine Connecting...</span>
+              </>
+            )}
           </div>
-          <div className="flex items-center gap-4 text-xs text-helix-muted">
-            <span>Keystrokes: <span className="text-helix-text">{todayMetrics.activity?.keystrokes || 0}</span></span>
-            <span>Screen: <span className="text-helix-text">{todayMetrics.screenTime.total}h</span></span>
-            <span>Intensity: <span className="text-helix-text">{Math.round(todayMetrics.activity?.typing_intensity || 0)}/min</span></span>
+          <div className="flex items-center gap-4 text-xs text-helix-muted flex-wrap justify-end">
+            <span>Typing activity: <span className="text-helix-text">{typingActivityLabel(ks)}</span></span>
+            <span>Screen time: <span className="text-helix-text">{todayMetrics.screenTime?.total ?? 0}h</span></span>
+            <span>Work intensity: <span className="text-helix-text">{workIntensityLabel(intensity)}</span></span>
           </div>
         </div>
       </div>

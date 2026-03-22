@@ -8,6 +8,8 @@ const QUICK_AMOUNTS = [
   { label: 'Sip', ml: 100 },
 ];
 
+const CARD_TITLE = 'text-[13px] uppercase tracking-[0.06em] font-semibold text-helix-muted';
+
 function WaterWave({ progress }) {
   const clampedProgress = Math.min(100, Math.max(0, progress));
   return (
@@ -29,6 +31,7 @@ export default function HydrationTracker() {
     ? Math.round((hydration.ml_today / hydration.goal_ml) * 100)
     : 0;
   const goalReached = hydration.ml_today >= hydration.goal_ml;
+  const remainingMl = Math.max(0, (hydration.goal_ml || 0) - (hydration.ml_today || 0));
 
   const handleLog = () => {
     if (amountMl > 0 && !goalReached) {
@@ -43,45 +46,34 @@ export default function HydrationTracker() {
     }
   };
 
+  const fillPct = Math.min(100, Math.max(0, progress));
+
   return (
-    <div className="glass-card p-6">
+    <div className="glass-card p-6 h-full flex flex-col rounded-[20px]">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-medium text-helix-muted">Hydration</h3>
+        <h3 className={CARD_TITLE}>Hydration</h3>
         <span className="text-xs text-helix-sky font-medium">
           {hydration.ml_today} / {hydration.goal_ml} ml
         </span>
       </div>
 
-      <div className="flex items-center justify-center mb-4">
-        <div className="relative flex flex-col items-center">
-          <svg width="80" height="96" viewBox="0 0 80 96" fill="none">
-            <defs>
-              <clipPath id="dropClip">
-                <path d="M40 4C40 4 8 40 8 60C8 77.67 22.33 92 40 92C57.67 92 72 77.67 72 60C72 40 40 4 40 4Z" />
-              </clipPath>
-            </defs>
-            <path
-              d="M40 4C40 4 8 40 8 60C8 77.67 22.33 92 40 92C57.67 92 72 77.67 72 60C72 40 40 4 40 4Z"
-              fill="#2e2e3c"
-              stroke="#3d3d52"
-              strokeWidth="1.5"
-            />
-            <rect
-              x="0" y={92 - (88 * Math.min(progress, 100)) / 100}
-              width="80"
-              height={(88 * Math.min(progress, 100)) / 100}
-              fill="url(#waterGrad)"
-              clipPath="url(#dropClip)"
-              className="transition-all duration-700"
-            />
-            <defs>
-              <linearGradient id="waterGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.9" />
-                <stop offset="100%" stopColor="#06b6d4" stopOpacity="0.7" />
-              </linearGradient>
-            </defs>
-          </svg>
-          <span className="mt-1 text-lg font-display font-bold text-helix-sky">{progress}%</span>
+      <div className="flex items-center justify-center gap-6 mb-4 flex-1 min-h-[7rem]">
+        <div
+          className="relative flex flex-col items-center justify-end rounded-b-xl rounded-t-md border border-helix-border/80 bg-helix-bg/80 overflow-hidden"
+          style={{ width: 44, height: 112 }}
+          aria-hidden
+        >
+          <div
+            className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-cyan-500/90 to-helix-sky/85 transition-all duration-700 ease-out"
+            style={{ height: `${fillPct}%` }}
+          />
+          <div className="absolute inset-x-0 top-0 h-2 rounded-t-md bg-helix-card/90 border-b border-helix-border/40 z-10" />
+        </div>
+        <div className="flex flex-col items-start justify-center">
+          <span className="text-3xl font-display font-bold text-helix-sky leading-none">{progress}%</span>
+          <span className="text-xs text-helix-muted mt-2 max-w-[11rem] leading-snug">
+            {remainingMl > 0 ? `${remainingMl} ml remaining to goal` : 'Goal reached'}
+          </span>
         </div>
       </div>
 
@@ -110,25 +102,28 @@ export default function HydrationTracker() {
                        hover:bg-helix-sky/20 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed
                        whitespace-nowrap"
           >
-            {goalReached ? '✓ Done!' : '+ Log'}
+            {goalReached ? 'Done' : 'Log'}
           </button>
         </div>
 
         <div className="flex gap-1.5">
-          {QUICK_AMOUNTS.map(({ label, ml }) => (
-            <button
-              key={label}
-              onClick={() => setAmountMl(ml)}
-              className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all duration-200
-                ${amountMl === ml
-                  ? 'bg-helix-sky/20 text-helix-sky border border-helix-sky/30'
-                  : 'bg-helix-bg/50 text-helix-muted hover:text-helix-text border border-transparent'
-                }`}
-            >
-              {label}
-              <span className="block text-[10px] opacity-70">{ml}ml</span>
-            </button>
-          ))}
+          {QUICK_AMOUNTS.map(({ label, ml }) => {
+            const selected = amountMl === ml;
+            return (
+              <button
+                key={label}
+                onClick={() => setAmountMl(ml)}
+                className={`flex-1 py-1.5 rounded-xl text-xs font-medium transition-all duration-200 border
+                  ${selected
+                    ? 'bg-helix-sky text-white border-helix-sky shadow-sm'
+                    : 'bg-helix-bg/50 text-helix-muted hover:text-helix-text border-helix-border/50'
+                  }`}
+              >
+                {label}
+                <span className={`block text-[10px] ${selected ? 'text-white/85' : 'opacity-70'}`}>{ml}ml</span>
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>

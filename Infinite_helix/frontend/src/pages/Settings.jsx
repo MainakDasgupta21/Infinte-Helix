@@ -1,12 +1,38 @@
 import React, { useState } from 'react';
+import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { HiOutlineUser, HiOutlineBell, HiOutlineShieldCheck, HiOutlineColorSwatch, HiOutlineLogout } from 'react-icons/hi';
+import { saveAppSettings, APP_SETTINGS_KEY } from '../services/mealReminders';
+import { loadEyeRestConfig, saveEyeRestConfig, restartEyeRestScheduler } from '../services/eyeRestReminder';
+import MealReminderSettings from '../components/Settings/MealReminderSettings';
 
-function ToggleSwitch({ enabled, onChange }) {
+const DEFAULT_APP_SETTINGS = {
+  notifications: true,
+  desktopNotifs: true,
+  soundEnabled: false,
+  nudgeFrequency: 'balanced',
+  hydrationGoalMl: 2000,
+  cycleModeEnabled: true,
+  dataSharing: false,
+  darkMode: true,
+};
+
+function loadStoredAppSettings() {
+  try {
+    return JSON.parse(localStorage.getItem(APP_SETTINGS_KEY) || '{}');
+  } catch {
+    return {};
+  }
+}
+
+function ToggleSwitch({ enabled, onChange, label }) {
   return (
     <button
+      role="switch"
+      aria-checked={enabled}
+      aria-label={label}
       onClick={() => onChange(!enabled)}
-      className={`w-10 h-5.5 rounded-full p-0.5 transition-colors ${enabled ? 'bg-helix-accent' : 'bg-helix-border'}`}
+      className={`w-10 h-5.5 rounded-full p-0.5 transition-colors focus:outline-none focus:ring-2 focus:ring-helix-accent/50 ${enabled ? 'bg-helix-accent' : 'bg-helix-border'}`}
     >
       <div className={`w-4 h-4 rounded-full bg-white transition-transform ${enabled ? 'translate-x-5' : 'translate-x-0'}`} />
     </button>
@@ -41,18 +67,20 @@ function SettingRow({ label, description, children }) {
 
 export default function Settings() {
   const { user, signOut } = useAuth();
-  const [settings, setSettings] = useState({
-    notifications: true,
-    desktopNotifs: true,
-    soundEnabled: false,
-    nudgeFrequency: 'balanced',
-    hydrationGoalMl: 2000,
-    cycleModeEnabled: true,
-    dataSharing: false,
-    darkMode: true,
-  });
+  const [settings, setSettings] = useState(() => ({
+    ...DEFAULT_APP_SETTINGS,
+    ...loadStoredAppSettings(),
+  }));
+  const [eyeRestCfg, setEyeRestCfg] = useState(loadEyeRestConfig);
 
-  const update = (key, val) => setSettings(prev => ({ ...prev, [key]: val }));
+  const update = (key, val) => {
+    setSettings((prev) => {
+      const next = { ...prev, [key]: val };
+      saveAppSettings(next);
+      return next;
+    });
+    toast.success('Setting saved');
+  };
 
   return (
     <div className="max-w-3xl mx-auto space-y-6 animate-slide-up">
@@ -66,7 +94,7 @@ export default function Settings() {
           {user?.photoURL ? (
             <img src={user.photoURL} alt="" className="w-14 h-14 rounded-full object-cover" />
           ) : (
-            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-helix-pink to-helix-accent flex items-center justify-center text-xl font-bold text-white">
+            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-helix-sky to-helix-accent flex items-center justify-center text-xl font-bold text-white">
               {user?.initials}
             </div>
           )}
@@ -111,6 +139,47 @@ export default function Settings() {
             <option value="frequent">Frequent</option>
           </select>
         </SettingRow>
+
+        <MealReminderSettings />
+
+        <div className="border-t border-helix-border/20 pt-4 mt-2">
+          <SettingRow label="Eye Rest Reminders (20-20-20)" description="Get reminded to look away from screen periodically">
+            <ToggleSwitch
+              enabled={eyeRestCfg.enabled}
+              onChange={(v) => {
+                const next = { ...eyeRestCfg, enabled: v };
+                setEyeRestCfg(next);
+                saveEyeRestConfig(next);
+                restartEyeRestScheduler();
+              }}
+            />
+          </SettingRow>
+          {eyeRestCfg.enabled && (
+            <SettingRow label="Reminder Interval" description="Minutes between eye rest reminders">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    const next = { ...eyeRestCfg, intervalMinutes: Math.max(5, eyeRestCfg.intervalMinutes - 5) };
+                    setEyeRestCfg(next);
+                    saveEyeRestConfig(next);
+                    restartEyeRestScheduler();
+                  }}
+                  className="w-7 h-7 rounded-lg bg-helix-bg text-helix-muted hover:text-helix-text transition-colors flex items-center justify-center"
+                >-</button>
+                <span className="text-sm font-medium text-helix-text w-16 text-center">{eyeRestCfg.intervalMinutes} min</span>
+                <button
+                  onClick={() => {
+                    const next = { ...eyeRestCfg, intervalMinutes: Math.min(60, eyeRestCfg.intervalMinutes + 5) };
+                    setEyeRestCfg(next);
+                    saveEyeRestConfig(next);
+                    restartEyeRestScheduler();
+                  }}
+                  className="w-7 h-7 rounded-lg bg-helix-bg text-helix-muted hover:text-helix-text transition-colors flex items-center justify-center"
+                >+</button>
+              </div>
+            </SettingRow>
+          )}
+        </div>
       </SettingsSection>
 
       <SettingsSection icon={HiOutlineColorSwatch} title="Wellness Goals">

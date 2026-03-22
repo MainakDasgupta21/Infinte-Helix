@@ -22,8 +22,8 @@ export default function WorkHoursChart({ data }) {
       {
         label: 'Focus Hours',
         data: data.focus,
-        backgroundColor: 'rgba(192, 132, 252, 0.75)',
-        hoverBackgroundColor: 'rgba(192, 132, 252, 0.95)',
+        backgroundColor: 'rgba(107, 140, 255, 0.75)',
+        hoverBackgroundColor: 'rgba(107, 140, 255, 0.95)',
         borderRadius: 6,
         borderSkipped: false,
       },
