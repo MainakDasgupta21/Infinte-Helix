@@ -70,7 +70,8 @@ export const calendarAPI = {
 };
 
 export const chatAPI = {
-  sendMessage: (message, user_id) => api.post('/chat/message', { message, user_id }),
+  sendMessage: (message, user_id, page_context) =>
+    api.post('/chat/message', { message, user_id, page_context }),
   getHistory: (user_id, limit) => api.get('/chat/history', { params: { user_id, limit } }),
   clearHistory: (user_id) => api.delete('/chat/history', { data: { user_id } }),
   getQuickReplies: (user_id) => api.get('/chat/quick-replies', { params: { user_id } }),

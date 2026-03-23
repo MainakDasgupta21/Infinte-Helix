@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useWellness } from '../context/WellnessContext';
 import { useAuth } from '../context/AuthContext';
+import { usePageContext } from '../context/PageContext';
 import ProductivityScore from '../components/Dashboard/ProductivityScore';
 import ScreenTimeChart from '../components/Dashboard/ScreenTimeChart';
 import BreakBalance from '../components/Dashboard/BreakBalance';
@@ -59,10 +60,35 @@ function DashboardSkeleton() {
 }
 
 export default function Dashboard() {
-  const { todayMetrics, trackerStatus, dashboardLoading } = useWellness();
+  const { todayMetrics, trackerStatus, dashboardLoading, nudges } = useWellness();
   const { user } = useAuth();
+  const { updatePageContext } = usePageContext();
   const ks = todayMetrics.activity?.keystrokes ?? 0;
   const intensity = todayMetrics.activity?.typing_intensity ?? 0;
+
+  useEffect(() => {
+    if (!dashboardLoading) {
+      updatePageContext('dashboard', {
+        wellness_score: todayMetrics.score,
+        mood: todayMetrics.mood,
+        streak_days: todayMetrics.streakDays,
+        screen_time_hours: todayMetrics.screenTime?.total || 0,
+        screen_time_breakdown: todayMetrics.screenTime?.breakdown || {},
+        breaks_taken: todayMetrics.breaks?.taken || 0,
+        breaks_suggested: todayMetrics.breaks?.suggested || 6,
+        last_break: todayMetrics.breaks?.lastBreak || 'N/A',
+        hydration_ml: todayMetrics.hydration?.ml_today || 0,
+        hydration_goal: todayMetrics.hydration?.goal_ml || 2000,
+        self_care_stretches: todayMetrics.selfCare?.stretch || 0,
+        self_care_eye_rest: todayMetrics.selfCare?.eye_rest || 0,
+        focus_sessions_count: todayMetrics.focusSessions?.length || 0,
+        typing_activity: typingActivityLabel(ks),
+        work_intensity: workIntensityLabel(intensity),
+        tracker_status: trackerStatus,
+        active_nudges: (nudges || []).filter(n => !n.dismissed).map(n => n.message || n.type).slice(0, 3),
+      });
+    }
+  }, [todayMetrics, trackerStatus, dashboardLoading, nudges, ks, intensity, updatePageContext]);
 
   if (dashboardLoading) return <DashboardSkeleton />;
 

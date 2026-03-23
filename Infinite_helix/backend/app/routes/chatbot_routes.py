@@ -1,7 +1,9 @@
+import logging
 from flask import Blueprint, request, jsonify
 from app.services.chatbot_service import chatbot_service
 from app.services.firebase_service import get_hydration_today
 
+logger = logging.getLogger(__name__)
 chatbot_bp = Blueprint('chatbot', __name__)
 
 
@@ -41,12 +43,24 @@ def _gather_app_context(user_id):
 def send_message():
     data = request.get_json(silent=True) or {}
     user_id = data.get('user_id', 'demo-user-001')
-    message = data.get('message', '').strip()
+    message = data.get('message', '').strip()[:2000]
+    page_context = data.get('page_context') if isinstance(data.get('page_context'), dict) else {}
 
     if not message:
         return jsonify({'error': 'Message is required'}), 400
 
     app_context = _gather_app_context(user_id)
+    app_context['page_context'] = page_context
+
+    current_page = page_context.get('current_page', 'unknown')
+    has_wellness = bool(page_context.get('wellness_metrics'))
+    has_page_data = bool(page_context.get('page_data'))
+    other_pages = list(page_context.get('other_pages_data', {}).keys())
+    logger.debug(
+        "Chat context — page: %s, wellness_metrics: %s, page_data: %s, other_pages: %s",
+        current_page, has_wellness, has_page_data, other_pages,
+    )
+
     response = chatbot_service.process_message(user_id, message, app_context)
 
     return jsonify(response)

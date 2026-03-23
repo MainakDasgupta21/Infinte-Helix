@@ -5,6 +5,7 @@ import AIResponse from '../components/Journal/AIResponse';
 import EntryHistory from '../components/Journal/EntryHistory';
 import { journalAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { usePageContext } from '../context/PageContext';
 
 export default function Journal() {
   const [analysis, setAnalysis] = useState(null);
@@ -12,6 +13,7 @@ export default function Journal() {
   const [entries, setEntries] = useState([]);
   const [submitError, setSubmitError] = useState(null);
   const { user } = useAuth();
+  const { updatePageContext } = usePageContext();
 
   const fetchEntries = useCallback(async () => {
     try {
@@ -27,6 +29,25 @@ export default function Journal() {
   useEffect(() => {
     fetchEntries();
   }, [fetchEntries]);
+
+  useEffect(() => {
+    const recentEntries = entries.slice(0, 5).map(e => ({
+      emotion: e.emotion,
+      sentiment: e.sentiment,
+      date: e.created_at,
+      snippet: (e.text || '').substring(0, 80),
+    }));
+    updatePageContext('journal', {
+      entry_count: entries.length,
+      recent_entries: recentEntries,
+      latest_analysis: analysis ? {
+        emotion: analysis.emotion,
+        sentiment: analysis.sentiment,
+        confidence: analysis.confidence,
+      } : null,
+      is_analyzing: isAnalyzing,
+    });
+  }, [entries, analysis, isAnalyzing, updatePageContext]);
 
   const handleSubmit = async (text) => {
     setIsAnalyzing(true);

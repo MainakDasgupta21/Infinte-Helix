@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { HiOutlineDownload, HiOutlineRefresh } from 'react-icons/hi';
 import { reportsAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { usePageContext } from '../context/PageContext';
 import WellnessScorecard from '../components/Reports/WellnessScorecard';
 import WorkHoursChart from '../components/Reports/WorkHoursChart';
 import EmotionChart from '../components/Reports/EmotionChart';
@@ -11,6 +12,7 @@ import WeeklyInsight from '../components/Reports/WeeklyInsight';
 
 export default function Reports() {
   const { user } = useAuth();
+  const { updatePageContext } = usePageContext();
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -32,6 +34,28 @@ export default function Reports() {
   useEffect(() => {
     fetchReport();
   }, [fetchReport]);
+
+  useEffect(() => {
+    if (report) {
+      updatePageContext('reports', {
+        period_label: report.period?.label,
+        wellness_score: report.wellness_score?.current,
+        wellness_grade: report.wellness_score?.grade,
+        score_change: report.wellness_score?.change,
+        mood_trend: report.summary?.mood_trend,
+        total_focus_hours: report.summary?.total_focus_hours,
+        breaks_per_day: report.summary?.breaks_per_day,
+        hydration_avg: report.summary?.hydration_avg_ml,
+        hydration_goal: report.summary?.hydration_goal_ml,
+        emotion_distribution: report.emotion_distribution,
+        insights: (report.insights || []).map(i => i.title),
+        recommendations: (report.recommendations || []).map(r => r.tip),
+        affirmation: report.affirmation,
+        cycle_insights_enabled: report.cycle_insights?.enabled,
+        cycle_phase: report.cycle_insights?.current_phase,
+      });
+    }
+  }, [report, updatePageContext]);
 
   const downloadReport = useCallback(() => {
     if (!report) return;

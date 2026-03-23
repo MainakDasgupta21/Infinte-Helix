@@ -16,6 +16,7 @@ import ChatBot from './components/ChatBot/ChatBot';
 
 import { WellnessProvider } from './context/WellnessContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { PageContextProvider } from './context/PageContext';
 
 /* ── Scroll to top on every route change ── */
 function ScrollToTop() {
@@ -149,26 +150,28 @@ function AppRoutes() {
 
   return (
     <WellnessProvider>
-      <div className="flex h-screen bg-helix-bg text-helix-text font-body">
-        <Sidebar />
-        <main className="flex-1 overflow-y-auto p-6 max-lg:pt-16 transition-all duration-300" id="main-content">
-          <ScrollToTop />
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/journal" element={<Journal />} />
-            <Route path="/reports" element={<Reports />} />
-            <Route path="/cycle-mode" element={<CycleMode />} />
-            <Route path="/calendar" element={<Calendar />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/auth" element={<Navigate to="/dashboard" replace />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </main>
-        <NotificationOverlay />
-        <OfflineBanner />
-        <ChatBot />
-      </div>
+      <PageContextProvider>
+        <div className="flex h-screen bg-helix-bg text-helix-text font-body">
+          <Sidebar />
+          <main className="flex-1 overflow-y-auto p-6 max-lg:pt-16 transition-all duration-300" id="main-content">
+            <ScrollToTop />
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/journal" element={<Journal />} />
+              <Route path="/reports" element={<Reports />} />
+              <Route path="/cycle-mode" element={<CycleMode />} />
+              <Route path="/calendar" element={<Calendar />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/auth" element={<Navigate to="/dashboard" replace />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </main>
+          <NotificationOverlay />
+          <OfflineBanner />
+          <ChatBot />
+        </div>
+      </PageContextProvider>
     </WellnessProvider>
   );
 }

@@ -4,6 +4,7 @@ import PeriodEntryModal from '../components/CycleMode/PeriodEntryModal';
 import PrivateCareTracker from '../components/CycleMode/PrivateCareTracker';
 import { HiOutlineShieldCheck } from 'react-icons/hi';
 import { toIso, startOfDay } from '../utils/periodMath';
+import { usePageContext } from '../context/PageContext';
 
 const DAILY_LOG_KEY = 'helix_cycle_daily_logs';
 const PERIOD_DURATION_KEY = 'helix_period_duration';
@@ -115,6 +116,7 @@ export default function CycleMode() {
     entries, hasEntries, lastPeriodStartIso, nextPeriodInfo,
     cycleDay, addEntry, updateEntry, removeEntry,
   } = usePeriodTracker();
+  const { updatePageContext } = usePageContext();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState('add');
@@ -196,6 +198,25 @@ export default function CycleMode() {
     () => getPatternInsight(entries, cycleDay, dailyLogs),
     [entries, cycleDay, dailyLogs]
   );
+
+  useEffect(() => {
+    updatePageContext('cycle-mode', {
+      cycle_day: cycleDay,
+      phase_name: phase.name,
+      phase_description: phase.desc,
+      has_entries: hasEntries,
+      next_period: nextPeriodInfo ? {
+        days_until: nextPeriodInfo.daysUntil,
+        date: nextPeriodInfo.label,
+      } : null,
+      today_mood: mood,
+      today_flow: flow,
+      today_symptoms: symptoms,
+      period_duration: periodDuration,
+      is_period_day: isPeriodDay,
+      pattern_insight: patternInsight?.text,
+    });
+  }, [cycleDay, phase, hasEntries, nextPeriodInfo, mood, flow, symptoms, periodDuration, isPeriodDay, patternInsight, updatePageContext]);
 
   return (
     <div className="max-w-3xl mx-auto space-y-5 animate-slide-up pb-8">

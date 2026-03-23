@@ -4,6 +4,7 @@ import ConfidenceBreath from '../components/Calendar/ConfidenceBreath';
 import { HiOutlineBell, HiOutlineCheckCircle } from 'react-icons/hi';
 import { calendarAPI } from '../services/api';
 import toast from 'react-hot-toast';
+import { usePageContext } from '../context/PageContext';
 
 function TeamsIcon({ className }) {
   return (
@@ -14,6 +15,7 @@ function TeamsIcon({ className }) {
 }
 
 export default function Calendar() {
+  const { updatePageContext } = usePageContext();
   const [status, setStatus] = useState({ connected: false, configured: false });
   const [meetings, setMeetings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -78,6 +80,26 @@ export default function Calendar() {
   }, 0);
   const meetingHours = (totalMinutes / 60).toFixed(1);
   const freeHours = Math.max(0, 8 - totalMinutes / 60);
+
+  useEffect(() => {
+    if (!loading) {
+      updatePageContext('calendar', {
+        total_meetings: meetings.length,
+        teams_meetings: teamsMeetings.length,
+        upcoming_count: upcomingCount,
+        meeting_hours: meetingHours,
+        free_hours: freeHours.toFixed(1),
+        teams_connected: status.connected,
+        meetings_list: meetings.slice(0, 5).map(m => ({
+          subject: m.subject,
+          start: m.start,
+          end: m.end,
+          is_teams: m.is_teams,
+          status: m.status,
+        })),
+      });
+    }
+  }, [meetings, status, loading, teamsMeetings, upcomingCount, meetingHours, freeHours, updatePageContext]);
 
   const stats = [
     { label: 'Meetings Today', value: String(meetings.length), color: 'text-helix-accent' },

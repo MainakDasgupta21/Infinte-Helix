@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import { HiOutlineUser, HiOutlineBell, HiOutlineShieldCheck, HiOutlineColorSwatch, HiOutlineLogout } from 'react-icons/hi';
 import { saveAppSettings, APP_SETTINGS_KEY } from '../services/mealReminders';
 import { loadEyeRestConfig, saveEyeRestConfig, restartEyeRestScheduler } from '../services/eyeRestReminder';
 import MealReminderSettings from '../components/Settings/MealReminderSettings';
+import { usePageContext } from '../context/PageContext';
 
 const DEFAULT_APP_SETTINGS = {
   notifications: true,
@@ -67,11 +68,27 @@ function SettingRow({ label, description, children }) {
 
 export default function Settings() {
   const { user, signOut } = useAuth();
+  const { updatePageContext } = usePageContext();
   const [settings, setSettings] = useState(() => ({
     ...DEFAULT_APP_SETTINGS,
     ...loadStoredAppSettings(),
   }));
   const [eyeRestCfg, setEyeRestCfg] = useState(loadEyeRestConfig);
+
+  useEffect(() => {
+    updatePageContext('settings', {
+      notifications_enabled: settings.notifications,
+      desktop_notifications: settings.desktopNotifs,
+      sound_enabled: settings.soundEnabled,
+      nudge_frequency: settings.nudgeFrequency,
+      hydration_goal: settings.hydrationGoalMl,
+      cycle_mode_enabled: settings.cycleModeEnabled,
+      data_sharing: settings.dataSharing,
+      dark_mode: settings.darkMode,
+      eye_rest_enabled: eyeRestCfg.enabled,
+      eye_rest_interval: eyeRestCfg.intervalMinutes,
+    });
+  }, [settings, eyeRestCfg, updatePageContext]);
 
   const update = (key, val) => {
     setSettings((prev) => {

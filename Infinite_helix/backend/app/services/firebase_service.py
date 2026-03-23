@@ -103,11 +103,9 @@ def get_journal_entries(user_id, limit=20):
                 query = query.where(filter=FieldFilter('user_id', '==', user_id))
             else:
                 query = query.where('user_id', '==', user_id)
-            docs = (query
-                    .order_by('timestamp', direction='DESCENDING')
-                    .limit(limit)
-                    .stream())
-            return [{'id': d.id, **d.to_dict()} for d in docs]
+            results = [{'id': d.id, **d.to_dict()} for d in query.stream()]
+            results.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
+            return results[:limit]
         except Exception as e:
             logger.warning('Firestore query failed for journal entries: %s', e)
             return []
@@ -154,15 +152,12 @@ def get_hydration_today(user_id):
         try:
             query = db.collection('hydration_logs')
             if FieldFilter:
-                query = (query
-                         .where(filter=FieldFilter('user_id', '==', user_id))
-                         .where(filter=FieldFilter('date', '==', today)))
+                query = query.where(filter=FieldFilter('user_id', '==', user_id))
             else:
-                query = (query
-                         .where('user_id', '==', user_id)
-                         .where('date', '==', today))
-            docs = list(query.stream())
-            total_ml = sum(d.to_dict().get('amount_ml', DEFAULT_AMOUNT_ML) for d in docs)
+                query = query.where('user_id', '==', user_id)
+            docs = [d.to_dict() for d in query.stream()
+                    if d.to_dict().get('date') == today]
+            total_ml = sum(d.get('amount_ml', DEFAULT_AMOUNT_ML) for d in docs)
             return {'ml_today': total_ml, 'entries': len(docs)}
         except Exception as e:
             logger.warning('Firestore query failed for hydration: %s', e)
@@ -373,15 +368,14 @@ def get_selfcare_today(user_id):
         try:
             query = db.collection('selfcare_logs')
             if FieldFilter:
-                query = (query
-                         .where(filter=FieldFilter('user_id', '==', user_id))
-                         .where(filter=FieldFilter('date', '==', today)))
+                query = query.where(filter=FieldFilter('user_id', '==', user_id))
             else:
-                query = (query
-                         .where('user_id', '==', user_id)
-                         .where('date', '==', today))
+                query = query.where('user_id', '==', user_id)
             for d in query.stream():
-                action = d.to_dict().get('action', '')
+                doc = d.to_dict()
+                if doc.get('date') != today:
+                    continue
+                action = doc.get('action', '')
                 if action in counts:
                     counts[action] += 1
             return counts
@@ -561,16 +555,11 @@ def get_todos_today(user_id):
         try:
             query = db.collection('personal_todos')
             if FieldFilter:
-                query = (query
-                         .where(filter=FieldFilter('user_id', '==', user_id))
-                         .where(filter=FieldFilter('date', '==', today)))
+                query = query.where(filter=FieldFilter('user_id', '==', user_id))
             else:
-                query = (query
-                         .where('user_id', '==', user_id)
-                         .where('date', '==', today))
-            results = []
-            for d in query.stream():
-                results.append(d.to_dict())
+                query = query.where('user_id', '==', user_id)
+            results = [d.to_dict() for d in query.stream()
+                       if d.to_dict().get('date') == today]
             return sorted(results, key=lambda x: x.get('timestamp', ''))
         except Exception as e:
             logger.warning('Firestore query failed for todos: %s', e)

@@ -1,5 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import { chatAPI } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
+import { useWellness } from '../../context/WellnessContext';
+import { usePageContext } from '../../context/PageContext';
 import {
   HiOutlineChatAlt2,
   HiOutlineX,
@@ -8,7 +12,6 @@ import {
   HiOutlineTrash,
   HiOutlineSparkles,
   HiOutlineStop,
-  HiOutlineHeart,
 } from 'react-icons/hi';
 
 const WELCOME_MSG = {
@@ -22,9 +25,19 @@ const WELCOME_MSG = {
   quick_replies: ['I need support', 'I\'m doing well!', 'What can you do?', 'Help me feel better'],
 };
 
+function escapeHtml(str) {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function formatMessage(text) {
   if (!text) return '';
-  let html = text
+  let html = escapeHtml(text);
+  html = html
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.*?)\*/g, '<em>$1</em>');
   html = html.replace(/\n/g, '<br/>');
@@ -88,7 +101,26 @@ function TypingIndicator() {
   );
 }
 
+function getPageName(pathname) {
+  if (pathname === '/' || pathname === '/dashboard') return 'dashboard';
+  return pathname.replace(/^\//, '');
+}
+
+const PAGE_LABELS = {
+  dashboard: 'Dashboard',
+  journal: 'Emotion Journal',
+  reports: 'Wellness Reports',
+  'cycle-mode': 'Cycle Mode',
+  calendar: 'Calendar',
+  settings: 'Settings',
+};
+
 export default function ChatBot() {
+  const location = useLocation();
+  const { user } = useAuth();
+  const wellness = useWellness();
+  const { getPageData } = usePageContext();
+
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([WELCOME_MSG]);
   const [input, setInput] = useState('');
@@ -101,6 +133,55 @@ export default function ChatBot() {
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const recognitionRef = useRef(null);
+
+  const buildPageContext = useCallback(() => {
+    const pageName = getPageName(location.pathname);
+    const allPageData = getPageData();
+
+    const context = {
+      current_page: pageName,
+      page_title: PAGE_LABELS[pageName] || pageName,
+      timestamp: new Date().toISOString(),
+      user_name: user?.displayName?.split(' ')[0] || '',
+      dashboard_loaded: !wellness?.dashboardLoading,
+    };
+
+    if (wellness) {
+      const m = wellness.todayMetrics;
+      context.wellness_metrics = {
+        score: m.score,
+        mood: m.mood,
+        streak_days: m.streakDays,
+        hydration_ml: m.hydration?.ml_today || 0,
+        hydration_goal: m.hydration?.goal_ml || 2000,
+        breaks_taken: m.breaks?.taken || 0,
+        breaks_suggested: m.breaks?.suggested || 6,
+        screen_time_hours: m.screenTime?.total || 0,
+        self_care_stretches: m.selfCare?.stretch || 0,
+        self_care_eye_rest: m.selfCare?.eye_rest || 0,
+        focus_sessions: m.focusSessions?.length || 0,
+        tracker_status: wellness.trackerStatus,
+      };
+    }
+
+    if (allPageData[pageName]) {
+      const { _updatedAt, ...data } = allPageData[pageName];
+      context.page_data = data;
+    }
+
+    const otherPages = {};
+    for (const [key, value] of Object.entries(allPageData)) {
+      if (key !== pageName && value) {
+        const { _updatedAt, ...data } = value;
+        otherPages[key] = data;
+      }
+    }
+    if (Object.keys(otherPages).length > 0) {
+      context.other_pages_data = otherPages;
+    }
+
+    return context;
+  }, [location.pathname, user, wellness, getPageData]);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -149,7 +230,8 @@ export default function ChatBot() {
     setLoading(true);
 
     try {
-      const res = await chatAPI.sendMessage(msg);
+      const pageContext = buildPageContext();
+      const res = await chatAPI.sendMessage(msg, user?.uid, pageContext);
       const botMsg = {
         role: 'assistant',
         message: res.data.message,
@@ -197,7 +279,7 @@ export default function ChatBot() {
 
   const clearChat = async () => {
     try {
-      await chatAPI.clearHistory();
+      await chatAPI.clearHistory(user?.uid);
     } catch { /* ignore */ }
     setMessages([WELCOME_MSG]);
     setQuickReplies(WELCOME_MSG.quick_replies);
@@ -288,6 +370,7 @@ export default function ChatBot() {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Share what's on your mind..."
+                maxLength={2000}
                 className="flex-1 bg-transparent text-sm text-helix-text placeholder:text-helix-muted/60
                           outline-none"
                 disabled={loading}
