@@ -102,18 +102,18 @@ export default function Calendar() {
   }, [meetings, status, loading, teamsMeetings, upcomingCount, meetingHours, freeHours, updatePageContext]);
 
   const stats = [
-    { label: 'Meetings Today', value: String(meetings.length), color: 'text-helix-accent' },
-    { label: 'Teams Calls', value: String(teamsMeetings.length), color: 'text-indigo-400' },
-    { label: 'Meeting Hours', value: `${meetingHours}h`, color: 'text-helix-sky' },
-    { label: 'Free Time', value: `${freeHours.toFixed(1)}h`, color: 'text-helix-mint' },
+    { label: 'Meetings Today', value: String(meetings.length), color: 'text-violet-600' },
+    { label: 'Teams Calls', value: String(teamsMeetings.length), color: 'text-violet-600' },
+    { label: 'Meeting Hours', value: `${meetingHours}h`, color: 'text-blue-600' },
+    { label: 'Free Time', value: `${freeHours.toFixed(1)}h`, color: 'text-emerald-600' },
   ];
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 animate-slide-up">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-display font-semibold text-helix-text">Calendar</h1>
-          <p className="text-sm text-helix-muted mt-1">
+          <h1 className="text-2xl font-serif font-semibold text-slate-800">Calendar</h1>
+          <p className="text-sm text-slate-500 mt-1">
             {status.connected
               ? 'Synced with Microsoft Teams — showing your real meetings'
               : 'Pre-meeting calm reminders & schedule overview'}
@@ -122,15 +122,15 @@ export default function Calendar() {
 
         {status.connected ? (
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-helix-mint/10 border border-helix-mint/20">
-              <HiOutlineCheckCircle className="w-4 h-4 text-helix-mint" />
-              <span className="text-xs text-helix-mint font-medium">
+            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-100 border border-emerald-200">
+              <HiOutlineCheckCircle className="w-4 h-4 text-emerald-600" />
+              <span className="text-xs text-emerald-600 font-medium">
                 {status.user?.name || 'Teams Connected'}
               </span>
             </div>
             <button
               onClick={handleDisconnect}
-              className="px-3 py-2 text-xs text-helix-muted hover:text-helix-pink transition-colors"
+              className="px-3 py-2 text-xs text-slate-500 hover:text-rose-500 transition-colors"
             >
               Disconnect
             </button>
@@ -138,7 +138,7 @@ export default function Calendar() {
         ) : (
           <button
             onClick={handleConnect}
-            className="glass-card px-4 py-2 flex items-center gap-2 text-sm text-indigo-400 hover:bg-indigo-500/10 border border-indigo-500/20 transition-colors"
+            className="glass-card px-4 py-2 flex items-center gap-2 text-sm text-violet-600 hover:bg-violet-100 border border-violet-200 transition-colors"
           >
             <TeamsIcon className="w-4 h-4" />
             Connect Microsoft Teams
@@ -147,19 +147,26 @@ export default function Calendar() {
       </div>
 
       {!status.connected && (
-        <div className="glass-card p-4 border border-indigo-500/10 bg-indigo-500/5">
+        <div className="glass-card p-4 border border-violet-200 bg-violet-50">
           <div className="flex items-start gap-3">
-            <TeamsIcon className="w-5 h-5 text-indigo-400 mt-0.5 shrink-0" />
+            <TeamsIcon className="w-5 h-5 text-violet-600 mt-0.5 shrink-0" />
             <div>
-              <p className="text-sm text-helix-text font-medium">Sync your Microsoft Teams meetings</p>
-              <p className="text-xs text-helix-muted mt-1">
-                Connect your Microsoft account to automatically see your Teams meetings,
-                join calls with one click, and get wellness reminders before stressful meetings.
+              <p className="text-sm text-slate-800 font-medium">Sync your Microsoft Teams meetings</p>
+              <p className="text-xs text-slate-500 mt-1">
+                Sign in with your Microsoft work account (same as Teams or Outlook). We only read
+                your calendar—meeting times, titles, and Teams join links—so we can show your day
+                and send calm reminders. We cannot read email, chat, or files.
+              </p>
+              <p className="text-xs text-slate-500 mt-2">
+                <span className="text-slate-700">For employees:</span> you do not register anything
+                in Azure. <span className="text-slate-700">For IT / one-time setup:</span> add one
+                app registration (client ID + secret) in the server config for the whole company.
               </p>
               {!status.configured && (
-                <p className="text-xs text-helix-amber mt-2">
-                  Setup required: Add MS_CLIENT_ID and MS_CLIENT_SECRET to your backend .env file.
-                  Register an app at portal.azure.com with Calendars.Read permission.
+                <p className="text-xs text-amber-600 mt-2">
+                  Setup required: Add MS_CLIENT_ID and MS_CLIENT_SECRET to the backend <code className="text-slate-800">.env</code>
+                  (delegated permissions <code className="text-slate-800">Calendars.Read</code>,{' '}
+                  <code className="text-slate-800">User.Read</code>).
                 </p>
               )}
             </div>
@@ -170,10 +177,10 @@ export default function Calendar() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {stats.map(stat => (
           <div key={stat.label} className="glass-card p-4 text-center">
-            <p className={`text-2xl font-display font-bold ${stat.color}`}>
+            <p className={`text-2xl font-serif font-bold ${stat.color}`}>
               {loading ? '—' : stat.value}
             </p>
-            <p className="text-xs text-helix-muted mt-1">{stat.label}</p>
+            <p className="text-xs text-slate-500 mt-1">{stat.label}</p>
           </div>
         ))}
       </div>
@@ -187,8 +194,8 @@ export default function Calendar() {
 
           <div className="glass-card p-5">
             <div className="flex items-center gap-2 mb-3">
-              <HiOutlineBell className="w-4 h-4 text-helix-amber" />
-              <h3 className="text-sm font-medium text-helix-text">Pre-Meeting Reminders</h3>
+              <HiOutlineBell className="w-4 h-4 text-amber-600" />
+              <h3 className="text-sm font-medium text-slate-800">Pre-Meeting Reminders</h3>
             </div>
             <div className="space-y-2">
               {[
@@ -197,9 +204,9 @@ export default function Calendar() {
                 { label: 'Stretch suggestion after back-to-back', enabled: false },
               ].map((item, i) => (
                 <div key={i} className="flex items-center justify-between py-2">
-                  <span className="text-sm text-helix-muted">{item.label}</span>
+                  <span className="text-sm text-slate-500">{item.label}</span>
                   <div className={`w-9 h-5 rounded-full p-0.5 transition-colors cursor-pointer ${
-                    item.enabled ? 'bg-helix-accent' : 'bg-helix-border'
+                    item.enabled ? 'bg-violet-600' : 'bg-slate-200'
                   }`}>
                     <div className={`w-4 h-4 rounded-full bg-white transition-transform ${
                       item.enabled ? 'translate-x-4' : 'translate-x-0'

@@ -26,48 +26,48 @@ export default function WellnessScorecard({ score, summary, dailyScores }) {
       value: `${summary.total_focus_hours}h`,
       sub: `${summary.avg_daily_focus}h/day avg`,
       icon: HiOutlineLightningBolt,
-      color: 'text-helix-accent',
-      bg: 'bg-helix-accent/10',
+      color: 'text-violet-600',
+      bg: 'bg-violet-50',
     },
     {
       label: 'Breaks / Day',
       value: summary.breaks_per_day,
       sub: `Every ${summary.avg_break_interval_min} min`,
       icon: HiOutlineClock,
-      color: 'text-helix-mint',
-      bg: 'bg-helix-mint/10',
+      color: 'text-emerald-600',
+      bg: 'bg-emerald-50',
     },
     {
       label: 'Hydration',
       value: `${summary.hydration_avg_ml} ml`,
       sub: `of ${summary.hydration_goal_ml} ml goal`,
       icon: HiOutlineHeart,
-      color: 'text-helix-sky',
-      bg: 'bg-helix-sky/10',
+      color: 'text-blue-600',
+      bg: 'bg-blue-50',
     },
     {
       label: 'Mood Trend',
       value: summary.mood_trend,
       sub: `Top: ${summary.top_emotion}`,
       icon: HiOutlineTrendingUp,
-      color: 'text-helix-pink',
-      bg: 'bg-helix-pink/10',
+      color: 'text-rose-500',
+      bg: 'bg-rose-50',
     },
     {
       label: 'Journal',
       value: `${summary.journal_entries}`,
       sub: 'entries this week',
       icon: HiOutlinePencilAlt,
-      color: 'text-helix-amber',
-      bg: 'bg-helix-amber/10',
+      color: 'text-amber-600',
+      bg: 'bg-amber-50',
     },
     {
       label: 'Streak',
       value: `${summary.streak_days}`,
       sub: 'days active',
       icon: HiOutlineFire,
-      color: 'text-helix-red',
-      bg: 'bg-helix-red/10',
+      color: 'text-red-600',
+      bg: 'bg-red-50',
     },
   ];
 
@@ -107,15 +107,15 @@ export default function WellnessScorecard({ score, summary, dailyScores }) {
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-helix-accent/20 text-helix-accent">
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-violet-100 text-violet-600">
               {score.grade}
             </span>
-            <span className={`text-xs font-medium px-2 py-1 rounded-full ${changePositive ? 'bg-helix-mint/15 text-helix-mint' : 'bg-helix-red/15 text-helix-red'}`}>
+            <span className={`text-xs font-medium px-2 py-1 rounded-full ${changePositive ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
               {changePositive ? '\u2191' : '\u2193'} {Math.abs(score.change)} from last week
             </span>
           </div>
 
-          <p className="text-xs text-helix-muted text-center">Wellness Score</p>
+          <p className="text-xs text-slate-500 text-center">Wellness Score</p>
         </div>
 
         {/* Stats + Daily Scores */}
@@ -124,13 +124,13 @@ export default function WellnessScorecard({ score, summary, dailyScores }) {
             {stats.map((stat) => {
               const Icon = stat.icon;
               return (
-                <div key={stat.label} className={`${stat.bg} rounded-xl p-3.5 border border-helix-border/10`}>
+                <div key={stat.label} className={`${stat.bg} rounded-xl p-3.5 border border-slate-100`}>
                   <div className="flex items-center gap-2 mb-1.5">
                     <Icon className={`w-4 h-4 ${stat.color}`} />
-                    <span className="text-xs text-helix-muted">{stat.label}</span>
+                    <span className="text-xs text-slate-500">{stat.label}</span>
                   </div>
-                  <p className={`text-lg font-display font-bold ${stat.color} capitalize`}>{stat.value}</p>
-                  <p className="text-xs text-helix-muted/70 mt-0.5">{stat.sub}</p>
+                  <p className={`text-lg font-serif font-bold ${stat.color} capitalize`}>{stat.value}</p>
+                  <p className="text-xs text-slate-500/70 mt-0.5">{stat.sub}</p>
                 </div>
               );
             })}
@@ -138,20 +138,20 @@ export default function WellnessScorecard({ score, summary, dailyScores }) {
 
           {dailyScores && dailyScores.length > 0 && (
             <div>
-              <p className="text-xs text-helix-muted font-medium uppercase tracking-wider mb-2.5">Daily Wellness</p>
+              <p className="text-xs text-slate-500 font-medium uppercase tracking-wider mb-2.5">Daily Wellness</p>
               <div className="space-y-1.5">
                 {dailyScores.map((d) => (
                   <div key={d.day} className="flex items-center gap-3">
-                    <span className="text-xs text-helix-muted w-8 text-right">{d.day}</span>
-                    <div className="flex-1 h-5 bg-helix-bg/60 rounded-full overflow-hidden">
+                    <span className="text-xs text-slate-500 w-8 text-right">{d.day}</span>
+                    <div className="flex-1 h-5 bg-slate-100/60 rounded-full overflow-hidden">
                       <div
-                        className="h-full rounded-full bg-gradient-to-r from-helix-accent/80 to-helix-sky/70 transition-all duration-700 flex items-center justify-end pr-2"
+                        className="h-full rounded-full bg-gradient-to-r from-violet-600/80 to-blue-600/70 transition-all duration-700 flex items-center justify-end pr-2"
                         style={{ width: `${d.score}%` }}
                       >
                         <span className="text-[10px] font-medium text-white/90">{d.score}</span>
                       </div>
                     </div>
-                    <span className="text-xs text-helix-muted w-16 text-right capitalize truncate" title={d.mood}>
+                    <span className="text-xs text-slate-500 w-16 text-right capitalize truncate" title={d.mood}>
                       {moodLabel(d.mood)}
                     </span>
                   </div>

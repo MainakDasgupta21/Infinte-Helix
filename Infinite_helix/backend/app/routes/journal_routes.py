@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify, current_app
 from app.services.firebase_service import save_journal_entry, get_journal_entries
+from app.ai.wellness_advisor import generate_wellness_suggestions
 
 journal_bp = Blueprint('journal', __name__)
 
@@ -24,18 +25,27 @@ def create_entry():
     if analyzer:
         sentiment_data = analyzer.analyze(text)
 
+    emotion = emotion_data.get('emotion', 'neutral')
+    sentiment = sentiment_data.get('sentiment', 'neutral')
+    confidence = emotion_data.get('confidence', 0)
+
+    suggestions = generate_wellness_suggestions(emotion, sentiment, confidence, text)
+
     combined = {
-        'emotion': emotion_data.get('emotion', 'neutral'),
-        'confidence': emotion_data.get('confidence', 0),
+        'emotion': emotion,
+        'confidence': confidence,
         'all_emotions': emotion_data.get('all_emotions', []),
-        'sentiment': sentiment_data.get('sentiment', 'neutral'),
+        'sentiment': sentiment,
         'reframe': sentiment_data.get('reframe'),
         'all_sentiments': sentiment_data.get('all_sentiments', []),
+        'suggestions': suggestions,
     }
 
     entry = save_journal_entry(user_id, {
         'text': text,
-        **combined,
+        'emotion': emotion,
+        'confidence': confidence,
+        'sentiment': sentiment,
     })
 
     return jsonify({**entry, **combined}), 201

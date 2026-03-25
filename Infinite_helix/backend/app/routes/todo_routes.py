@@ -1,6 +1,8 @@
 from flask import Blueprint, request, jsonify
 from app.services.firebase_service import (
-    save_todo, get_todos_today, toggle_todo, delete_todo,
+    save_todo, get_todos_today, get_todos_by_date,
+    get_todos_upcoming, get_todo_history,
+    toggle_todo, delete_todo,
 )
 
 todo_bp = Blueprint('todo', __name__)
@@ -11,12 +13,14 @@ def create():
     data = request.get_json(silent=True) or {}
     user_id = data.get('user_id', 'demo-user-001')
     text = (data.get('text') or '').strip()
-    remind_at = data.get('remind_at')  # HH:MM or null
+    remind_at = data.get('remind_at')
+    date = data.get('date')
+    category = data.get('category')
 
     if not text:
         return jsonify({'error': 'text is required'}), 400
 
-    entry = save_todo(user_id, text, remind_at)
+    entry = save_todo(user_id, text, remind_at, date, category)
     return jsonify({'status': 'created', 'todo': entry})
 
 
@@ -24,6 +28,28 @@ def create():
 def today():
     user_id = request.args.get('user_id', 'demo-user-001')
     todos = get_todos_today(user_id)
+    return jsonify({'todos': todos})
+
+
+@todo_bp.route('/date/<date>', methods=['GET'])
+def by_date(date):
+    user_id = request.args.get('user_id', 'demo-user-001')
+    todos = get_todos_by_date(user_id, date)
+    return jsonify({'todos': todos})
+
+
+@todo_bp.route('/upcoming', methods=['GET'])
+def upcoming():
+    user_id = request.args.get('user_id', 'demo-user-001')
+    todos = get_todos_upcoming(user_id)
+    return jsonify({'todos': todos})
+
+
+@todo_bp.route('/history', methods=['GET'])
+def history():
+    user_id = request.args.get('user_id', 'demo-user-001')
+    days = request.args.get('days', 30, type=int)
+    todos = get_todo_history(user_id, days)
     return jsonify({'todos': todos})
 
 

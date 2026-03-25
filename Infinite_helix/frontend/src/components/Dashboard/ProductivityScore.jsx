@@ -1,9 +1,7 @@
 import React, { useMemo } from 'react';
 
-const CARD_TITLE = 'text-[13px] uppercase tracking-[0.06em] font-semibold text-helix-muted';
-
 function scoreContextSentence(score, breaks) {
-  if (score >= 80) return "You're in a good rhythm — small wins add up.";
+  if (score >= 80) return "You're in a beautiful rhythm — small wins add up.";
   if (score >= 60) {
     const need = Math.max(0, (breaks?.suggested || 6) - (breaks?.taken || 0));
     if (need > 0) return `Take ${need} more break${need === 1 ? '' : 's'} to reach 80 today.`;
@@ -24,62 +22,49 @@ export default function ProductivityScore({ score = 0, streakDays = 0, mood = 'n
     stressed: 'Stressed',
     tired: 'Tired',
     calm: 'Calm',
-    neutral: 'Neutral',
+    neutral: 'Balanced',
   };
-  const scoreColor = score >= 80 ? 'text-helix-mint' : score >= 60 ? 'text-helix-amber' : 'text-helix-red';
-  const strokeColor = score >= 80 ? '#3db89a' : score >= 60 ? '#d4a84b' : '#e07070';
-  const arcMuted = score >= 80 ? 'rgba(61, 184, 154, 0.15)' : score >= 60 ? 'rgba(212, 168, 75, 0.15)' : 'rgba(224, 112, 112, 0.15)';
+  const scoreColor = score >= 80 ? 'text-emerald-600' : score >= 60 ? 'text-amber-600' : 'text-rose-500';
+  const strokeColor = score >= 80 ? '#7cb874' : score >= 60 ? '#c88a2d' : '#d99faf';
+  const arcMuted = score >= 80 ? 'rgba(124,184,116,0.15)' : score >= 60 ? 'rgba(200,138,45,0.15)' : 'rgba(217,159,175,0.15)';
 
   const contextLine = useMemo(() => scoreContextSentence(score, breaks), [score, breaks]);
 
   return (
-    <div className="glass-card p-6 glow-accent flex flex-col items-center h-full rounded-2xl border border-helix-border/30">
-      <h3 className={`${CARD_TITLE} mb-4 w-full text-left`}>Wellness Score</h3>
-      <div className="relative w-32 h-32">
+    <div className="bento-card flex flex-col items-center h-full glow-lavender">
+      <h3 className="bento-label mb-5 w-full text-left">Wellness Score</h3>
+
+      <div className="relative w-36 h-36">
         <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
-          <circle cx="60" cy="60" r="54" fill="none" stroke="#2e2e3c" strokeWidth="8" />
-          <circle
-            cx="60"
-            cy="60"
-            r="54"
-            fill="none"
-            stroke={arcMuted}
-            strokeWidth="8"
-            strokeDasharray={circumference}
-            strokeDashoffset="0"
-          />
-          <circle
-            cx="60"
-            cy="60"
-            r="54"
-            fill="none"
-            stroke={strokeColor}
-            strokeWidth="8"
-            strokeDasharray={circumference}
-            strokeDashoffset={offset}
-            strokeLinecap="round"
-            className="transition-all duration-1000 ease-out"
-          />
+          <circle cx="60" cy="60" r="54" fill="none" stroke="#f1f0f8" strokeWidth="7" />
+          <circle cx="60" cy="60" r="54" fill="none" stroke={arcMuted} strokeWidth="7"
+            strokeDasharray={circumference} strokeDashoffset="0" />
+          <circle cx="60" cy="60" r="54" fill="none" stroke={strokeColor} strokeWidth="7"
+            strokeDasharray={circumference} strokeDashoffset={offset}
+            strokeLinecap="round" className="transition-all duration-1000 ease-out" />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className={`text-3xl font-display font-bold ${scoreColor}`}>{score}</span>
-          <span className="text-xs text-helix-muted">/ 100</span>
+          <span className={`text-3xl font-serif font-bold ${scoreColor}`}>{Math.round(score)}</span>
+          <span className="text-[11px] text-slate-400 font-medium">/ 100</span>
         </div>
       </div>
-      <p className="text-xs text-helix-muted text-center mt-3 leading-relaxed px-1 min-h-[2.5rem] flex items-center justify-center">
+
+      <p className="text-xs text-slate-400 text-center mt-4 leading-relaxed px-2 min-h-[2.5rem] flex items-center justify-center">
         {contextLine}
       </p>
-      <div className="mt-4 w-full pt-4 border-t border-helix-border/40 flex items-stretch justify-around gap-2">
-        <div className="flex-1 text-center rounded-xl bg-helix-bg/40 py-3 px-2">
-          <p className={`${CARD_TITLE} mb-2`}>Today&apos;s mood</p>
-          <span className="text-lg font-semibold text-helix-text leading-none block">
+
+      <div className="mt-5 w-full pt-5 flex items-stretch justify-around gap-3"
+           style={{ borderTop: '1px solid rgba(0,0,0,0.04)' }}>
+        <div className="flex-1 text-center rounded-2xl bg-slate-50/60 py-3.5 px-3 hover:bg-white/70 transition-all">
+          <p className="bento-label mb-2">Mood</p>
+          <span className="text-base font-semibold text-slate-700 leading-none block font-serif">
             {moodLabels[mood] || moodLabels.neutral}
           </span>
         </div>
-        <div className="flex-1 text-center rounded-xl bg-helix-bg/40 py-3 px-2">
-          <p className={`${CARD_TITLE} mb-2`}>Streak</p>
-          <span className="text-xl font-display font-semibold text-helix-accent leading-none block">{streakDays}</span>
-          <p className="text-xs text-helix-muted mt-1.5">days</p>
+        <div className="flex-1 text-center rounded-2xl bg-slate-50/60 py-3.5 px-3 hover:bg-white/70 transition-all">
+          <p className="bento-label mb-2">Streak</p>
+          <span className="text-xl font-serif font-semibold text-violet-600 leading-none block">{streakDays}</span>
+          <p className="text-[11px] text-slate-400 mt-1.5">days</p>
         </div>
       </div>
     </div>

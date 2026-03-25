@@ -8,14 +8,12 @@ const QUICK_AMOUNTS = [
   { label: 'Sip', ml: 100 },
 ];
 
-const CARD_TITLE = 'text-[13px] uppercase tracking-[0.06em] font-semibold text-helix-muted';
-
 function WaterWave({ progress }) {
   const clampedProgress = Math.min(100, Math.max(0, progress));
   return (
-    <div className="relative w-full h-3 bg-helix-bg rounded-full overflow-hidden">
+    <div className="relative w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
       <div
-        className="absolute inset-y-0 left-0 bg-gradient-to-r from-helix-sky to-cyan-400 rounded-full transition-all duration-700 ease-out"
+        className="absolute inset-y-0 left-0 bg-gradient-to-r from-blue-600 to-cyan-400 rounded-full transition-all duration-700 ease-out"
         style={{ width: `${clampedProgress}%` }}
       />
     </div>
@@ -49,29 +47,29 @@ export default function HydrationTracker() {
   const fillPct = Math.min(100, Math.max(0, progress));
 
   return (
-    <div className="glass-card p-6 h-full flex flex-col rounded-[20px]">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className={CARD_TITLE}>Hydration</h3>
-        <span className="text-xs text-helix-sky font-medium">
+    <div className="bento-card h-full flex flex-col">
+      <div className="flex items-center justify-between mb-5">
+        <h3 className="bento-label">Hydration</h3>
+        <span className="text-xs text-blue-600 font-medium">
           {hydration.ml_today} / {hydration.goal_ml} ml
         </span>
       </div>
 
-      <div className="flex items-center justify-center gap-6 mb-4 flex-1 min-h-[7rem]">
+      <div className="flex items-center justify-center gap-6 mb-5 flex-1 min-h-[7rem]">
         <div
-          className="relative flex flex-col items-center justify-end rounded-b-xl rounded-t-md border border-helix-border/80 bg-helix-bg/80 overflow-hidden"
-          style={{ width: 44, height: 112 }}
+          className="relative flex flex-col items-center justify-end rounded-xl overflow-hidden bg-slate-50"
+          style={{ width: 44, height: 112, border: '1px solid rgba(0,0,0,0.04)' }}
           aria-hidden
         >
           <div
-            className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-cyan-500/90 to-helix-sky/85 transition-all duration-700 ease-out"
+            className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-cyan-500/90 to-blue-600/85 transition-all duration-700 ease-out"
             style={{ height: `${fillPct}%` }}
           />
-          <div className="absolute inset-x-0 top-0 h-2 rounded-t-md bg-helix-card/90 border-b border-helix-border/40 z-10" />
+          <div className="absolute inset-x-0 top-0 h-2 rounded-t-xl bg-white/80 z-10" />
         </div>
         <div className="flex flex-col items-start justify-center">
-          <span className="text-3xl font-display font-bold text-helix-sky leading-none">{progress}%</span>
-          <span className="text-xs text-helix-muted mt-2 max-w-[11rem] leading-snug">
+          <span className="text-3xl font-serif font-bold text-blue-600 leading-none">{progress}%</span>
+          <span className="text-xs text-slate-400 mt-2 max-w-[11rem] leading-snug">
             {remainingMl > 0 ? `${remainingMl} ml remaining to goal` : 'Goal reached'}
           </span>
         </div>
@@ -79,7 +77,7 @@ export default function HydrationTracker() {
 
       <WaterWave progress={progress} />
 
-      <div className="mt-4 space-y-3">
+      <div className="mt-5 space-y-3">
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
             <input
@@ -89,38 +87,38 @@ export default function HydrationTracker() {
               min="50"
               max="2000"
               step="50"
-              className="w-full bg-helix-bg/50 border border-helix-border rounded-xl px-3 py-2 pr-10 text-sm text-helix-text
-                         focus:outline-none focus:border-helix-sky/50 focus:ring-1 focus:ring-helix-sky/20 transition-all
+              className="w-full bg-slate-50 rounded-2xl px-4 py-2.5 pr-10 text-sm text-slate-700
+                         focus:outline-none focus:bg-white focus:shadow-[0_2px_12px_rgb(0,0,0,0.04)] transition-all
                          [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-helix-muted">ml</span>
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-slate-400">ml</span>
           </div>
           <button
             onClick={handleLog}
             disabled={goalReached || amountMl <= 0}
-            className="px-4 py-2 rounded-xl bg-helix-sky/10 text-helix-sky text-sm font-medium
-                       hover:bg-helix-sky/20 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed
+            className="px-5 py-2.5 rounded-2xl bg-blue-50 text-blue-600 text-sm font-medium
+                       hover:bg-blue-100 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed
                        whitespace-nowrap"
           >
             {goalReached ? 'Done' : 'Log'}
           </button>
         </div>
 
-        <div className="flex gap-1.5">
+        <div className="flex gap-2">
           {QUICK_AMOUNTS.map(({ label, ml }) => {
             const selected = amountMl === ml;
             return (
               <button
                 key={label}
                 onClick={() => setAmountMl(ml)}
-                className={`flex-1 py-1.5 rounded-xl text-xs font-medium transition-all duration-200 border
+                className={`flex-1 py-2 rounded-2xl text-xs font-medium transition-all duration-200
                   ${selected
-                    ? 'bg-helix-sky text-white border-helix-sky shadow-sm'
-                    : 'bg-helix-bg/50 text-helix-muted hover:text-helix-text border-helix-border/50'
+                    ? 'bg-blue-600 text-white shadow-[0_4px_16px_rgba(59,130,200,0.2)]'
+                    : 'bg-slate-50 text-slate-500 hover:text-slate-700 hover:bg-slate-100'
                   }`}
               >
                 {label}
-                <span className={`block text-[10px] ${selected ? 'text-white/85' : 'opacity-70'}`}>{ml}ml</span>
+                <span className={`block text-[10px] mt-0.5 ${selected ? 'text-white/80' : 'opacity-60'}`}>{ml}ml</span>
               </button>
             );
           })}

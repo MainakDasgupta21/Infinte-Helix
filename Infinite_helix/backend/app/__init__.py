@@ -36,6 +36,7 @@ def create_app():
     from app.routes.todo_routes import todo_bp
     from app.routes.user_routes import user_bp
     from app.routes.chatbot_routes import chatbot_bp
+    from app.routes.stress_routes import stress_bp
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(emotion_bp, url_prefix='/api/emotion')
@@ -53,6 +54,7 @@ def create_app():
     app.register_blueprint(todo_bp, url_prefix='/api/todos')
     app.register_blueprint(user_bp, url_prefix='/api/user')
     app.register_blueprint(chatbot_bp, url_prefix='/api/chat')
+    app.register_blueprint(stress_bp, url_prefix='/api/stress')
 
     @app.route('/api/health')
     def health():

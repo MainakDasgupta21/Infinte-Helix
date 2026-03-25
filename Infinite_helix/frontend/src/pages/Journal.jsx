@@ -64,6 +64,7 @@ export default function Journal() {
           reframe: res.data.reframe,
           all_emotions: res.data.all_emotions,
           all_sentiments: res.data.all_sentiments,
+          suggestions: res.data.suggestions,
         });
         fetchEntries();
         setIsAnalyzing(false);
@@ -83,16 +84,16 @@ export default function Journal() {
   return (
     <div className="max-w-5xl mx-auto animate-slide-up">
       <div className="mb-6">
-        <h1 className="text-2xl font-display font-semibold text-helix-text">Emotion Journal</h1>
-        <p className="text-sm text-helix-muted mt-1">
-          Write freely; your entry is analyzed and saved with detected emotion and sentiment.
+        <h1 className="text-2xl font-serif font-semibold text-slate-800">Emotion Journal</h1>
+        <p className="text-sm text-slate-500 mt-1">
+          Write how you feel — get personalized coping strategies, wellness tips, and actionable advice.
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         <div className="lg:col-span-3 space-y-4">
           {submitError && (
-            <div className="rounded-xl border border-helix-red/30 bg-helix-red/10 px-4 py-3 text-sm text-helix-text">
+            <div className="rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-slate-800">
               {submitError}
             </div>
           )}

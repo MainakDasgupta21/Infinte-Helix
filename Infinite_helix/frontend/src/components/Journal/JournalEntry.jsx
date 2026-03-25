@@ -22,14 +22,14 @@ export default function JournalEntry({ onSubmit, isAnalyzing }) {
   };
 
   return (
-    <div className="glass-card p-6 border border-helix-border/40">
+    <div className="glass-card p-6 border border-slate-200">
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-8 h-8 rounded-xl bg-helix-accent/15 border border-helix-accent/25 flex items-center justify-center">
-          <HiOutlinePencilAlt className="w-4 h-4 text-helix-accent" />
+        <div className="w-8 h-8 rounded-xl bg-violet-100 border border-violet-200 flex items-center justify-center">
+          <HiOutlinePencilAlt className="w-4 h-4 text-violet-600" />
         </div>
         <div>
-          <h3 className="text-sm font-medium text-helix-text">Emotion Journal</h3>
-          <p className="text-xs text-helix-muted">AI-powered emotion analysis</p>
+          <h3 className="text-sm font-medium text-slate-800">Emotion Journal</h3>
+          <p className="text-xs text-slate-500">Write freely — get real advice, not just labels</p>
         </div>
       </div>
 
@@ -40,19 +40,19 @@ export default function JournalEntry({ onSubmit, isAnalyzing }) {
             onChange={(e) => setText(e.target.value)}
             placeholder={prompt}
             rows={4}
-            className="w-full bg-helix-bg/50 border border-helix-border rounded-xl p-4 text-sm text-helix-text
-                       placeholder:text-helix-muted/60 resize-none focus:outline-none focus:border-helix-accent/50
-                       focus:ring-1 focus:ring-helix-accent/20 transition-all"
+            className="w-full bg-slate-100/50 border border-slate-200 rounded-xl p-4 text-sm text-slate-800
+                       placeholder:text-slate-500 resize-none focus:outline-none focus:border-violet-300
+                       focus:ring-1 focus:ring-violet-200 transition-all"
           />
           <div className="absolute bottom-3 right-3 flex items-center gap-2">
-            <span className="text-xs text-helix-muted">{text.length} chars</span>
+            <span className="text-xs text-slate-500">{text.length} chars</span>
           </div>
         </div>
 
         <button
           type="submit"
           disabled={!text.trim() || isAnalyzing}
-          className="mt-3 w-full py-3 rounded-xl bg-gradient-to-r from-helix-accent to-helix-sky text-white
+          className="mt-3 w-full py-3 rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 text-white
                      text-sm font-medium flex items-center justify-center gap-2 hover:opacity-90 transition-all
                      disabled:opacity-40 disabled:cursor-not-allowed"
         >
@@ -64,7 +64,7 @@ export default function JournalEntry({ onSubmit, isAnalyzing }) {
           ) : (
             <>
               <HiOutlinePaperAirplane className="w-4 h-4 rotate-90" />
-              Analyze Emotion
+              Analyze & Get Advice
             </>
           )}
         </button>

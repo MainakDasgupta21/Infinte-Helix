@@ -23,6 +23,9 @@ class Config:
     MS_TENANT_ID = os.getenv('MS_TENANT_ID', 'common')
     MS_REDIRECT_URI = os.getenv('MS_REDIRECT_URI', 'http://localhost:5000/api/calendar/callback')
 
+    GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
+    GROQ_API_KEY = os.getenv('GROQ_API_KEY', '')
+
     EMOTION_MODEL = os.getenv('EMOTION_MODEL', 'j-hartmann/emotion-english-distilroberta-base')
     SENTIMENT_MODEL = os.getenv('SENTIMENT_MODEL', 'cardiffnlp/twitter-roberta-base-sentiment')
     MODEL_CACHE_DIR = os.getenv('MODEL_CACHE_DIR', './model_cache')

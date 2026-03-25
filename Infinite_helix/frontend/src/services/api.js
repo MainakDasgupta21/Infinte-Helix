@@ -93,10 +93,16 @@ export const selfCareAPI = {
 };
 
 export const todoAPI = {
-  create: (text, remindAt, userId) =>
-    api.post('/todos', { text, remind_at: remindAt || null, ...(userId && { user_id: userId }) }),
+  create: (text, remindAt, userId, date, category) =>
+    api.post('/todos', { text, remind_at: remindAt || null, date: date || null, category: category || 'work', ...(userId && { user_id: userId }) }),
   getToday: (userId) =>
     api.get('/todos/today', userId ? { params: { user_id: userId } } : undefined),
+  getByDate: (date, userId) =>
+    api.get(`/todos/date/${date}`, userId ? { params: { user_id: userId } } : undefined),
+  getUpcoming: (userId) =>
+    api.get('/todos/upcoming', userId ? { params: { user_id: userId } } : undefined),
+  getHistory: (userId, days = 30) =>
+    api.get('/todos/history', { params: { ...(userId && { user_id: userId }), days } }),
   toggle: (todoId, userId) =>
     api.post(`/todos/${todoId}/toggle`, { ...(userId && { user_id: userId }) }),
   remove: (todoId, userId) =>

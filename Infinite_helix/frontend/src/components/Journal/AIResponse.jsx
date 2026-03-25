@@ -1,57 +1,152 @@
-import React from 'react';
+import React, { useState } from 'react';
 import EmotionBadge from './EmotionBadge';
+import {
+  HiOutlineHeart,
+  HiOutlineLightBulb,
+  HiOutlineLightningBolt,
+  HiOutlineSparkles,
+  HiOutlineUserGroup,
+  HiOutlineShieldCheck,
+  HiOutlinePencilAlt,
+  HiOutlineRefresh,
+} from 'react-icons/hi';
+
+const TIP_ICONS = {
+  breathe: HiOutlineRefresh,
+  move: HiOutlineLightningBolt,
+  journal: HiOutlinePencilAlt,
+  social: HiOutlineUserGroup,
+  goal: HiOutlineLightBulb,
+  comfort: HiOutlineHeart,
+  boundary: HiOutlineShieldCheck,
+};
 
 export default function AIResponse({ analysis }) {
+  const [expandedTip, setExpandedTip] = useState(null);
+
   if (!analysis) return null;
 
-  const { emotion, confidence, sentiment, reframe } = analysis;
+  const { emotion, confidence, sentiment, suggestions } = analysis;
   const allEmotions = analysis.allEmotions || analysis.all_emotions;
 
   return (
-    <div className="glass-card p-5 border border-helix-border/50 animate-slide-up">
-      <div className="flex items-center gap-2 mb-3">
-        <span className="text-sm font-medium text-helix-text">Analysis</span>
-      </div>
+    <div className="space-y-4 animate-slide-up">
+      {/* Emotion Detection Summary */}
+      <div className="glass-card p-5 border border-slate-200">
+        <div className="flex items-center gap-2 mb-3">
+          <HiOutlineSparkles className="w-4 h-4 text-violet-600" />
+          <span className="text-sm font-medium text-slate-800">Analysis</span>
+        </div>
 
-      <div className="flex flex-wrap gap-2 mb-4">
-        <EmotionBadge emotion={emotion} confidence={confidence} />
-        {sentiment && (
-          <span
-            className={`text-xs px-3 py-1.5 rounded border font-medium capitalize ${
-              sentiment === 'positive'
-                ? 'bg-helix-mint/10 text-helix-mint border-helix-mint/30'
-                : sentiment === 'negative'
-                  ? 'bg-helix-red/10 text-helix-red border-helix-red/30'
-                  : 'bg-helix-muted/10 text-helix-muted border-helix-border/40'
-            }`}
-          >
-            {sentiment}
-          </span>
+        <div className="flex flex-wrap gap-2 mb-4">
+          <EmotionBadge emotion={emotion} confidence={confidence} />
+          {sentiment && (
+            <span
+              className={`text-xs px-3 py-1.5 rounded-full border font-medium capitalize ${
+                sentiment === 'positive'
+                  ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
+                  : sentiment === 'negative'
+                    ? 'bg-red-50 text-red-600 border-red-200'
+                    : 'bg-slate-100 text-slate-500 border-slate-200'
+              }`}
+            >
+              {sentiment}
+            </span>
+          )}
+        </div>
+
+        {allEmotions && allEmotions.length > 0 && (
+          <div className="space-y-1.5">
+            {allEmotions.slice(0, 4).map((e) => (
+              <div key={e.label} className="flex items-center gap-2">
+                <span className="text-xs text-slate-500 w-16 capitalize">{e.label}</span>
+                <div className="flex-1 h-1.5 bg-slate-50 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-violet-600 to-blue-600 rounded-full transition-all duration-700"
+                    style={{ width: `${e.score * 100}%` }}
+                  />
+                </div>
+                <span className="text-xs text-slate-500 w-10 text-right">{Math.round(e.score * 100)}%</span>
+              </div>
+            ))}
+          </div>
         )}
       </div>
 
-      {allEmotions && allEmotions.length > 0 && (
-        <div className="mb-4 space-y-1.5">
-          {allEmotions.slice(0, 4).map((e) => (
-            <div key={e.label} className="flex items-center gap-2">
-              <span className="text-xs text-helix-muted w-16 capitalize">{e.label}</span>
-              <div className="flex-1 h-1.5 bg-helix-bg rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-helix-accent to-helix-sky rounded-full"
-                  style={{ width: `${e.score * 100}%` }}
-                />
+      {/* Wellness Suggestions */}
+      {suggestions && (
+        <>
+          {/* Heading + Insight */}
+          <div className="glass-card p-5 border border-violet-200 bg-gradient-to-br from-violet-50 to-transparent">
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-xl bg-violet-100 border border-violet-200 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <HiOutlineLightBulb className="w-5 h-5 text-violet-600" />
               </div>
-              <span className="text-xs text-helix-muted w-10 text-right">{Math.round(e.score * 100)}%</span>
+              <div>
+                <h3 className="text-sm font-semibold text-slate-800 mb-1">{suggestions.heading}</h3>
+                <p className="text-sm text-slate-500 leading-relaxed">{suggestions.insight}</p>
+              </div>
             </div>
-          ))}
-        </div>
-      )}
+          </div>
 
-      {reframe && (
-        <div className="bg-helix-bg/40 border border-helix-border/50 rounded-xl p-4">
-          <p className="text-xs text-helix-muted font-medium mb-1 uppercase tracking-wide">Reframe</p>
-          <p className="text-sm text-helix-text leading-relaxed">{reframe}</p>
-        </div>
+          {/* Quick Action */}
+          {suggestions.quick_action && (
+            <div className="glass-card p-4 border border-emerald-200 bg-emerald-50">
+              <div className="flex items-center gap-2 mb-2">
+                <HiOutlineLightningBolt className="w-4 h-4 text-emerald-600" />
+                <span className="text-xs font-semibold text-emerald-600 uppercase tracking-wide">
+                  {suggestions.quick_action.label}
+                </span>
+              </div>
+              <p className="text-sm text-slate-800 leading-relaxed">{suggestions.quick_action.text}</p>
+            </div>
+          )}
+
+          {/* Actionable Tips */}
+          {suggestions.tips && suggestions.tips.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs font-medium text-slate-500 uppercase tracking-wide px-1">
+                Coping Strategies
+              </p>
+              {suggestions.tips.map((tip, idx) => {
+                const Icon = TIP_ICONS[tip.icon] || HiOutlineLightBulb;
+                const isExpanded = expandedTip === idx;
+
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => setExpandedTip(isExpanded ? null : idx)}
+                    className="w-full text-left glass-card p-4 border border-slate-200 hover:border-violet-200 transition-all cursor-pointer group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-violet-50 border border-violet-200 flex items-center justify-center flex-shrink-0 group-hover:bg-violet-100 transition-colors">
+                        <Icon className="w-4 h-4 text-violet-600" />
+                      </div>
+                      <span className="text-sm font-medium text-slate-800 flex-1">{tip.title}</span>
+                      <span className={`text-xs text-slate-500 transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
+                        ▾
+                      </span>
+                    </div>
+                    {isExpanded && (
+                      <p className="mt-3 ml-11 text-sm text-slate-500 leading-relaxed animate-slide-up">
+                        {tip.text}
+                      </p>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Affirmation */}
+          {suggestions.affirmation && (
+            <div className="text-center py-4 px-6">
+              <p className="text-sm text-violet-600 italic leading-relaxed">
+                "{suggestions.affirmation}"
+              </p>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

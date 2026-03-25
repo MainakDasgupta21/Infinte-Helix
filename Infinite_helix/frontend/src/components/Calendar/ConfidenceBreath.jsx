@@ -1,19 +1,32 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-const PHASES = [
-  { label: 'Breathe In', duration: 4000, color: '#c084fc' },
-  { label: 'Hold', duration: 4000, color: '#38bdf8' },
-  { label: 'Breathe Out', duration: 6000, color: '#34d399' },
-  { label: 'Rest', duration: 2000, color: '#f472b6' },
+const BOX_PHASES = [
+  { label: 'Breathe In', duration: 4000, color: '#6b8cff' },
+  { label: 'Hold', duration: 4000, color: '#5eb0d8' },
+  { label: 'Breathe Out', duration: 6000, color: '#3db89a' },
+  { label: 'Rest', duration: 2000, color: '#c97b9a' },
 ];
-const TOTAL_CYCLE = PHASES.reduce((s, p) => s + p.duration, 0);
 
-export default function ConfidenceBreath() {
+const PELVIC_PHASES = [
+  { label: 'Deep Inhale', duration: 5000, color: '#f5b731' },
+  { label: 'Expand & Hold', duration: 3000, color: '#d4960a' },
+  { label: 'Slow Release', duration: 7000, color: '#2d9e6e' },
+  { label: 'Rest & Soften', duration: 3000, color: '#d95f8c' },
+];
+
+function cycleTotal(phases) {
+  return phases.reduce((s, p) => s + p.duration, 0);
+}
+
+export default function ConfidenceBreath({ pregnancyMode = false }) {
   const [active, setActive] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [cycles, setCycles] = useState(0);
   const rafRef = useRef(null);
   const startRef = useRef(0);
+
+  const PHASES = pregnancyMode ? PELVIC_PHASES : BOX_PHASES;
+  const TOTAL_CYCLE = cycleTotal(PHASES);
 
   useEffect(() => {
     if (!active) return;
@@ -28,7 +41,7 @@ export default function ConfidenceBreath() {
     };
     rafRef.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafRef.current);
-  }, [active]);
+  }, [active, TOTAL_CYCLE]);
 
   const cycleElapsed = elapsed % TOTAL_CYCLE;
   let phaseIndex = 0, acc = 0;
@@ -39,17 +52,25 @@ export default function ConfidenceBreath() {
   const phase = PHASES[phaseIndex];
   const phaseProgress = (cycleElapsed - acc) / phase.duration;
 
-  const scale = phaseIndex === 0 ? 1 + phaseProgress * 0.3
-    : phaseIndex === 1 ? 1.3
-    : phaseIndex === 2 ? 1.3 - phaseProgress * 0.3
+  const scale = phaseIndex === 0 ? 1 + phaseProgress * (pregnancyMode ? 0.35 : 0.3)
+    : phaseIndex === 1 ? pregnancyMode ? 1.35 : 1.3
+    : phaseIndex === 2 ? (pregnancyMode ? 1.35 : 1.3) - phaseProgress * (pregnancyMode ? 0.35 : 0.3)
     : 1;
 
   const reset = () => { setActive(false); setElapsed(0); setCycles(0); };
 
+  const title = pregnancyMode ? 'Deep Pelvic Breathing' : 'Confidence Breath';
+  const subtitle = pregnancyMode
+    ? 'Gentle deep breathing to relax your pelvic floor'
+    : 'A 30-second calming exercise before meetings';
+  const accentGradient = pregnancyMode
+    ? 'from-amber-400 to-amber-600'
+    : 'from-violet-600 to-blue-600';
+
   return (
-    <div className="glass-card p-6 text-center">
-      <h3 className="text-sm font-medium text-helix-muted mb-2">Confidence Breath</h3>
-      <p className="text-xs text-helix-muted mb-6">A 30-second calming exercise before meetings</p>
+    <div className="bento-card p-6 text-center">
+      <h3 className="text-sm font-medium text-slate-500 mb-2">{title}</h3>
+      <p className="text-xs text-slate-500 mb-6">{subtitle}</p>
 
       <div className="relative w-40 h-40 mx-auto mb-6">
         <div
@@ -69,11 +90,11 @@ export default function ConfidenceBreath() {
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           {active ? (
             <>
-              <span className="text-lg font-display font-semibold text-helix-text">{phase.label}</span>
-              <span className="text-xs text-helix-muted mt-1">Cycle {cycles + 1}</span>
+              <span className="text-lg font-serif font-semibold text-slate-800">{phase.label}</span>
+              <span className="text-xs text-slate-500 mt-1">Cycle {cycles + 1}</span>
             </>
           ) : (
-            <span className="text-sm text-helix-muted">Ready</span>
+            <span className="text-sm text-slate-500">Ready</span>
           )}
         </div>
       </div>
@@ -83,14 +104,14 @@ export default function ConfidenceBreath() {
           onClick={() => setActive(!active)}
           className={`px-6 py-2.5 rounded-xl text-sm font-medium transition-all ${
             active
-              ? 'bg-helix-red/15 text-helix-red hover:bg-helix-red/25'
-              : 'bg-gradient-to-r from-helix-accent to-helix-pink text-white hover:opacity-90'
+              ? 'bg-red-50 text-red-600 hover:bg-red-100'
+              : `bg-gradient-to-r ${accentGradient} text-white hover:opacity-90`
           }`}
         >
           {active ? 'Pause' : 'Start Breathing'}
         </button>
         {elapsed > 0 && (
-          <button onClick={reset} className="px-4 py-2.5 rounded-xl text-sm text-helix-muted bg-helix-bg/50 hover:bg-helix-bg">
+          <button onClick={reset} className="px-4 py-2.5 rounded-xl text-sm text-slate-500 bg-slate-100 hover:bg-slate-50">
             Reset
           </button>
         )}

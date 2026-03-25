@@ -79,20 +79,20 @@ export default function WorkHoursChart({ data }) {
   return (
     <div className="glass-card p-6">
       <div className="flex items-center justify-between mb-1">
-        <h3 className="text-sm font-medium text-helix-muted">Work Hours</h3>
+        <h3 className="text-sm font-medium text-slate-500">Work Hours</h3>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-sm bg-helix-accent/75" />
-            <span className="text-xs text-helix-muted">Focus</span>
+            <div className="w-2.5 h-2.5 rounded-sm bg-violet-600/75" />
+            <span className="text-xs text-slate-500">Focus</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-sm bg-helix-mint/75" />
-            <span className="text-xs text-helix-muted">Breaks</span>
+            <div className="w-2.5 h-2.5 rounded-sm bg-emerald-600/75" />
+            <span className="text-xs text-slate-500">Breaks</span>
           </div>
         </div>
       </div>
       <div className="flex gap-4 mb-4">
-        <p className="text-xs text-helix-muted/70">{totalFocus}h focus &middot; {totalBreaks}h breaks this week</p>
+        <p className="text-xs text-slate-500/70">{totalFocus}h focus &middot; {totalBreaks}h breaks this week</p>
       </div>
       <div className="h-52">
         <Bar data={chartData} options={options} />

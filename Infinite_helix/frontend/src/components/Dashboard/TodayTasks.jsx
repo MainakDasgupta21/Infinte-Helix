@@ -70,20 +70,18 @@ export default function TodayTasks() {
   const done = todos.filter(t => t.completed);
 
   return (
-    <div className="glass-card p-5 h-full flex flex-col rounded-2xl border border-helix-border/30">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-helix-sky/10">
-            <HiOutlineClipboardList className="w-4 h-4 text-helix-sky" />
+    <div className="bento-card h-full flex flex-col">
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-2xl bg-blue-50">
+            <HiOutlineClipboardList className="w-4 h-4 text-blue-600" />
           </div>
-          <h3 className="text-[13px] uppercase tracking-[0.06em] font-semibold text-helix-muted">
-            Today's Tasks
-          </h3>
+          <h3 className="bento-label">Today's Tasks</h3>
         </div>
         {!showInput && (
           <button
             onClick={() => setShowInput(true)}
-            className="p-1.5 rounded-lg text-helix-muted hover:text-helix-accent hover:bg-helix-accent/10 transition-all"
+            className="p-2 rounded-xl text-slate-400 hover:text-violet-600 hover:bg-violet-50 transition-all"
             aria-label="Add task"
           >
             <HiOutlinePlus className="w-4 h-4" />
@@ -91,9 +89,8 @@ export default function TodayTasks() {
         )}
       </div>
 
-      {/* Quick add input */}
       {showInput && (
-        <div className="mb-3 space-y-2">
+        <div className="mb-4 space-y-2.5">
           <input
             type="text"
             value={text}
@@ -101,29 +98,29 @@ export default function TodayTasks() {
             onKeyDown={handleKeyDown}
             placeholder="Buy vegetables, call mom..."
             autoFocus
-            className="w-full bg-helix-bg/50 border border-helix-border/30 rounded-xl px-3 py-2 text-sm text-helix-text placeholder:text-helix-muted/50 focus:outline-none focus:border-helix-accent/40"
+            className="w-full bg-slate-50 rounded-2xl px-4 py-3 text-sm text-slate-700 placeholder:text-slate-400/60 focus:outline-none focus:bg-white focus:shadow-[0_2px_12px_rgb(0,0,0,0.04)] transition-all"
           />
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 flex-1">
-              <HiOutlineClock className="w-3.5 h-3.5 text-helix-muted" />
+            <div className="flex items-center gap-2 flex-1">
+              <HiOutlineClock className="w-3.5 h-3.5 text-slate-400" />
               <input
                 type="time"
                 value={remindAt}
                 onChange={e => setRemindAt(e.target.value)}
-                className="bg-helix-bg/50 border border-helix-border/30 rounded-lg px-2 py-1 text-xs text-helix-text focus:outline-none focus:border-helix-accent/40"
+                className="bg-slate-50 rounded-xl px-3 py-1.5 text-xs text-slate-600 focus:outline-none"
               />
-              <span className="text-[10px] text-helix-muted">remind at</span>
+              <span className="text-[10px] text-slate-400">remind at</span>
             </div>
             <button
               onClick={() => { setShowInput(false); setText(''); setRemindAt(''); }}
-              className="px-3 py-1.5 rounded-lg text-xs text-helix-muted hover:text-helix-text transition-colors"
+              className="px-3 py-1.5 rounded-xl text-xs text-slate-400 hover:text-slate-600 transition-colors"
             >
               Cancel
             </button>
             <button
               onClick={handleAdd}
               disabled={!text.trim()}
-              className="px-3 py-1.5 rounded-lg text-xs font-medium bg-helix-accent/15 text-helix-accent hover:bg-helix-accent/25 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              className="px-4 py-1.5 rounded-xl text-xs font-medium bg-violet-50 text-violet-600 hover:bg-violet-100 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Add
             </button>
@@ -131,15 +128,14 @@ export default function TodayTasks() {
         </div>
       )}
 
-      {/* Task list */}
-      <div className="flex-1 overflow-y-auto space-y-1.5 max-h-52 pr-0.5">
+      <div className="flex-1 overflow-y-auto space-y-2 max-h-52 pr-0.5">
         {pending.length === 0 && done.length === 0 && !showInput && (
-          <div className="text-center py-6">
+          <div className="text-center py-8">
             <p className="text-2xl mb-2">{'\u{1F4CB}'}</p>
-            <p className="text-xs text-helix-muted">No tasks for today</p>
+            <p className="text-xs text-slate-400">No tasks for today</p>
             <button
               onClick={() => setShowInput(true)}
-              className="text-xs text-helix-accent mt-1 hover:underline"
+              className="text-xs text-violet-600 mt-2 hover:underline"
             >
               Add your first task
             </button>
@@ -149,25 +145,25 @@ export default function TodayTasks() {
         {pending.map(todo => (
           <div
             key={todo.id}
-            className="flex items-start gap-2.5 bg-helix-bg/40 rounded-xl px-3 py-2.5 border border-helix-border/20 group hover:border-helix-accent/20 transition-colors"
+            className="flex items-start gap-3 bg-slate-50/60 rounded-2xl px-4 py-3 group hover:bg-white/60 transition-all"
           >
             <button
               onClick={() => handleToggle(todo.id)}
-              className="mt-0.5 w-4 h-4 rounded-md border-2 border-helix-border/50 hover:border-helix-accent flex items-center justify-center shrink-0 transition-colors"
+              className="mt-0.5 w-4.5 h-4.5 rounded-lg border-2 border-slate-200 hover:border-violet-400 flex items-center justify-center shrink-0 transition-colors"
               aria-label="Mark complete"
             />
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-helix-text leading-snug">{todo.text}</p>
+              <p className="text-sm text-slate-600 leading-snug">{todo.text}</p>
               {todo.remind_at && (
-                <div className="flex items-center gap-1 mt-1">
-                  <HiOutlineClock className="w-3 h-3 text-helix-muted" />
-                  <span className="text-[10px] text-helix-muted">{todo.remind_at}</span>
+                <div className="flex items-center gap-1.5 mt-1">
+                  <HiOutlineClock className="w-3 h-3 text-slate-400" />
+                  <span className="text-[10px] text-slate-400">{todo.remind_at}</span>
                 </div>
               )}
             </div>
             <button
               onClick={() => handleDelete(todo.id)}
-              className="opacity-0 group-hover:opacity-100 p-1 rounded text-helix-muted hover:text-helix-red transition-all"
+              className="opacity-0 group-hover:opacity-100 p-1 rounded-lg text-slate-300 hover:text-red-600 transition-all"
               aria-label="Delete task"
             >
               <HiOutlineTrash className="w-3.5 h-3.5" />
@@ -177,25 +173,25 @@ export default function TodayTasks() {
 
         {done.length > 0 && (
           <>
-            <p className="text-[10px] text-helix-muted font-medium uppercase tracking-wider pt-2">
+            <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider pt-3">
               Done ({done.length})
             </p>
             {done.map(todo => (
               <div
                 key={todo.id}
-                className="flex items-center gap-2.5 bg-helix-bg/20 rounded-xl px-3 py-2 border border-helix-border/10 group"
+                className="flex items-center gap-3 bg-slate-50/40 rounded-2xl px-4 py-2.5 group"
               >
                 <button
                   onClick={() => handleToggle(todo.id)}
-                  className="w-4 h-4 rounded-md bg-helix-mint/20 border-2 border-helix-mint/40 flex items-center justify-center shrink-0"
+                  className="w-4.5 h-4.5 rounded-lg bg-emerald-100 flex items-center justify-center shrink-0"
                   aria-label="Undo complete"
                 >
-                  <span className="text-[10px] text-helix-mint">{'\u2713'}</span>
+                  <span className="text-[10px] text-emerald-600">{'\u2713'}</span>
                 </button>
-                <p className="text-sm text-helix-muted line-through flex-1 min-w-0 truncate">{todo.text}</p>
+                <p className="text-sm text-slate-400 line-through flex-1 min-w-0 truncate">{todo.text}</p>
                 <button
                   onClick={() => handleDelete(todo.id)}
-                  className="opacity-0 group-hover:opacity-100 p-1 rounded text-helix-muted hover:text-helix-red transition-all"
+                  className="opacity-0 group-hover:opacity-100 p-1 rounded-lg text-slate-300 hover:text-red-600 transition-all"
                   aria-label="Delete task"
                 >
                   <HiOutlineTrash className="w-3.5 h-3.5" />
@@ -206,10 +202,10 @@ export default function TodayTasks() {
         )}
       </div>
 
-      {/* Footer count */}
       {(pending.length > 0 || done.length > 0) && (
-        <div className="mt-2 pt-2 border-t border-helix-border/15 flex items-center justify-between">
-          <span className="text-[10px] text-helix-muted">
+        <div className="mt-3 pt-3 flex items-center justify-between"
+             style={{ borderTop: '1px solid rgba(0,0,0,0.04)' }}>
+          <span className="text-[10px] text-slate-400">
             {pending.length} pending{done.length > 0 ? ` \u00B7 ${done.length} done` : ''}
           </span>
         </div>

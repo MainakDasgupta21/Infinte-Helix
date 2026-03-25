@@ -12,8 +12,6 @@ import {
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip);
 
-const CARD_TITLE = 'text-[13px] uppercase tracking-[0.06em] font-semibold text-helix-muted';
-
 const FILTER_LABELS = ['Deep Work', 'Code Review', 'Feature Dev', 'Documentation'];
 
 const pulseLastPointPlugin = {
@@ -30,11 +28,11 @@ const pulseLastPointPlugin = {
     ctx.save();
     ctx.beginPath();
     ctx.arc(x, y, 10 + t * 5, 0, 2 * Math.PI);
-    ctx.fillStyle = `rgba(107, 140, 255, ${0.12 + t * 0.18})`;
+    ctx.fillStyle = `rgba(124, 108, 219, ${0.10 + t * 0.15})`;
     ctx.fill();
     ctx.beginPath();
     ctx.arc(x, y, 5, 0, 2 * Math.PI);
-    ctx.fillStyle = '#6b8cff';
+    ctx.fillStyle = '#7c6cdb';
     ctx.fill();
     ctx.restore();
   },
@@ -55,26 +53,24 @@ export default function FocusTimeline({ sessions = [] }) {
   const data = useMemo(
     () => ({
       labels,
-      datasets: [
-        {
-          data: scores,
-          borderColor: '#6b8cff',
-          backgroundColor: (ctx) => {
-            const gradient = ctx.chart.ctx.createLinearGradient(0, 0, 0, 160);
-            gradient.addColorStop(0, 'rgba(107, 140, 255, 0.28)');
-            gradient.addColorStop(1, 'rgba(107, 140, 255, 0)');
-            return gradient;
-          },
-          fill: true,
-          tension: 0.4,
-          pointBackgroundColor: '#6b8cff',
-          pointBorderColor: '#22222e',
-          pointBorderWidth: 2,
-          pointRadius: (ctx) =>
-            ctx.dataIndex === (ctx.dataset.data?.length ?? 0) - 1 ? 0 : 4,
-          pointHoverRadius: 7,
+      datasets: [{
+        data: scores,
+        borderColor: '#7c6cdb',
+        backgroundColor: (ctx) => {
+          const gradient = ctx.chart.ctx.createLinearGradient(0, 0, 0, 160);
+          gradient.addColorStop(0, 'rgba(124, 108, 219, 0.15)');
+          gradient.addColorStop(1, 'rgba(124, 108, 219, 0)');
+          return gradient;
         },
-      ],
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: '#7c6cdb',
+        pointBorderColor: 'white',
+        pointBorderWidth: 2,
+        pointRadius: (ctx) =>
+          ctx.dataIndex === (ctx.dataset.data?.length ?? 0) - 1 ? 0 : 4,
+        pointHoverRadius: 7,
+      }],
     }),
     [labels, scores]
   );
@@ -86,26 +82,28 @@ export default function FocusTimeline({ sessions = [] }) {
       animation: { duration: 400 },
       scales: {
         x: {
-          grid: { color: 'rgba(46, 46, 60, 0.5)' },
-          ticks: { color: '#9490a8', font: { size: 11 } },
+          grid: { color: 'rgba(0,0,0,0.03)' },
+          ticks: { color: '#94a3b8', font: { size: 11 } },
+          border: { display: false },
         },
         y: {
           min: 0,
           max: 100,
-          grid: { color: 'rgba(46, 46, 60, 0.3)' },
-          ticks: { color: '#9490a8', font: { size: 11 }, callback: (v) => `${v}%` },
+          grid: { color: 'rgba(0,0,0,0.03)' },
+          ticks: { color: '#94a3b8', font: { size: 11 }, callback: (v) => `${v}%` },
+          border: { display: false },
         },
       },
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: '#1a1a22',
-          borderColor: '#2e2e3c',
+          backgroundColor: 'rgba(255,255,255,0.95)',
+          titleColor: '#334155',
+          bodyColor: '#64748b',
+          borderColor: 'rgba(0,0,0,0.06)',
           borderWidth: 1,
-          titleColor: '#e8e4f0',
-          bodyColor: '#9490a8',
           padding: 12,
-          cornerRadius: 12,
+          cornerRadius: 14,
         },
       },
     }),
@@ -127,17 +125,17 @@ export default function FocusTimeline({ sessions = [] }) {
   }, [filtered, activeFilter]);
 
   return (
-    <div className="glass-card p-6 col-span-2 h-full flex flex-col rounded-[20px]">
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
-        <h3 className={CARD_TITLE}>Focus Timeline</h3>
+    <div className="bento-card h-full flex flex-col">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-5">
+        <h3 className="bento-label">Focus Timeline</h3>
         <div className="flex flex-wrap gap-1.5 justify-end">
           <button
             type="button"
             onClick={() => setActiveFilter(null)}
-            className={`text-xs px-2.5 py-1 rounded-lg font-medium transition-colors ${
+            className={`text-[11px] px-3 py-1.5 rounded-xl font-medium transition-all ${
               activeFilter === null
-                ? 'bg-helix-accent/25 text-helix-accent border border-helix-accent/35'
-                : 'bg-helix-bg/50 text-helix-muted border border-transparent hover:text-helix-text'
+                ? 'bg-violet-100 text-violet-600 shadow-[0_2px_8px_rgba(124,108,219,0.1)]'
+                : 'bg-transparent text-slate-400 hover:text-slate-600'
             }`}
           >
             All
@@ -149,10 +147,10 @@ export default function FocusTimeline({ sessions = [] }) {
                 key={name}
                 type="button"
                 onClick={() => setActiveFilter(name)}
-                className={`text-xs px-2.5 py-1 rounded-lg font-medium transition-colors ${
+                className={`text-[11px] px-3 py-1.5 rounded-xl font-medium transition-all ${
                   active
-                    ? 'bg-helix-accent/25 text-helix-accent border border-helix-accent/35'
-                    : 'bg-helix-bg/50 text-helix-muted border border-transparent hover:text-helix-text'
+                    ? 'bg-violet-100 text-violet-600 shadow-[0_2px_8px_rgba(124,108,219,0.1)]'
+                    : 'bg-transparent text-slate-400 hover:text-slate-600'
                 }`}
               >
                 {name}
@@ -163,7 +161,7 @@ export default function FocusTimeline({ sessions = [] }) {
       </div>
       <div className="h-44 flex-1 min-h-[11rem] relative">
         {filtered.length === 0 ? (
-          <p className="text-sm text-helix-muted flex items-center justify-center h-full">
+          <p className="text-sm text-slate-400 flex items-center justify-center h-full">
             No focus blocks match this filter today.
           </p>
         ) : (
@@ -175,7 +173,7 @@ export default function FocusTimeline({ sessions = [] }) {
           />
         )}
         {filtered.length > 0 && (
-          <span className="absolute bottom-1 right-2 text-[10px] uppercase tracking-wider text-helix-muted/90 pointer-events-none">
+          <span className="absolute bottom-1 right-2 text-[10px] uppercase tracking-wider text-slate-400/80 pointer-events-none">
             Current
           </span>
         )}

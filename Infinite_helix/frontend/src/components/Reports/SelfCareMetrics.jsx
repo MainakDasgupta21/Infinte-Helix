@@ -6,8 +6,8 @@ const METRICS_CONFIG = [
     key: 'hydration',
     label: 'Hydration',
     icon: HiOutlineHeart,
-    color: 'from-helix-sky to-blue-400',
-    textColor: 'text-helix-sky',
+    color: 'from-blue-600 to-blue-400',
+    textColor: 'text-blue-600',
     format: (d) => ({
       value: `${d.avg_ml} / ${d.goal_ml}`,
       unit: 'ml avg',
@@ -19,8 +19,8 @@ const METRICS_CONFIG = [
     key: 'breaks',
     label: 'Break Balance',
     icon: HiOutlineClock,
-    color: 'from-helix-mint to-emerald-400',
-    textColor: 'text-helix-mint',
+    color: 'from-emerald-600 to-emerald-400',
+    textColor: 'text-emerald-600',
     format: (d) => ({
       value: d.total,
       unit: 'breaks taken',
@@ -32,8 +32,8 @@ const METRICS_CONFIG = [
     key: 'stretches',
     label: 'Stretch Breaks',
     icon: HiOutlineRefresh,
-    color: 'from-helix-accent to-indigo-500',
-    textColor: 'text-helix-accent',
+    color: 'from-violet-600 to-indigo-500',
+    textColor: 'text-violet-600',
     format: (d) => ({
       value: `${d.done} / ${d.suggested}`,
       unit: 'completed',
@@ -45,8 +45,8 @@ const METRICS_CONFIG = [
     key: 'eye_rest',
     label: 'Eye Rest (20-20-20)',
     icon: HiOutlineEye,
-    color: 'from-helix-pink to-rose-400',
-    textColor: 'text-helix-pink',
+    color: 'from-rose-500 to-rose-400',
+    textColor: 'text-rose-500',
     format: (d) => ({
       value: `${d.done} / ${d.suggested}`,
       unit: 'completed',
@@ -62,8 +62,8 @@ export default function SelfCareMetrics({ selfCare }) {
   return (
     <div className="glass-card p-6">
       <div className="mb-5">
-        <h3 className="text-sm font-medium text-helix-muted">Self-Care Progress</h3>
-        <p className="text-xs text-helix-muted/60 mt-0.5">How well you cared for yourself this week</p>
+        <h3 className="text-sm font-medium text-slate-500">Self-Care Progress</h3>
+        <p className="text-xs text-slate-500/60 mt-0.5">How well you cared for yourself this week</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -73,28 +73,28 @@ export default function SelfCareMetrics({ selfCare }) {
           const { value, unit, detail, pct } = format(d);
 
           return (
-            <div key={key} className="bg-helix-bg/50 rounded-xl p-4 border border-helix-border/15">
+            <div key={key} className="bg-slate-100/50 rounded-xl p-4 border border-slate-200">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-2.5">
                   <div className={`p-2 rounded-lg ${textColor} bg-current/10`}>
                     <Icon className={`w-4.5 h-4.5 ${textColor}`} />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-helix-text">{label}</p>
-                    <p className="text-xs text-helix-muted/70">{detail}</p>
+                    <p className="text-sm font-medium text-slate-800">{label}</p>
+                    <p className="text-xs text-slate-500/70">{detail}</p>
                   </div>
                 </div>
-                <span className={`text-lg font-display font-bold ${textColor}`}>{pct}%</span>
+                <span className={`text-lg font-serif font-bold ${textColor}`}>{pct}%</span>
               </div>
 
               <div className="flex items-center gap-3">
-                <div className="flex-1 h-2.5 bg-helix-border/25 rounded-full overflow-hidden">
+                <div className="flex-1 h-2.5 bg-slate-200/50 rounded-full overflow-hidden">
                   <div
                     className={`h-full rounded-full bg-gradient-to-r ${color} transition-all duration-700`}
                     style={{ width: `${Math.min(pct, 100)}%` }}
                   />
                 </div>
-                <span className="text-xs text-helix-muted whitespace-nowrap">{value} {unit}</span>
+                <span className="text-xs text-slate-500 whitespace-nowrap">{value} {unit}</span>
               </div>
             </div>
           );

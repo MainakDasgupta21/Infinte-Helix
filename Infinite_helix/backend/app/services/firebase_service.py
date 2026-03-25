@@ -525,16 +525,19 @@ def get_activity_streak(user_id):
 # Personal Todos / Reminders
 # ---------------------------------------------------------------------------
 
-def save_todo(user_id, text, remind_at=None):
+def save_todo(user_id, text, remind_at=None, date=None, category=None):
     db = get_db()
     todo_id = str(uuid.uuid4())[:8]
+    todo_date = date or datetime.utcnow().strftime('%Y-%m-%d')
     doc = {
         'id': todo_id,
         'user_id': user_id,
         'text': text,
         'remind_at': remind_at,
         'completed': False,
-        'date': datetime.utcnow().strftime('%Y-%m-%d'),
+        'date': todo_date,
+        'category': category or 'work',
+        'created_at': datetime.utcnow().isoformat(),
         'timestamp': datetime.utcnow().isoformat(),
     }
     if db:
@@ -550,6 +553,40 @@ def save_todo(user_id, text, remind_at=None):
 
 def get_todos_today(user_id):
     today = datetime.utcnow().strftime('%Y-%m-%d')
+    return get_todos_by_date(user_id, today)
+
+
+def get_todos_by_date(user_id, date):
+    db = get_db()
+    if db:
+        try:
+            query = db.collection('personal_todos')
+            if FieldFilter:
+                query = (query
+                         .where(filter=FieldFilter('user_id', '==', user_id))
+                         .where(filter=FieldFilter('date', '==', date)))
+            else:
+                query = (query
+                         .where('user_id', '==', user_id)
+                         .where('date', '==', date))
+            results = []
+            for d in query.stream():
+                results.append(d.to_dict())
+            return sorted(results, key=lambda x: x.get('timestamp', ''))
+        except Exception as e:
+            logger.warning('Firestore query failed for todos: %s', e)
+            return []
+
+    return sorted(
+        [t for t in _in_memory_store.get('personal_todos', [])
+         if t.get('user_id') == user_id and t.get('date') == date],
+        key=lambda x: x.get('timestamp', ''),
+    )
+
+
+def get_todos_upcoming(user_id):
+    """Return all incomplete todos for today and future dates, sorted by date then time."""
+    today = datetime.utcnow().strftime('%Y-%m-%d')
     db = get_db()
     if db:
         try:
@@ -558,17 +595,49 @@ def get_todos_today(user_id):
                 query = query.where(filter=FieldFilter('user_id', '==', user_id))
             else:
                 query = query.where('user_id', '==', user_id)
-            results = [d.to_dict() for d in query.stream()
-                       if d.to_dict().get('date') == today]
-            return sorted(results, key=lambda x: x.get('timestamp', ''))
+            results = []
+            for d in query.stream():
+                doc = d.to_dict()
+                if doc.get('date', '') >= today and not doc.get('completed', False):
+                    results.append(doc)
+            return sorted(results, key=lambda x: (x.get('date', ''), x.get('remind_at') or '99:99'))
         except Exception as e:
-            logger.warning('Firestore query failed for todos: %s', e)
+            logger.warning('Firestore query failed for upcoming todos: %s', e)
             return []
 
     return sorted(
         [t for t in _in_memory_store.get('personal_todos', [])
-         if t.get('user_id') == user_id and t.get('date') == today],
-        key=lambda x: x.get('timestamp', ''),
+         if t.get('user_id') == user_id and t.get('date', '') >= today and not t.get('completed', False)],
+        key=lambda x: (x.get('date', ''), x.get('remind_at') or '99:99'),
+    )
+
+
+def get_todo_history(user_id, days=30):
+    """Return all todos (completed and pending) for the last N days, newest first."""
+    cutoff = (datetime.utcnow() - timedelta(days=days)).strftime('%Y-%m-%d')
+    db = get_db()
+    if db:
+        try:
+            query = db.collection('personal_todos')
+            if FieldFilter:
+                query = query.where(filter=FieldFilter('user_id', '==', user_id))
+            else:
+                query = query.where('user_id', '==', user_id)
+            results = []
+            for d in query.stream():
+                doc = d.to_dict()
+                if doc.get('date', '') >= cutoff:
+                    results.append(doc)
+            return sorted(results, key=lambda x: (x.get('date', ''), x.get('timestamp', '')), reverse=True)
+        except Exception as e:
+            logger.warning('Firestore query failed for todo history: %s', e)
+            return []
+
+    return sorted(
+        [t for t in _in_memory_store.get('personal_todos', [])
+         if t.get('user_id') == user_id and t.get('date', '') >= cutoff],
+        key=lambda x: (x.get('date', ''), x.get('timestamp', '')),
+        reverse=True,
     )
 
 

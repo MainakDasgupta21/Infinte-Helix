@@ -42,18 +42,18 @@ export default function EntryHistory({ entries: propEntries }) {
   return (
     <div className="glass-card p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-medium text-helix-muted">Recent Entries</h3>
+        <h3 className="text-sm font-medium text-slate-500">Recent Entries</h3>
         {entries.length > 0 && (
-          <span className="text-xs text-helix-accent">{entries.length} entries</span>
+          <span className="text-xs text-violet-600">{entries.length} entries</span>
         )}
       </div>
 
       {entries.length === 0 ? (
         <div className="text-center py-12">
           <div className="text-4xl mb-3">{'\u270D\uFE0F'}</div>
-          <p className="text-sm font-medium text-helix-text mb-1">No journal entries yet</p>
-          <p className="text-xs text-helix-muted leading-relaxed max-w-xs mx-auto">
-            Write your first thought above. Your entries help the AI understand your wellness patterns.
+          <p className="text-sm font-medium text-slate-800 mb-1">No journal entries yet</p>
+          <p className="text-xs text-slate-500 leading-relaxed max-w-xs mx-auto">
+            Write how you feel above. You'll get personalized coping strategies and wellness advice — not just emojis.
           </p>
         </div>
       ) : (
@@ -65,13 +65,13 @@ export default function EntryHistory({ entries: propEntries }) {
             return (
               <React.Fragment key={entry.id || idx}>
                 {showDate && (
-                  <p className="text-xs text-helix-muted font-medium pt-2 first:pt-0">{entry.date}</p>
+                  <p className="text-xs text-slate-500 font-medium pt-2 first:pt-0">{entry.date}</p>
                 )}
-                <div className="bg-helix-bg/40 rounded-xl p-4 border border-helix-border/30 hover:border-helix-accent/20 transition-colors">
-                  <p className="text-sm text-helix-text leading-relaxed mb-3">{entry.text}</p>
+                <div className="bg-slate-100/40 rounded-xl p-4 border border-slate-200 hover:border-violet-200 transition-colors">
+                  <p className="text-sm text-slate-800 leading-relaxed mb-3">{entry.text}</p>
                   <div className="flex items-center justify-between">
                     <EmotionBadge emotion={entry.emotion} confidence={entry.confidence} size="sm" />
-                    <span className="text-xs text-helix-muted">{entry.displayTime || entry.timestamp}</span>
+                    <span className="text-xs text-slate-500">{entry.displayTime || entry.timestamp}</span>
                   </div>
                 </div>
               </React.Fragment>

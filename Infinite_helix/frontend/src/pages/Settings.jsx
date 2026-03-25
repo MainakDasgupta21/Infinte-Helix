@@ -33,7 +33,7 @@ function ToggleSwitch({ enabled, onChange, label }) {
       aria-checked={enabled}
       aria-label={label}
       onClick={() => onChange(!enabled)}
-      className={`w-10 h-5.5 rounded-full p-0.5 transition-colors focus:outline-none focus:ring-2 focus:ring-helix-accent/50 ${enabled ? 'bg-helix-accent' : 'bg-helix-border'}`}
+      className={`w-10 h-5.5 rounded-full p-0.5 transition-colors focus:outline-none focus:ring-2 focus:ring-violet-300 ${enabled ? 'bg-violet-600' : 'bg-slate-200'}`}
     >
       <div className={`w-4 h-4 rounded-full bg-white transition-transform ${enabled ? 'translate-x-5' : 'translate-x-0'}`} />
     </button>
@@ -44,10 +44,10 @@ function SettingsSection({ icon: Icon, title, children }) {
   return (
     <div className="glass-card p-6">
       <div className="flex items-center gap-3 mb-5">
-        <div className="w-8 h-8 rounded-xl bg-helix-accent/10 flex items-center justify-center">
-          <Icon className="w-4 h-4 text-helix-accent" />
+        <div className="w-8 h-8 rounded-xl bg-violet-100 flex items-center justify-center">
+          <Icon className="w-4 h-4 text-violet-600" />
         </div>
-        <h3 className="text-sm font-medium text-helix-text">{title}</h3>
+        <h3 className="text-sm font-medium text-slate-800">{title}</h3>
       </div>
       <div className="space-y-4">{children}</div>
     </div>
@@ -58,8 +58,8 @@ function SettingRow({ label, description, children }) {
   return (
     <div className="flex items-center justify-between py-2">
       <div>
-        <p className="text-sm text-helix-text">{label}</p>
-        {description && <p className="text-xs text-helix-muted mt-0.5">{description}</p>}
+        <p className="text-sm text-slate-800">{label}</p>
+        {description && <p className="text-xs text-slate-500 mt-0.5">{description}</p>}
       </div>
       {children}
     </div>
@@ -102,8 +102,8 @@ export default function Settings() {
   return (
     <div className="max-w-3xl mx-auto space-y-6 animate-slide-up">
       <div>
-        <h1 className="text-2xl font-display font-semibold text-helix-text">Settings</h1>
-        <p className="text-sm text-helix-muted mt-1">Personalize your wellness experience</p>
+        <h1 className="text-2xl font-serif font-semibold text-slate-800">Settings</h1>
+        <p className="text-sm text-slate-500 mt-1">Personalize your wellness experience</p>
       </div>
 
       <SettingsSection icon={HiOutlineUser} title="Profile">
@@ -111,15 +111,15 @@ export default function Settings() {
           {user?.photoURL ? (
             <img src={user.photoURL} alt="" className="w-14 h-14 rounded-full object-cover" />
           ) : (
-            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-helix-sky to-helix-accent flex items-center justify-center text-xl font-bold text-white">
+            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center text-xl font-bold text-white">
               {user?.initials}
             </div>
           )}
           <div className="flex-1">
-            <p className="text-sm font-medium text-helix-text">{user?.displayName}</p>
-            <p className="text-xs text-helix-muted">{user?.email}</p>
+            <p className="text-sm font-medium text-slate-800">{user?.displayName}</p>
+            <p className="text-xs text-slate-500">{user?.email}</p>
             {user?.provider && (
-              <p className="text-xs text-helix-muted mt-0.5 capitalize">
+              <p className="text-xs text-slate-500 mt-0.5 capitalize">
                 Signed in via {user.provider === 'google.com' ? 'Google' : user.provider}
               </p>
             )}
@@ -127,8 +127,8 @@ export default function Settings() {
         </div>
         <button
           onClick={signOut}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-helix-red/10 text-helix-red text-sm font-medium
-                     hover:bg-helix-red/20 transition-all mt-2 w-full justify-center"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-red-100 text-red-600 text-sm font-medium
+                     hover:bg-red-200 transition-all mt-2 w-full justify-center"
         >
           <HiOutlineLogout className="w-4 h-4" />
           Sign Out
@@ -149,7 +149,7 @@ export default function Settings() {
           <select
             value={settings.nudgeFrequency}
             onChange={e => update('nudgeFrequency', e.target.value)}
-            className="bg-helix-bg border border-helix-border rounded-lg px-3 py-1.5 text-sm text-helix-text focus:outline-none focus:border-helix-accent"
+            className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-sm text-slate-800 focus:outline-none focus:border-violet-400"
           >
             <option value="minimal">Minimal</option>
             <option value="balanced">Balanced</option>
@@ -159,7 +159,7 @@ export default function Settings() {
 
         <MealReminderSettings />
 
-        <div className="border-t border-helix-border/20 pt-4 mt-2">
+        <div className="border-t border-slate-200/20 pt-4 mt-2">
           <SettingRow label="Eye Rest Reminders (20-20-20)" description="Get reminded to look away from screen periodically">
             <ToggleSwitch
               enabled={eyeRestCfg.enabled}
@@ -181,9 +181,9 @@ export default function Settings() {
                     saveEyeRestConfig(next);
                     restartEyeRestScheduler();
                   }}
-                  className="w-7 h-7 rounded-lg bg-helix-bg text-helix-muted hover:text-helix-text transition-colors flex items-center justify-center"
+                  className="w-7 h-7 rounded-lg bg-slate-50 text-slate-500 hover:text-slate-800 transition-colors flex items-center justify-center"
                 >-</button>
-                <span className="text-sm font-medium text-helix-text w-16 text-center">{eyeRestCfg.intervalMinutes} min</span>
+                <span className="text-sm font-medium text-slate-800 w-16 text-center">{eyeRestCfg.intervalMinutes} min</span>
                 <button
                   onClick={() => {
                     const next = { ...eyeRestCfg, intervalMinutes: Math.min(60, eyeRestCfg.intervalMinutes + 5) };
@@ -191,7 +191,7 @@ export default function Settings() {
                     saveEyeRestConfig(next);
                     restartEyeRestScheduler();
                   }}
-                  className="w-7 h-7 rounded-lg bg-helix-bg text-helix-muted hover:text-helix-text transition-colors flex items-center justify-center"
+                  className="w-7 h-7 rounded-lg bg-slate-50 text-slate-500 hover:text-slate-800 transition-colors flex items-center justify-center"
                 >+</button>
               </div>
             </SettingRow>
@@ -203,10 +203,10 @@ export default function Settings() {
         <SettingRow label="Daily Hydration Goal" description="Minimum daily water intake in milliliters (ml)">
           <div className="flex items-center gap-2">
             <button onClick={() => update('hydrationGoalMl', Math.max(500, settings.hydrationGoalMl - 250))}
-                    className="w-7 h-7 rounded-lg bg-helix-bg text-helix-muted hover:text-helix-text transition-colors flex items-center justify-center">−</button>
-            <span className="text-sm font-medium text-helix-text w-16 text-center">{settings.hydrationGoalMl} ml</span>
+                    className="w-7 h-7 rounded-lg bg-slate-50 text-slate-500 hover:text-slate-800 transition-colors flex items-center justify-center">−</button>
+            <span className="text-sm font-medium text-slate-800 w-16 text-center">{settings.hydrationGoalMl} ml</span>
             <button onClick={() => update('hydrationGoalMl', Math.min(5000, settings.hydrationGoalMl + 250))}
-                    className="w-7 h-7 rounded-lg bg-helix-bg text-helix-muted hover:text-helix-text transition-colors flex items-center justify-center">+</button>
+                    className="w-7 h-7 rounded-lg bg-slate-50 text-slate-500 hover:text-slate-800 transition-colors flex items-center justify-center">+</button>
           </div>
         </SettingRow>
         <SettingRow label="Cycle Energy Mode" description="Adjust suggestions based on menstrual cycle phase">
@@ -218,9 +218,9 @@ export default function Settings() {
         <SettingRow label="Data Sharing" description="Share anonymized wellness data for product improvement">
           <ToggleSwitch enabled={settings.dataSharing} onChange={v => update('dataSharing', v)} />
         </SettingRow>
-        <div className="bg-helix-mint/5 border border-helix-mint/20 rounded-xl p-4">
-          <p className="text-xs text-helix-mint font-medium mb-1">Your Data is Safe</p>
-          <p className="text-xs text-helix-muted leading-relaxed">
+        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+          <p className="text-xs text-emerald-600 font-medium mb-1">Your Data is Safe</p>
+          <p className="text-xs text-slate-500 leading-relaxed">
             All emotion analysis is processed locally. Cycle data never leaves your device.
             We use Firebase only for preferences sync — no wellness data is transmitted.
           </p>

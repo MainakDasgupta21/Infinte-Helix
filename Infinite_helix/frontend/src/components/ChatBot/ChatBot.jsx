@@ -53,10 +53,10 @@ function MessageBubble({ msg, isUser }) {
         </div>
       )}
       <div
-        className={`max-w-[80%] px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed ${
+        className={`max-w-[80%] px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed font-sans ${
           isUser
-            ? 'bg-helix-accent/20 border border-helix-accent/30 text-helix-text rounded-br-md'
-            : 'bg-helix-surface border border-helix-border/40 text-helix-text rounded-bl-md'
+            ? 'bg-helix-accent/20 border border-helix-accent/30 text-slate-700 rounded-br-md'
+            : 'bg-white/90 border border-slate-200/50 text-slate-700 rounded-bl-md'
         }`}
         dangerouslySetInnerHTML={{ __html: formatMessage(msg.message) }}
       />
@@ -73,7 +73,7 @@ function QuickReplies({ replies, onSelect, disabled }) {
           key={i}
           onClick={() => onSelect(reply)}
           disabled={disabled}
-          className="px-3 py-1.5 text-xs rounded-full border border-helix-accent/30 text-helix-accent
+          className="px-3 py-1.5 text-xs font-sans font-medium rounded-full border border-helix-accent/30 text-helix-accent
                      hover:bg-helix-accent/10 transition-all duration-200 disabled:opacity-50
                      disabled:cursor-not-allowed whitespace-nowrap"
         >
@@ -90,11 +90,11 @@ function TypingIndicator() {
       <div className="w-7 h-7 rounded-full bg-gradient-to-br from-helix-accent to-helix-pink flex items-center justify-center mr-2 mt-1 shrink-0">
         <HiOutlineSparkles className="w-3.5 h-3.5 text-white" />
       </div>
-      <div className="bg-helix-surface border border-helix-border/40 rounded-2xl rounded-bl-md px-4 py-3">
+      <div className="bg-white/90 border border-slate-200/50 rounded-2xl rounded-bl-md px-4 py-3">
         <div className="flex gap-1">
-          <span className="w-2 h-2 bg-helix-muted rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-          <span className="w-2 h-2 bg-helix-muted rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-          <span className="w-2 h-2 bg-helix-muted rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+          <span className="w-2 h-2 bg-slate-300 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+          <span className="w-2 h-2 bg-slate-300 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+          <span className="w-2 h-2 bg-slate-300 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
         </div>
       </div>
     </div>
@@ -109,6 +109,7 @@ function getPageName(pathname) {
 const PAGE_LABELS = {
   dashboard: 'Dashboard',
   journal: 'Emotion Journal',
+  todos: 'My Tasks',
   reports: 'Wellness Reports',
   'cycle-mode': 'Cycle Mode',
   calendar: 'Calendar',
@@ -157,10 +158,17 @@ export default function ChatBot() {
         breaks_taken: m.breaks?.taken || 0,
         breaks_suggested: m.breaks?.suggested || 6,
         screen_time_hours: m.screenTime?.total || 0,
+        screen_time_breakdown: m.screenTime?.breakdown || {},
         self_care_stretches: m.selfCare?.stretch || 0,
         self_care_eye_rest: m.selfCare?.eye_rest || 0,
-        focus_sessions: m.focusSessions?.length || 0,
+        focus_sessions_count: m.focusSessions?.length || 0,
+        focus_sessions: (m.focusSessions || []).slice(0, 5).map(s => ({
+          label: s.label, start: s.start, score: s.score,
+        })),
         tracker_status: wellness.trackerStatus,
+        active_nudges: (wellness.nudges || []).filter(n => !n.dismissed).map(n => ({
+          type: n.type, message: n.message, priority: n.priority,
+        })).slice(0, 5),
       };
     }
 
@@ -176,6 +184,55 @@ export default function ChatBot() {
         otherPages[key] = data;
       }
     }
+
+    // Pull cycle/pregnancy data from localStorage so the chatbot always knows
+    try {
+      const periodEntries = JSON.parse(localStorage.getItem('helix_period_entries') || '[]');
+      if (periodEntries.length > 0 && !otherPages['cycle-mode'] && pageName !== 'cycle-mode') {
+        const sorted = [...periodEntries].sort((a, b) => b.startDate.localeCompare(a.startDate));
+        const lastStart = sorted[0]?.startDate;
+        if (lastStart) {
+          const start = new Date(lastStart + 'T00:00:00');
+          const today = new Date(); today.setHours(0,0,0,0);
+          const diff = Math.round((today - start) / 86400000);
+          const cycleDay = diff >= 0 ? (diff % 28) + 1 : 1;
+          const phaseName = cycleDay <= 5 ? 'Menstrual (Rest)' : cycleDay <= 13 ? 'Follicular (Plan)' : cycleDay <= 16 ? 'Ovulatory (Execute)' : 'Luteal (Refine)';
+          otherPages['cycle-mode'] = { cycle_day: cycleDay, phase_name: phaseName, has_entries: true };
+        }
+      }
+      const lifeStage = localStorage.getItem('helix_life_stage_mode');
+      if (lifeStage === 'pregnancy') {
+        const pregData = JSON.parse(localStorage.getItem('helix_pregnancy_data') || '{}');
+        const existing = otherPages['cycle-mode'] || context.page_data || {};
+        const merged = { ...existing, mode: 'pregnancy', due_date: pregData.dueDateIso || null };
+        if (pregData.dueDateIso) {
+          const due = new Date(pregData.dueDateIso + 'T00:00:00');
+          const now = new Date(); now.setHours(0,0,0,0);
+          const daysRemaining = Math.round((due - now) / 86400000);
+          const weeksPregnant = Math.max(0, Math.min(40, Math.floor((280 - daysRemaining) / 7)));
+          merged.weeks_pregnant = weeksPregnant;
+          merged.trimester = weeksPregnant < 13 ? 1 : weeksPregnant < 27 ? 2 : 3;
+          merged.days_until_due = Math.max(0, daysRemaining);
+        }
+        if (pageName === 'cycle-mode') context.page_data = { ...context.page_data, ...merged };
+        else otherPages['cycle-mode'] = merged;
+      }
+    } catch { /* localStorage read failures are non-critical */ }
+
+    // Pull daily cycle logs from localStorage
+    try {
+      const logs = JSON.parse(localStorage.getItem('helix_cycle_daily_logs') || '{}');
+      const todayKey = new Date().toISOString().slice(0, 10);
+      const todayLog = logs[todayKey];
+      if (todayLog && todayLog.mood) {
+        const cycleCtx = otherPages['cycle-mode'] || context.page_data || {};
+        cycleCtx.today_mood = todayLog.mood;
+        cycleCtx.today_flow = todayLog.flow;
+        cycleCtx.today_symptoms = todayLog.symptoms;
+        if (pageName !== 'cycle-mode') otherPages['cycle-mode'] = cycleCtx;
+      }
+    } catch { /* non-critical */ }
+
     if (Object.keys(otherPages).length > 0) {
       context.other_pages_data = otherPages;
     }
@@ -317,19 +374,19 @@ export default function ChatBot() {
       {isOpen && (
         <div className="fixed bottom-24 right-6 z-50 w-[380px] max-w-[calc(100vw-2rem)]
                        h-[560px] max-h-[calc(100vh-8rem)]
-                       bg-helix-bg/95 backdrop-blur-xl border border-helix-border/50
-                       rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-slide-up">
+                       bg-slate-50/95 backdrop-blur-xl border border-slate-200/50
+                       rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-slide-up font-sans antialiased">
           {/* Header */}
-          <div className="px-4 py-3 border-b border-helix-border/40 bg-helix-surface/50 flex items-center justify-between shrink-0">
+          <div className="px-4 py-3 border-b border-slate-200/40 bg-white/60 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-helix-accent to-helix-pink flex items-center justify-center">
                 <HiOutlineSparkles className="w-4 h-4 text-white" />
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-helix-text">Helix</h3>
+                <h3 className="text-sm font-semibold text-slate-800">Helix</h3>
                 <div className="flex items-center gap-1">
-                  <span className={`w-1.5 h-1.5 rounded-full ${aiPowered ? 'bg-helix-mint' : 'bg-helix-amber'}`} />
-                  <span className="text-[10px] text-helix-muted">
+                  <span className={`w-1.5 h-1.5 rounded-full ${aiPowered ? 'bg-emerald-400' : 'bg-amber-400'}`} />
+                  <span className="text-[10px] text-slate-400 font-medium">
                     {aiPowered ? 'AI Companion' : 'Your supportive companion'}
                   </span>
                 </div>
@@ -337,10 +394,10 @@ export default function ChatBot() {
             </div>
             <button
               onClick={clearChat}
-              className="p-1.5 rounded-lg hover:bg-helix-border/30 transition-colors"
+              className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
               title="Clear conversation"
             >
-              <HiOutlineTrash className="w-4 h-4 text-helix-muted" />
+              <HiOutlineTrash className="w-4 h-4 text-slate-400" />
             </button>
           </div>
 
@@ -361,8 +418,8 @@ export default function ChatBot() {
           )}
 
           {/* Input */}
-          <div className="px-3 pb-3 pt-1 border-t border-helix-border/30 shrink-0">
-            <div className="flex items-center gap-2 bg-helix-surface rounded-xl border border-helix-border/40 px-3 py-2">
+          <div className="px-3 pb-3 pt-1 border-t border-slate-200/30 shrink-0">
+            <div className="flex items-center gap-2 bg-white rounded-xl border border-slate-200/50 px-3 py-2">
               <input
                 ref={inputRef}
                 type="text"
@@ -371,7 +428,7 @@ export default function ChatBot() {
                 onKeyDown={handleKeyDown}
                 placeholder="Share what's on your mind..."
                 maxLength={2000}
-                className="flex-1 bg-transparent text-sm text-helix-text placeholder:text-helix-muted/60
+                className="flex-1 bg-transparent text-sm font-sans text-slate-700 placeholder:text-slate-400
                           outline-none"
                 disabled={loading}
               />
@@ -381,8 +438,8 @@ export default function ChatBot() {
                   onClick={toggleVoice}
                   className={`p-1.5 rounded-lg transition-all ${
                     isListening
-                      ? 'bg-helix-pink/20 text-helix-pink animate-pulse'
-                      : 'hover:bg-helix-border/30 text-helix-muted'
+                      ? 'bg-rose-100 text-rose-500 animate-pulse'
+                      : 'hover:bg-slate-100 text-slate-400'
                   }`}
                   title={isListening ? 'Stop listening' : 'Voice input'}
                 >
@@ -397,8 +454,8 @@ export default function ChatBot() {
               <button
                 onClick={() => sendMessage()}
                 disabled={!input.trim() || loading}
-                className="p-1.5 rounded-lg bg-helix-accent/20 text-helix-accent
-                          hover:bg-helix-accent/30 transition-all disabled:opacity-30
+                className="p-1.5 rounded-lg bg-violet-100 text-violet-600
+                          hover:bg-violet-200 transition-all disabled:opacity-30
                           disabled:cursor-not-allowed"
               >
                 <HiOutlinePaperAirplane className="w-4 h-4 rotate-90" />

@@ -1,35 +1,92 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: ["./src/**/*.{js,jsx,ts,tsx}"],
+  darkMode: 'class', // Enable dark mode toggle later
   theme: {
     extend: {
       colors: {
         helix: {
-          bg: '#030304',
-          surface: '#0a0a0d',
-          card: '#121218',
-          accent: '#6b8cff',
-          'accent-dim': '#5576e6',
-          pink: '#c97b9a',
-          'pink-dim': '#a85f7f',
-          sky: '#5eb0d8',
-          mint: '#3db89a',
-          amber: '#d4a84b',
-          red: '#e07070',
-          text: '#f0f0f3',
-          muted: '#8f8f9a',
-          border: '#26262f',
-          'border-light': '#36363f',
+          // Light feminine base
+          bg: '#fdfbff',
+          'bg-dark': '#f5f3ff',
+          surface: '#fefbff',
+          card: '#fdfbff',
+          // Purple primary
+          lavender: {
+            50: '#f4f7ff',
+            100: '#e8ecff',
+            200: '#d0d8ff',
+            300: '#b8c2ff',
+            400: '#a0acff',
+            500: '#a8b4ff',
+            600: '#919fff',
+            700: '#7a8fff',
+            900: '#5a6fd4',
+          },
+          // Blush pink secondary
+          blush: {
+            100: '#fdf2f5',
+            300: '#f9c9d8',
+            400: '#f4b0cc',
+            500: '#f0a8c3',
+            600: '#d4829e',
+          },
+          // Sage green accents
+          sage: {
+            200: '#d4e8d0',
+            400: '#c4e4c8',
+            500: '#a8d4a0',
+            600: '#7cb874',
+          },
+          // Cycle rose
+          rose: {
+            100: '#fceef2',
+            300: '#f8d7e0',
+            400: '#e8b4c1',
+            500: '#d99faf',
+          },
+          // Gold touch
+          gold: '#d4a843',
+          // Sunrise Gold theme (Pregnancy / Motherhood Shield)
+          sunrise: {
+            50: '#fffdf5',
+            100: '#fff7ed',
+            200: '#ffeed4',
+            300: '#ffe0a8',
+            400: '#ffd06a',
+            500: '#f5b731',
+            600: '#d4960a',
+            700: '#a67508',
+            text: '#5c3d0a',
+            muted: '#8b6d3f',
+            border: '#f0dbb8',
+            surface: '#fffbf2',
+          },
+          // Functional accent colors (used across Dashboard, Calendar, ChatBot, Journal)
+          accent: '#7c6cdb',
+          sky: '#3b82c8',
+          mint: '#2d9e6e',
+          pink: '#d95f8c',
+          amber: '#c88a2d',
+          red: '#d94f4f',
+          // Neutrals/text
+          text: '#2a2a3a',
+          'text-dark': '#1a1a24',
+          muted: '#6b7280',
+          border: '#e8e8f0',
+          'border-light': '#f0f0f8',
         }
       },
       fontFamily: {
-        display: ['Inter', 'system-ui', 'sans-serif'],
-        body: ['Inter', 'system-ui', 'sans-serif'],
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['"Plus Jakarta Sans"', 'system-ui', '-apple-system', 'sans-serif'],
+        serif: ['"Playfair Display"', 'Georgia', 'serif'],
+        display: ['"Playfair Display"', 'Georgia', 'serif'],
+        body: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
       },
       animation: {
         'float': 'float 3s ease-in-out infinite',
         'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
+        'blush-pulse': 'blush-pulse 2s ease-in-out infinite',
         'slide-up': 'slide-up 0.5s ease-out',
         'breathe': 'breathe 4s ease-in-out infinite',
         'spin-slow': 'spin 8s linear infinite',
@@ -37,7 +94,14 @@ module.exports = {
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'mesh': 'radial-gradient(ellipse 80% 50% at 50% -20%, rgba(107,140,255,0.07) 0%, transparent 55%), radial-gradient(ellipse 60% 40% at 100% 0%, rgba(94,176,216,0.05) 0%, transparent 45%), radial-gradient(ellipse 50% 60% at 0% 100%, rgba(255,255,255,0.02) 0%, transparent 50%)',
+        'mesh-light': 'radial-gradient(ellipse 80% 50% at 50% -20%, rgba(168,180,255,0.08) 0%, transparent 55%), radial-gradient(ellipse 60% 40% at 100% 0%, rgba(240,168,195,0.06) 0%, transparent 45%), radial-gradient(ellipse 50% 60% at 0% 100%, rgba(255,255,255,0.04) 0%, transparent 50%)',
+        'lavender-gradient': 'linear-gradient(135deg, #a8b4ff 0%, #919fff 50%, #7a8fff 100%)',
+        'blush-gradient': 'linear-gradient(135deg, #f9c9d8 0%, #f4b0cc 50%, #f0a8c3 100%)',
+        'sunrise-gradient': 'linear-gradient(135deg, #ffd06a 0%, #f5b731 50%, #d4960a 100%)',
+        'sunrise-mesh': 'radial-gradient(ellipse 80% 50% at 50% -20%, rgba(245,183,49,0.12) 0%, transparent 55%), radial-gradient(ellipse 60% 40% at 100% 0%, rgba(255,208,106,0.08) 0%, transparent 45%)',
+      },
+      borderRadius: {
+        '20': '20px',
       }
     },
   },

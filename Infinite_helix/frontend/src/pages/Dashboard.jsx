@@ -42,19 +42,17 @@ function workIntensityLabel(typingIntensity) {
 
 function DashboardSkeleton() {
   return (
-    <div className="max-w-7xl mx-auto space-y-6 animate-pulse">
-      <div className="bg-helix-card/40 rounded-[20px] h-24" />
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[1, 2, 3, 4].map(i => (
-          <div key={i} className="bg-helix-card/40 rounded-[20px] h-52" />
-        ))}
+    <div className="max-w-[1400px] mx-auto animate-pulse space-y-5">
+      <div className="h-24 bg-white rounded-2xl border border-slate-200" />
+      <div className="grid grid-cols-12 gap-5">
+        <div className="col-span-12 md:col-span-4 h-60 bg-white rounded-2xl border border-slate-200" />
+        <div className="col-span-12 md:col-span-4 h-60 bg-white rounded-2xl border border-slate-200" />
+        <div className="col-span-12 md:col-span-4 h-60 bg-white rounded-2xl border border-slate-200" />
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-        <div className="bg-helix-card/40 rounded-[20px] h-64 col-span-2" />
-        <div className="bg-helix-card/40 rounded-[20px] h-64" />
-        <div className="bg-helix-card/40 rounded-[20px] h-64" />
+      <div className="grid grid-cols-12 gap-5">
+        <div className="col-span-12 lg:col-span-8 h-64 bg-white rounded-2xl border border-slate-200" />
+        <div className="col-span-12 lg:col-span-4 h-64 bg-white rounded-2xl border border-slate-200" />
       </div>
-      <div className="bg-helix-card/40 rounded-[20px] h-14" />
     </div>
   );
 }
@@ -93,80 +91,102 @@ export default function Dashboard() {
   if (dashboardLoading) return <DashboardSkeleton />;
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 animate-slide-up">
-      <div className="bg-mesh rounded-[20px] p-6 border border-helix-border/30">
-        <div className="flex items-start justify-between flex-wrap gap-4">
+    <div className="max-w-[1400px] mx-auto space-y-5 animate-slide-up">
+      {/* ── Hero Greeting ── */}
+      <div className="bento-card-lg relative overflow-hidden">
+        <div className="absolute -top-20 -right-20 w-60 h-60 bg-gradient-radial from-violet-100/50 to-transparent rounded-full blur-2xl pointer-events-none" />
+        <div className="relative flex items-start justify-between flex-wrap gap-4">
           <div className="min-w-0 flex-1">
-            <h1 className="text-2xl font-display font-semibold text-helix-text">
+            <h1 className="text-2xl font-serif font-bold text-slate-900 tracking-tight">
               {getGreeting()}, {user?.displayName?.split(' ')[0] || 'there'}
             </h1>
-            <p className="text-sm text-helix-muted mt-1.5 leading-relaxed">
+            <p className="text-sm text-slate-500 mt-1.5 leading-relaxed font-medium">
               {wellnessStatusLine(todayMetrics.score)}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2 shrink-0">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-helix-accent/25 bg-helix-accent/10 px-3 py-1.5 text-xs font-medium text-helix-accent">
-              <span className="text-helix-muted font-normal">Focus</span>
+            <span className="inline-flex items-center gap-2 rounded-xl bg-violet-100 border border-violet-200 px-3.5 py-1.5 text-xs font-bold text-violet-700">
+              <span className="text-violet-500 font-semibold">Focus</span>
               <span className="tabular-nums">{todayMetrics.focusSessions.length}</span>
             </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-helix-sky/25 bg-helix-sky/10 px-3 py-1.5 text-xs font-medium text-helix-sky">
-              <span className="text-helix-muted font-normal">Breaks</span>
+            <span className="inline-flex items-center gap-2 rounded-xl bg-rose-100 border border-rose-200 px-3.5 py-1.5 text-xs font-bold text-rose-700">
+              <span className="text-rose-500 font-semibold">Breaks</span>
               <span className="tabular-nums">{todayMetrics.breaks?.taken ?? 0}</span>
             </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-helix-pink/25 bg-helix-pink/10 px-3 py-1.5 text-xs font-medium text-helix-pink">
-              <span className="text-helix-muted font-normal">Eye Rest</span>
+            <span className="inline-flex items-center gap-2 rounded-xl bg-emerald-100 border border-emerald-200 px-3.5 py-1.5 text-xs font-bold text-emerald-700">
+              <span className="text-emerald-500 font-semibold">Self Care</span>
               <span className="tabular-nums">{todayMetrics.selfCare?.eye_rest ?? 0}</span>
             </span>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
-        <ProductivityScore
-          score={todayMetrics.score}
-          streakDays={todayMetrics.streakDays}
-          mood={todayMetrics.mood}
-          breaks={todayMetrics.breaks}
-        />
-        <ScreenTimeChart screenTime={todayMetrics.screenTime} />
-        <BreakBalance breaks={todayMetrics.breaks} />
-        <HydrationTracker />
+      {/* ── Row 1: Bento asymmetric — Score hero (wider) + Screen + Break ── */}
+      <div className="grid grid-cols-12 gap-5 items-stretch">
+        <div className="col-span-12 md:col-span-5 lg:col-span-4">
+          <ProductivityScore
+            score={todayMetrics.score}
+            streakDays={todayMetrics.streakDays}
+            mood={todayMetrics.mood}
+            breaks={todayMetrics.breaks}
+          />
+        </div>
+        <div className="col-span-12 md:col-span-7 lg:col-span-4">
+          <ScreenTimeChart screenTime={todayMetrics.screenTime} />
+        </div>
+        <div className="col-span-12 md:col-span-6 lg:col-span-4">
+          <BreakBalance breaks={todayMetrics.breaks} />
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 items-stretch">
-        <FocusTimeline sessions={todayMetrics.focusSessions} />
-        <NudgeFeed />
-        <SelfCareTracker />
+      {/* ── Row 2: Focus Timeline (wide) + Hydration ── */}
+      <div className="grid grid-cols-12 gap-5 items-stretch">
+        <div className="col-span-12 lg:col-span-8">
+          <FocusTimeline sessions={todayMetrics.focusSessions} />
+        </div>
+        <div className="col-span-12 lg:col-span-4">
+          <HydrationTracker />
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
-        <TodayTasks />
+      {/* ── Row 3: Nudges + Self Care + Tasks ── */}
+      <div className="grid grid-cols-12 gap-5 items-stretch">
+        <div className="col-span-12 md:col-span-6 lg:col-span-4">
+          <NudgeFeed />
+        </div>
+        <div className="col-span-12 md:col-span-6 lg:col-span-4">
+          <SelfCareTracker />
+        </div>
+        <div className="col-span-12 lg:col-span-4">
+          <TodayTasks />
+        </div>
       </div>
 
-      <div className="glass-card p-4 rounded-[20px]">
+      {/* ── Status Bar ── */}
+      <div className="bento-card px-5 py-3.5">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-2.5">
             {trackerStatus === 'connected' ? (
               <>
                 <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-helix-mint opacity-60" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-helix-mint" />
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-60" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
                 </span>
-                <span className="text-xs text-helix-muted">
+                <span className="text-xs text-slate-600 font-semibold">
                   AI Wellness Engine Active
                 </span>
               </>
             ) : (
               <>
-                <div className="w-2 h-2 rounded-full bg-helix-red" />
-                <span className="text-xs text-helix-muted">AI Wellness Engine Connecting...</span>
+                <div className="w-2 h-2 rounded-full bg-rose-400 animate-pulse" />
+                <span className="text-xs text-slate-500">Connecting to your wellness flow...</span>
               </>
             )}
           </div>
-          <div className="flex items-center gap-4 text-xs text-helix-muted flex-wrap justify-end">
-            <span>Typing activity: <span className="text-helix-text">{typingActivityLabel(ks)}</span></span>
-            <span>Screen time: <span className="text-helix-text">{todayMetrics.screenTime?.total ?? 0}h</span></span>
-            <span>Work intensity: <span className="text-helix-text">{workIntensityLabel(intensity)}</span></span>
+          <div className="flex items-center gap-4 text-xs text-slate-500 flex-wrap justify-end">
+            <span>Activity: <span className="text-slate-700 font-bold">{typingActivityLabel(ks)}</span></span>
+            <span>Screen: <span className="text-slate-700 font-bold">{todayMetrics.screenTime?.total ?? 0}h</span></span>
+            <span>Intensity: <span className="text-slate-700 font-bold">{workIntensityLabel(intensity)}</span></span>
           </div>
         </div>
       </div>

@@ -17,7 +17,7 @@ export default function EmotionBadge({ emotion, confidence, size = 'md' }) {
   return (
     <span className={`inline-flex items-center gap-1.5 rounded-full border font-medium ${config.color} ${sizeClasses}`}>
       <span className="capitalize">{emotion}</span>
-      {confidence && <span className="opacity-60">{Math.round(confidence * 100)}%</span>}
+      {confidence && <span className="opacity-80">{Math.round(confidence * 100)}%</span>}
     </span>
   );
 }

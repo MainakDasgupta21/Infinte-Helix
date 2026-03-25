@@ -152,9 +152,9 @@ export default function AuthPage() {
         {/* Brand */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-helix-accent to-helix-sky mb-4 glow-accent">
-            <span className="text-white font-display font-bold text-xl tracking-tight">IH</span>
+            <span className="text-white font-serif font-bold text-xl tracking-tight">IH</span>
           </div>
-          <h1 className="font-display text-3xl font-bold text-helix-text">Infinite Helix</h1>
+          <h1 className="font-serif text-3xl font-bold text-helix-text">Infinite Helix</h1>
           <p className="text-helix-muted text-sm mt-1">Your AI Wellness Companion</p>
         </div>
 

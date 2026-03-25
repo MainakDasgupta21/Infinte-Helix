@@ -7,6 +7,7 @@ from urllib.parse import urlencode
 logger = logging.getLogger(__name__)
 
 GRAPH_BASE = 'https://graph.microsoft.com/v1.0'
+# Read-only: meetings/times from Outlook/Teams calendar; no email, files, or write access.
 SCOPES = 'Calendars.Read User.Read offline_access'
 
 

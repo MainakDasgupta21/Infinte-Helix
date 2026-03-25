@@ -48,6 +48,15 @@ SYSTEM_PROMPT = """You are **Helix**, a supportive, respectful, and emotionally 
 - **Ovulatory (Day 14-16):** Peak energy — presentations, leadership, confidence
 - **Luteal (Day 17-28):** Winding down — complete tasks, comfort, yoga, extra self-care
 
+## Pregnancy Mode Reference (use when user is in pregnancy mode)
+If the user has Pregnancy/Motherhood Shield mode active:
+- **1st Trimester (Weeks 1-12):** Nausea, fatigue — recommend short walks, small frequent meals, extra rest
+- **2nd Trimester (Weeks 13-26):** "Golden trimester" — energy returns, great for bigger projects, stay hydrated
+- **3rd Trimester (Weeks 27-40):** Body working hard at rest — delegate freely, break every 30 min, side-lying rest
+- Use gentle, nurturing language — say "Your body is doing incredible work" instead of "push through"
+- Reference their specific week/trimester and days until due date
+- Support their "Pregnancy Brain" (cognitive load) by encouraging use of the micro-task breakdown feature
+
 ## Boundaries (VERY IMPORTANT — NEVER BREAK THESE)
 - Do NOT claim to be a doctor, therapist, or licensed professional
 - Do NOT provide diagnoses, prescriptions, or definitive medical advice
@@ -66,19 +75,25 @@ SYSTEM_PROMPT = """You are **Helix**, a supportive, respectful, and emotionally 
   4. NEVER minimize their pain or rush to "fix" things — just be present first
 - For severe distress, prioritize emotional safety over being informative
 
-## Context Awareness
-You have real-time access to the user's current app context, including:
-- Which page they are viewing (Dashboard, Journal, Reports, Cycle Mode, Calendar, Settings)
-- Their wellness metrics (score, hydration, breaks, screen time, mood, etc.)
-- Page-specific visible data (journal entries, report insights, cycle phase, meetings, settings)
+## Context Awareness — TOTAL APP KNOWLEDGE
+You have REAL-TIME access to the user's ENTIRE app state at all times, including:
+- **Dashboard**: Wellness score, mood, streak, hydration (ml + goal), breaks (taken vs suggested), screen time (hours + breakdown), focus sessions, self-care stats (stretches, eye rests), active nudges, typing activity, work intensity
+- **Journal**: Entry count, recent entries with detected emotions and sentiments, latest analysis
+- **Tasks/Todos**: Total tasks, pending count, completed count, today's tasks, overdue count, upcoming task list with due dates
+- **Cycle Mode**: Cycle day, current phase (Menstrual/Follicular/Ovulatory/Luteal), today's mood/flow/symptoms, next period prediction, pattern insights
+- **Pregnancy Mode**: If active — weeks pregnant, trimester (1st/2nd/3rd), days until due date, micro-tasks, appointment info
+- **Calendar**: Meeting count, Teams meetings, meeting hours, free hours, upcoming meeting details
+- **Reports**: Weekly wellness score, grade, score change, mood trend, emotion distribution, recommendations
+- **Settings**: Hydration goal, nudge frequency, eye rest config
 
-Use this context naturally in your responses:
-- Reference data the user can see when relevant (e.g., "I can see your wellness score is at 72 today — that's solid progress!")
-- Offer suggestions based on their current page (e.g., on Journal: "Would you like a journaling prompt to get started?")
-- Notice patterns proactively (e.g., low hydration, long work without breaks, high stress indicators)
-- Don't reference every data point in every response — be selective and natural
-- When the user asks about their data or progress, give specific answers using the context provided
-- If the user is on a page, assume they might have questions about what they're seeing
+CRITICAL RULES for using this context:
+- You know EVERYTHING shown across the app — not just the page the user is viewing
+- When the user asks "how am I doing?" or "what do you know about me?", give a comprehensive answer drawing from ALL data points
+- Reference specific numbers confidently (e.g., "Your wellness score is 72, you've had 500ml of water, taken 2 breaks, and you're on day 14 of your cycle")
+- Proactively notice cross-page patterns (e.g., "Your mood in the journal was sad, and you're in the luteal phase — that tracks")
+- If the user asks about tasks, breaks, hydration, cycle, meetings, or ANY data — answer with the EXACT values from the context
+- Be selective — don't dump all data unless asked. Be natural and conversational
+- When the user asks about something and you have the data, NEVER say "I'm not sure" — you HAVE the data
 
 ## Goal
 Create a safe, trustworthy, and comforting experience where women employees feel supported, respected, and guided — like talking to a dependable, mature, and kind companion who always has their back.
@@ -87,6 +102,8 @@ Never break these guidelines. Ever.
 """
 
 QUICK_REPLY_MAP = {
+    'wellness_check': ['How can I improve?', 'My tasks', 'Cycle update', 'Hydration check', 'Breathing exercise'],
+    'todo': ['Help me prioritize', 'What should I do first?', 'Break down a task', 'Productivity tips'],
     'hydration': ['Log water now', 'Hydration tips', 'Set a reminder'],
     'stress': ['Try breathing exercise', 'I want to talk', 'Self-care ideas', 'Take a break'],
     'emotion': ['I want to journal', 'Breathing exercise', 'Self-care tips', 'Just listen'],
@@ -107,12 +124,14 @@ QUICK_REPLY_MAP = {
 
 INTENT_PATTERNS = {
     'distress': r"\b(suicid\w*|self\s*harm|kill\s*my(self)?|end\s*(it\s*all|it|my\s*life)|hurt\s*myself|don['\s]?t\s*want\s*to\s*live|want\s*to\s*die|give\s*up|can['\s]?t\s*go\s*on|hopeless|worthless|no\s*point|no\s*reason\s*to\s*live|cutting|harm\s*myself|feel\s*like\s*a\s*burden|nobody\s*cares|no\s*one\s*cares|not\s*worth\s*(it|living)|better\s*off\s*(dead|without\s*me)|can['\s]?t\s*take\s*(it|this)\s*anymore)\b",
+    'wellness_check': r'\b(how\s*am\s*i\s*(doing|going)|wellness\s*check|my\s*status|my\s*progress|overall\s*health|how\s*is\s*my\s*day|tell\s*me\s*(about|everything)|what\s*do\s*you\s*know|summarize?\s*my|give\s*me\s*a?\s*summary|my\s*overview|how[\'s]*\s*my\s*(day|health|wellness)|check\s*(up|in)|what[\'s]*\s*my\s*(score|status))\b',
     'greeting': r'\b(hi|hello|hey|good\s*(morning|afternoon|evening)|howdy|hola|sup)\b',
     'farewell': r'\b(bye|goodbye|see\s*you|take\s*care|good\s*night|cya)\b',
     'hydration': r'\b(water\b|hydrat\w*|drink\b|thirst\w*|sip\b|liquid\b|dehydrat\w*|glass\b)',
     'emotion': r'\b(feel\w*|emotion\w*|mood\b|sentiment\b|sad\b|happy\b|angry\b|anxious\b|stressed\b|upset\b|depress\w*|lonely\b|overwhelm\w*|frustrat\w*|worried\b|scared\b|nervous\b|cry\w*|tears\b|heartbr\w*)',
     'stress': r"\b(stress\w*|burnout\b|burn\s*out|overwhelm\w*|pressure\b|tense\b|tension\b|panic\b|anxiety\b|anxious\b|calm\b|relax\w*|breathe\b|meditat\w*|can['\s]?t\s*cope)",
-    'cycle': r'\b(period\b|menstrual\b|menstrual\s+cycle|my\s+cycle|cycle\s+track\w*|pms\b|cramp\w*|ovulat\w*|follicular\b|luteal\b|menstruat\w*|spotting\b|tampon\b|sanitary\s+pad)\b',
+    'todo': r'\b(task\w*|todo\w*|to\s*do\w*|my\s*tasks?|pending|overdue|due\s*today|what\s*(should|do)\s*i\s*(do|work))\b',
+    'cycle': r'\b(period\b|menstrual\b|menstrual\s+cycle|my\s+cycle|cycle\s+track\w*|pms\b|cramp\w*|ovulat\w*|follicular\b|luteal\b|menstruat\w*|spotting\b|tampon\b|sanitary\s+pad|pregnan\w*|trimester\b|due\s*date)\b',
     'nutrition': r'\b(food\b|eat\w*|diet\b|nutrition\b|meal\b|snack\w*|breakfast\b|lunch\b|dinner\b|protein\b|vitamin\b|iron\b|calorie\b|recipe\b|hungry\b|appetite\b)',
     'productivity': r'\b(productiv\w*|focus\b|concentrat\w*|distract\w*|procrastinat\w*|time\s*manage\w*|pomodoro\b|deep\s*work|efficient\b|priorit\w*|deadline\b)',
     'sleep': r'\b(sleep\w*|insomnia\b|nap\b|rest\b|tired\b|fatigue\w*|exhaust\w*|drowsy\b|wake\b|bedtime\b|circadian\b)',
@@ -292,16 +311,24 @@ class GroqClient:
 
     def __init__(self):
         self._api_key = None
-        self._available = False
-        self._init()
+        self._available = None  # None = not yet checked
+        self._requests = None
 
-    def _init(self):
-        import requests as _requests
-        self._requests = _requests
+    def _ensure_init(self):
+        """Lazy init on first use so env vars are guaranteed loaded."""
+        if self._available is not None:
+            return
+        try:
+            import requests as _requests
+            self._requests = _requests
+        except ImportError:
+            self._available = False
+            return
 
         api_key = os.getenv('GROQ_API_KEY', '').strip()
         if not api_key:
             logger.info("GROQ_API_KEY not set — chatbot will use template responses")
+            self._available = False
             return
 
         self._api_key = api_key
@@ -310,10 +337,12 @@ class GroqClient:
 
     @property
     def available(self):
+        self._ensure_init()
         return self._available
 
     def chat(self, conversation_history, context_prefix=""):
         """Send conversation to Groq and return the response text."""
+        self._ensure_init()
         if not self._available:
             return None
 
@@ -454,8 +483,9 @@ class ChatbotService:
     PAGE_DESCRIPTIONS = {
         'dashboard': 'Dashboard — showing wellness score, hydration, breaks, screen time, focus sessions, self-care, and nudges',
         'journal': 'Emotion Journal — for writing and analyzing journal entries with AI emotion/sentiment detection',
+        'todos': 'My Tasks — task management with upcoming tasks, reminders, and completion tracking',
         'reports': 'Wellness Reports — showing weekly wellness report with scores, emotion trends, and personalized recommendations',
-        'cycle-mode': 'Cycle Mode — menstrual cycle tracking with mood, flow, symptoms, and phase-specific guidance',
+        'cycle-mode': 'Cycle Mode — menstrual cycle tracking OR pregnancy mode with trimester insights, mood, flow, symptoms, and phase-specific guidance',
         'calendar': 'Calendar — meetings overview with Microsoft Teams integration and pre-meeting calm tools',
         'settings': 'Settings — notification preferences, wellness goals, eye rest, and privacy settings',
     }
@@ -487,16 +517,30 @@ class ChatbotService:
             eye_rest = wellness.get('self_care_eye_rest', 0)
             focus = wellness.get('focus_sessions', 0)
             streak = wellness.get('streak_days', 0)
+            screen_breakdown = wellness.get('screen_time_breakdown', {})
+            breakdown_str = ', '.join(f"{k}: {v}h" for k, v in screen_breakdown.items()) if screen_breakdown else 'N/A'
+            focus_sessions_detail = wellness.get('focus_sessions', [])
+            focus_str = ''
+            if focus_sessions_detail:
+                focus_lines = [f"  - {s.get('label', 'Session')} at {s.get('start', '?')} (score: {s.get('score', '?')})" for s in focus_sessions_detail[:5]]
+                focus_str = f"\nFocus session details:\n" + "\n".join(focus_lines)
+            nudges_detail = wellness.get('active_nudges', [])
+            nudge_str = ''
+            if nudges_detail:
+                nudge_lines = [f"  - [{n.get('type', '?')}] {n.get('message', '')}" for n in nudges_detail[:5]]
+                nudge_str = f"\nActive wellness nudges:\n" + "\n".join(nudge_lines)
+
             context_parts.append(
                 f"Wellness Score: {score} out of 100\n"
                 f"Mood: {mood}\n"
                 f"Hydration: {h_ml}ml of {h_goal}ml goal ({h_pct}%)\n"
                 f"Breaks taken: {breaks_t} of {breaks_s} suggested\n"
-                f"Screen time: {screen_h} hours\n"
+                f"Screen time: {screen_h} hours (breakdown: {breakdown_str})\n"
                 f"Stretch breaks: {stretches}\n"
                 f"Eye rests: {eye_rest}\n"
                 f"Focus sessions: {focus}\n"
                 f"Streak: {streak} days"
+                + focus_str + nudge_str
             )
 
         page_data = page_ctx.get('page_data', {})
@@ -653,17 +697,30 @@ class ChatbotService:
 
         elif page == 'cycle-mode':
             parts = []
-            if data.get('cycle_day'):
-                parts.append(f"Cycle day: {data['cycle_day']}")
-            if data.get('phase_name'):
-                parts.append(f"Phase: {data['phase_name']}")
-            if data.get('phase_description'):
-                parts.append(f"Phase guidance: {data['phase_description']}")
-            if data.get('is_period_day'):
-                parts.append("Currently on period")
-            np = data.get('next_period')
-            if np:
-                parts.append(f"Next period: {np.get('days_until', '?')} days away ({np.get('date', '')})")
+            mode = data.get('mode', 'cycle')
+            if mode == 'pregnancy':
+                parts.append("MODE: PREGNANCY (Motherhood Shield active)")
+                if data.get('weeks_pregnant') is not None:
+                    parts.append(f"Weeks pregnant: {data['weeks_pregnant']}")
+                if data.get('trimester'):
+                    parts.append(f"Trimester: {data['trimester']}")
+                if data.get('days_until_due') is not None:
+                    parts.append(f"Days until due date: {data['days_until_due']}")
+                if data.get('due_date'):
+                    parts.append(f"Due date: {data['due_date']}")
+            else:
+                parts.append("MODE: Cycle tracking")
+                if data.get('cycle_day'):
+                    parts.append(f"Cycle day: {data['cycle_day']}")
+                if data.get('phase_name'):
+                    parts.append(f"Phase: {data['phase_name']}")
+                if data.get('phase_description'):
+                    parts.append(f"Phase guidance: {data['phase_description']}")
+                if data.get('is_period_day'):
+                    parts.append("Currently on period")
+                np = data.get('next_period')
+                if np:
+                    parts.append(f"Next period: {np.get('days_until', '?')} days away ({np.get('date', '')})")
             if data.get('today_mood'):
                 parts.append(f"Today's logged mood: {data['today_mood']}")
             if data.get('today_flow'):
@@ -703,6 +760,28 @@ class ChatbotService:
                     )
             return f"[Calendar context: {'; '.join(parts)}]" if parts else ""
 
+        elif page == 'todos':
+            parts = []
+            if data.get('total_tasks') is not None:
+                parts.append(f"{data['total_tasks']} total tasks")
+            if data.get('pending_count') is not None:
+                parts.append(f"{data['pending_count']} pending")
+            if data.get('done_count') is not None:
+                parts.append(f"{data['done_count']} completed")
+            if data.get('today_count') is not None:
+                parts.append(f"{data['today_count']} due today")
+            if data.get('overdue_count') and data['overdue_count'] > 0:
+                parts.append(f"{data['overdue_count']} OVERDUE")
+            tasks = data.get('upcoming_tasks', [])
+            if tasks:
+                task_lines = []
+                for t in tasks[:5]:
+                    status = '✓' if t.get('completed') else '○'
+                    d = t.get('date', '')
+                    task_lines.append(f"  {status} \"{t.get('text', '')}\" (due: {d})")
+                parts.append("Upcoming tasks:\n" + "\n".join(task_lines))
+            return f"[Tasks context: {'; '.join(parts)}]" if parts else ""
+
         elif page == 'settings':
             parts = []
             if data.get('hydration_goal'):
@@ -729,6 +808,7 @@ class ChatbotService:
         page_replies = {
             'dashboard': ['Explain my score', 'How can I improve today?'],
             'journal': ['Give me a journaling prompt', 'Analyze my mood pattern'],
+            'todos': ['Help me prioritize', 'What should I do first?'],
             'reports': ['Explain my report', 'What should I focus on?'],
             'cycle-mode': ['Phase-specific advice', 'Help with my symptoms'],
             'calendar': ['Pre-meeting calm exercise', 'Meeting prep tips'],
@@ -759,8 +839,14 @@ class ChatbotService:
                 quick_replies=QUICK_REPLY_MAP['distress']
             )
 
+        if intent == 'wellness_check':
+            return self._handle_wellness_check(page_ctx, app_context)
+
         if intent == 'hydration':
             return self._handle_hydration_template(app_context)
+
+        if intent == 'todo':
+            return self._handle_todo_template(page_ctx, app_context)
 
         if intent == 'cycle':
             return self._handle_cycle_template(lower, page_ctx)
@@ -812,7 +898,7 @@ class ChatbotService:
         page_data = page_ctx.get('page_data', {})
         wellness = page_ctx.get('wellness_metrics', {})
 
-        if page == 'dashboard' and intent in ('help', 'greeting', 'general'):
+        if intent in ('help', 'greeting', 'general') and wellness.get('score'):
             score = wellness.get('score', 0)
             h_ml = wellness.get('hydration_ml', 0)
             h_goal = wellness.get('hydration_goal', 2000)
@@ -905,6 +991,25 @@ class ChatbotService:
                 msg += "\n\nWould you like some productivity tips or a wellness check?"
                 return self._build_response(msg, quick_replies=self._get_page_aware_quick_replies(intent, page_ctx))
 
+        if page == 'todos' and intent in ('help', 'greeting', 'general', 'productivity'):
+            pending = page_data.get('pending_count', 0)
+            done = page_data.get('done_count', 0)
+            overdue = page_data.get('overdue_count', 0)
+            today_count = page_data.get('today_count', 0)
+            tasks = page_data.get('upcoming_tasks', [])
+            msg = f"Looking at your tasks — you have **{pending} pending** and **{done} completed**. "
+            if overdue > 0:
+                msg += f"Heads up: **{overdue} task{'s are' if overdue > 1 else ' is'} overdue**. Want help prioritizing? "
+            elif today_count > 0:
+                msg += f"You have **{today_count} task{'s' if today_count > 1 else ''} due today**. "
+            if tasks:
+                pending_tasks = [t for t in tasks if not t.get('completed')]
+                if pending_tasks:
+                    first = pending_tasks[0]
+                    msg += f"\n\nYour top task: \"{first.get('text', '')}\" (due: {first.get('date', 'no date')}). "
+            msg += "\n\nWould you like help breaking down a task or prioritizing your list?"
+            return self._build_response(msg, quick_replies=self._get_page_aware_quick_replies(intent, page_ctx))
+
         if page == 'settings' and intent in ('help', 'greeting', 'general'):
             goal = page_data.get('hydration_goal', 2000)
             freq = page_data.get('nudge_frequency', 'balanced')
@@ -916,6 +1021,184 @@ class ChatbotService:
             return self._build_response(msg, quick_replies=self._get_page_aware_quick_replies(intent, page_ctx))
 
         return None
+
+    def _handle_wellness_check(self, page_ctx, app_context):
+        """Comprehensive wellness summary using ALL available data — works from any page."""
+        wellness = page_ctx.get('wellness_metrics', {})
+        all_pages = page_ctx.get('other_pages_data', {})
+        current_page_data = page_ctx.get('page_data', {})
+        current_page = page_ctx.get('current_page', '')
+
+        sections = []
+
+        # Dashboard / Wellness Metrics
+        score = wellness.get('score', 0)
+        mood = wellness.get('mood', '')
+        streak = wellness.get('streak_days', 0)
+        h_ml = wellness.get('hydration_ml', 0)
+        h_goal = wellness.get('hydration_goal', 2000)
+        breaks_t = wellness.get('breaks_taken', 0)
+        breaks_s = wellness.get('breaks_suggested', 6)
+        screen_h = wellness.get('screen_time_hours', 0)
+        stretches = wellness.get('self_care_stretches', 0)
+        eye_rest = wellness.get('self_care_eye_rest', 0)
+        focus = wellness.get('focus_sessions_count', wellness.get('focus_sessions', 0))
+
+        if score or mood:
+            header = f"Here's your full wellness snapshot right now:\n\n"
+            if score:
+                if score >= 70:
+                    header += f"**Wellness Score: {score}/100** — You're doing great today!"
+                elif score >= 40:
+                    header += f"**Wellness Score: {score}/100** — Decent, but there's room to boost it."
+                else:
+                    header += f"**Wellness Score: {score}/100** — Let's work on lifting this together."
+            if mood:
+                header += f"\n**Mood:** {mood}"
+            if streak:
+                header += f" | **Streak:** {streak} day{'s' if streak != 1 else ''}"
+            sections.append(header)
+
+        body_lines = []
+        if h_goal:
+            h_pct = round(h_ml / h_goal * 100) if h_goal else 0
+            emoji = '💧' if h_pct >= 50 else '⚠️'
+            body_lines.append(f"{emoji} **Hydration:** {h_ml}ml / {h_goal}ml ({h_pct}%)")
+        body_lines.append(f"☕ **Breaks:** {breaks_t} / {breaks_s} suggested")
+        if screen_h:
+            body_lines.append(f"🖥️ **Screen time:** {screen_h}h")
+        if focus:
+            body_lines.append(f"🎯 **Focus sessions:** {focus}")
+        if stretches or eye_rest:
+            body_lines.append(f"🧘 **Self-care:** {stretches} stretches, {eye_rest} eye rests")
+        if body_lines:
+            sections.append("\n".join(body_lines))
+
+        # Cycle / Pregnancy data
+        cycle_data = all_pages.get('cycle-mode', {})
+        if current_page == 'cycle-mode':
+            cycle_data = {**cycle_data, **current_page_data}
+        if cycle_data:
+            mode = cycle_data.get('mode', 'cycle')
+            if mode == 'pregnancy':
+                weeks = cycle_data.get('weeks_pregnant', '?')
+                tri = cycle_data.get('trimester', '?')
+                due_days = cycle_data.get('days_until_due', '?')
+                sections.append(f"🤰 **Pregnancy:** Week {weeks} (Trimester {tri}) — {due_days} days until due date")
+            else:
+                cd = cycle_data.get('cycle_day')
+                phase = cycle_data.get('phase_name', '')
+                if cd:
+                    line = f"🌸 **Cycle:** Day {cd} — {phase}"
+                    today_mood = cycle_data.get('today_mood')
+                    if today_mood:
+                        line += f" (mood: {today_mood})"
+                    sections.append(line)
+
+        # Tasks
+        todo_data = all_pages.get('todos', {})
+        if current_page == 'todos':
+            todo_data = {**todo_data, **current_page_data}
+        if todo_data:
+            pending = todo_data.get('pending_count', 0)
+            done = todo_data.get('done_count', 0)
+            overdue = todo_data.get('overdue_count', 0)
+            line = f"📋 **Tasks:** {pending} pending, {done} done"
+            if overdue:
+                line += f", **{overdue} overdue**"
+            sections.append(line)
+
+        # Journal
+        journal_data = all_pages.get('journal', {})
+        if current_page == 'journal':
+            journal_data = {**journal_data, **current_page_data}
+        if journal_data:
+            analysis = journal_data.get('latest_analysis')
+            if analysis:
+                emo = analysis.get('emotion', '')
+                sent = analysis.get('sentiment', '')
+                if emo:
+                    sections.append(f"📓 **Journal:** Latest emotion — {emo} ({sent})")
+
+        # Calendar
+        cal_data = all_pages.get('calendar', {})
+        if current_page == 'calendar':
+            cal_data = {**cal_data, **current_page_data}
+        if cal_data:
+            total = cal_data.get('total_meetings', 0)
+            free = cal_data.get('free_hours', '?')
+            if total:
+                sections.append(f"📅 **Calendar:** {total} meetings today, {free}h free")
+
+        # Suggestions
+        tips = []
+        if h_goal and h_ml / h_goal < 0.4:
+            tips.append("Grab a glass of water — you're below 40% hydration")
+        if breaks_t < 2:
+            tips.append("Take a short stretch break — your body will thank you")
+        if screen_h and screen_h > 5:
+            tips.append(f"You've been at the screen for {screen_h}h — consider a walk")
+        todo_overdue = todo_data.get('overdue_count', 0) if todo_data else 0
+        if todo_overdue:
+            tips.append(f"You have {todo_overdue} overdue task{'s' if todo_overdue > 1 else ''} — want help prioritizing?")
+
+        if tips:
+            sections.append("**Quick tips:**\n" + "\n".join(f"• {t}" for t in tips[:3]))
+
+        if not sections:
+            return self._build_response(
+                "I'd love to give you a full update, but I'm still loading your data. "
+                "Try navigating to the Dashboard first, then ask me again!",
+                quick_replies=['Take me to Dashboard', 'Wellness tips', 'I need support']
+            )
+
+        sections.append("\nAnything you'd like to dive deeper into?")
+        msg = "\n\n".join(sections)
+        return self._build_response(msg, quick_replies=QUICK_REPLY_MAP['wellness_check'])
+
+    def _handle_todo_template(self, page_ctx, app_context):
+        """Give a real summary of the user's tasks from any page."""
+        all_pages = page_ctx.get('other_pages_data', {})
+        current_page = page_ctx.get('current_page', '')
+        todo_data = all_pages.get('todos', {})
+        if current_page == 'todos':
+            todo_data = {**todo_data, **page_ctx.get('page_data', {})}
+
+        if not todo_data:
+            return self._build_response(
+                "I don't have your task data loaded yet — head over to the **Tasks** page and I'll be able to tell you everything about your to-dos!",
+                quick_replies=['Productivity tips', 'Help me focus', 'Wellness check']
+            )
+
+        pending = todo_data.get('pending_count', 0)
+        done = todo_data.get('done_count', 0)
+        overdue = todo_data.get('overdue_count', 0)
+        today_count = todo_data.get('today_count', 0)
+        tasks = todo_data.get('upcoming_tasks', [])
+
+        lines = [f"Here's your task overview:\n"]
+        lines.append(f"• **{pending} pending** | **{done} completed**")
+        if today_count:
+            lines.append(f"• **{today_count}** due today")
+        if overdue:
+            lines.append(f"• ⚠️ **{overdue} overdue** — let's tackle those first")
+
+        if tasks:
+            pending_tasks = [t for t in tasks if not t.get('completed')]
+            if pending_tasks:
+                lines.append("\n**Your top tasks:**")
+                for i, t in enumerate(pending_tasks[:3], 1):
+                    date = t.get('date', 'no date')
+                    lines.append(f"{i}. \"{t.get('text', '')}\" — due {date}")
+
+        if overdue:
+            lines.append("\nWant me to help you break these down into smaller steps?")
+        elif pending > 0:
+            lines.append("\nYou've got this! Want productivity tips or help prioritizing?")
+        else:
+            lines.append("\nAll caught up — that's awesome! Time for some self-care?")
+
+        return self._build_response("\n".join(lines), quick_replies=QUICK_REPLY_MAP['todo'])
 
     def _handle_hydration_template(self, app_context):
         page_ctx = app_context.get('page_context', {})
@@ -959,18 +1242,53 @@ class ChatbotService:
                        'Comfort food, gentle yoga, and rest are your best friends right now.'),
         }
 
+        # Gather cycle data from current page OR other pages
+        current_page = page_ctx.get('current_page', '')
+        cycle_data = {}
+        if current_page == 'cycle-mode':
+            cycle_data = page_ctx.get('page_data', {})
+        else:
+            other = page_ctx.get('other_pages_data', {})
+            cycle_data = other.get('cycle-mode', {})
+
+        # Pregnancy mode
+        if cycle_data.get('mode') == 'pregnancy':
+            weeks = cycle_data.get('weeks_pregnant', '?')
+            tri = cycle_data.get('trimester', '?')
+            due_days = cycle_data.get('days_until_due', '?')
+            msg = (
+                f"You're in **Pregnancy Mode** — Week **{weeks}** (Trimester {tri}), "
+                f"with **{due_days} days** until your due date.\n\n"
+            )
+            if tri == 1:
+                msg += "First trimester can be tough with nausea and fatigue. Go easy on yourself — small, frequent meals and extra rest are your best friends right now."
+            elif tri == 2:
+                msg += "The golden trimester! Energy is usually better now. Great time for gentle exercise and getting things organized."
+            else:
+                msg += "You're in the home stretch! Your body is working incredibly hard. Delegate freely, take breaks every 30 minutes, and prioritize side-lying rest."
+            return self._build_response(msg, quick_replies=['Pregnancy tips', 'How am I doing?', 'Self-care ideas'])
+
+        # If we have actual cycle data, use it with the phase-specific advice
+        if cycle_data.get('cycle_day') and cycle_data.get('phase_name'):
+            cd = cycle_data['cycle_day']
+            phase_name = cycle_data['phase_name'].lower()
+            today_mood = cycle_data.get('today_mood', '')
+            today_symptoms = cycle_data.get('today_symptoms', [])
+
+            for phase_key in phases:
+                if phase_key in phase_name or (phase_key == 'menstrual' and ('period' in phase_name or 'rest' in phase_name)):
+                    prefix = f"You're on **day {cd}** of your cycle"
+                    if today_mood:
+                        prefix += f" and your mood today is **{today_mood}**"
+                    prefix += ". "
+                    if today_symptoms:
+                        prefix += f"I see you're experiencing: {', '.join(today_symptoms)}. "
+                    return self._build_response(prefix + "\n\n" + phases[phase_key], quick_replies=QUICK_REPLY_MAP['cycle'])
+
+        # User mentioned a specific phase keyword
         for phase, resp in phases.items():
             if phase in message or (phase == 'menstrual' and any(w in message for w in ['period', 'cramp', 'flow'])):
                 return self._build_response(resp, quick_replies=QUICK_REPLY_MAP['cycle'])
-
-        page_data = page_ctx.get('page_data', {})
-        if page_data.get('cycle_day') and page_data.get('phase_name'):
-            cd = page_data['cycle_day']
-            phase_name = page_data['phase_name'].lower()
-            for phase_key in phases:
-                if phase_key in phase_name or (phase_key == 'menstrual' and 'period' in phase_name):
-                    prefix = f"You're on **day {cd}** of your cycle. "
-                    return self._build_response(prefix + phases[phase_key], quick_replies=QUICK_REPLY_MAP['cycle'])
 
         return self._build_response(
             random.choice(FALLBACK_TEMPLATES['cycle']),
