@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
-import { HiOutlineUser, HiOutlineBell, HiOutlineShieldCheck, HiOutlineColorSwatch, HiOutlineLogout } from 'react-icons/hi';
+import { HiOutlineUser, HiOutlineBell, HiOutlineShieldCheck, HiOutlineColorSwatch, HiOutlineLogout, HiOutlineMoon } from 'react-icons/hi';
 import { saveAppSettings, APP_SETTINGS_KEY } from '../services/mealReminders';
+import { settingsAPI } from '../services/api';
 import { loadEyeRestConfig, saveEyeRestConfig, restartEyeRestScheduler } from '../services/eyeRestReminder';
 import MealReminderSettings from '../components/Settings/MealReminderSettings';
 import { usePageContext } from '../context/PageContext';
+import { useTheme } from '../context/ThemeContext';
 
 const DEFAULT_APP_SETTINGS = {
   notifications: true,
@@ -15,7 +17,6 @@ const DEFAULT_APP_SETTINGS = {
   hydrationGoalMl: 2000,
   cycleModeEnabled: true,
   dataSharing: false,
-  darkMode: true,
 };
 
 function loadStoredAppSettings() {
@@ -33,7 +34,11 @@ function ToggleSwitch({ enabled, onChange, label }) {
       aria-checked={enabled}
       aria-label={label}
       onClick={() => onChange(!enabled)}
+<<<<<<< HEAD
       className={`w-10 h-5.5 rounded-full p-0.5 transition-colors focus:outline-none focus:ring-2 focus:ring-violet-300 ${enabled ? 'bg-violet-600' : 'bg-slate-200'}`}
+=======
+      className={`w-10 h-[22px] rounded-full p-0.5 transition-colors focus:outline-none focus:ring-2 focus:ring-helix-accent/50 ${enabled ? 'bg-helix-accent' : 'bg-helix-border'}`}
+>>>>>>> 9aa662e (Add middleware, calendar providers, theme support, and UI improvement)
     >
       <div className={`w-4 h-4 rounded-full bg-white transition-transform ${enabled ? 'translate-x-5' : 'translate-x-0'}`} />
     </button>
@@ -69,11 +74,55 @@ function SettingRow({ label, description, children }) {
 export default function Settings() {
   const { user, signOut } = useAuth();
   const { updatePageContext } = usePageContext();
+  const { isDark, toggleTheme } = useTheme();
   const [settings, setSettings] = useState(() => ({
     ...DEFAULT_APP_SETTINGS,
     ...loadStoredAppSettings(),
   }));
   const [eyeRestCfg, setEyeRestCfg] = useState(loadEyeRestConfig);
+  const syncTimer = useRef(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    settingsAPI.get()
+      .then(({ data }) => {
+        if (!cancelled && data && typeof data === 'object') {
+          const merged = { ...DEFAULT_APP_SETTINGS, ...data };
+          const frontend = {
+            notifications: merged.notifications ?? DEFAULT_APP_SETTINGS.notifications,
+            desktopNotifs: merged.desktop_notifs ?? merged.desktopNotifs ?? DEFAULT_APP_SETTINGS.desktopNotifs,
+            soundEnabled: merged.sound_enabled ?? merged.soundEnabled ?? DEFAULT_APP_SETTINGS.soundEnabled,
+            nudgeFrequency: merged.nudge_frequency ?? merged.nudgeFrequency ?? DEFAULT_APP_SETTINGS.nudgeFrequency,
+            hydrationGoalMl: merged.hydration_goal_ml ?? merged.hydrationGoalMl ?? DEFAULT_APP_SETTINGS.hydrationGoalMl,
+            cycleModeEnabled: merged.cycle_mode_enabled ?? merged.cycleModeEnabled ?? DEFAULT_APP_SETTINGS.cycleModeEnabled,
+            dataSharing: merged.data_sharing ?? merged.dataSharing ?? DEFAULT_APP_SETTINGS.dataSharing,
+          };
+          setSettings(frontend);
+          saveAppSettings(frontend);
+        }
+      })
+      .catch(() => { /* keep localStorage values on failure */ });
+    return () => { cancelled = true; };
+  }, []);
+
+  const syncToBackend = useCallback((next) => {
+    if (syncTimer.current) clearTimeout(syncTimer.current);
+    syncTimer.current = setTimeout(() => {
+      const payload = {
+        notifications: next.notifications,
+        desktop_notifs: next.desktopNotifs,
+        sound_enabled: next.soundEnabled,
+        nudge_frequency: next.nudgeFrequency,
+        hydration_goal_ml: next.hydrationGoalMl,
+        cycle_mode_enabled: next.cycleModeEnabled,
+        data_sharing: next.dataSharing,
+      };
+      settingsAPI.update(payload)
+        .catch(() => {
+          toast.error('Settings saved locally but couldn\u2019t sync to server', { id: 'sync-error' });
+        });
+    }, 600);
+  }, []);
 
   useEffect(() => {
     updatePageContext('settings', {
@@ -84,19 +133,20 @@ export default function Settings() {
       hydration_goal: settings.hydrationGoalMl,
       cycle_mode_enabled: settings.cycleModeEnabled,
       data_sharing: settings.dataSharing,
-      dark_mode: settings.darkMode,
+      dark_mode: isDark,
       eye_rest_enabled: eyeRestCfg.enabled,
       eye_rest_interval: eyeRestCfg.intervalMinutes,
     });
-  }, [settings, eyeRestCfg, updatePageContext]);
+  }, [settings, eyeRestCfg, isDark, updatePageContext]);
 
   const update = (key, val) => {
     setSettings((prev) => {
       const next = { ...prev, [key]: val };
       saveAppSettings(next);
+      syncToBackend(next);
       return next;
     });
-    toast.success('Setting saved');
+    toast.success('Setting saved', { id: 'setting-saved' });
   };
 
   return (
@@ -137,13 +187,13 @@ export default function Settings() {
 
       <SettingsSection icon={HiOutlineBell} title="Notifications">
         <SettingRow label="Enable Notifications" description="Receive wellness nudges throughout the day">
-          <ToggleSwitch enabled={settings.notifications} onChange={v => update('notifications', v)} />
+          <ToggleSwitch enabled={settings.notifications} onChange={v => update('notifications', v)} label="Toggle notifications" />
         </SettingRow>
         <SettingRow label="Desktop Notifications" description="Show system-level notification popups">
-          <ToggleSwitch enabled={settings.desktopNotifs} onChange={v => update('desktopNotifs', v)} />
+          <ToggleSwitch enabled={settings.desktopNotifs} onChange={v => update('desktopNotifs', v)} label="Toggle desktop notifications" />
         </SettingRow>
         <SettingRow label="Sound Effects" description="Play gentle sounds with nudges">
-          <ToggleSwitch enabled={settings.soundEnabled} onChange={v => update('soundEnabled', v)} />
+          <ToggleSwitch enabled={settings.soundEnabled} onChange={v => update('soundEnabled', v)} label="Toggle sound effects" />
         </SettingRow>
         <SettingRow label="Nudge Frequency">
           <select
@@ -162,12 +212,14 @@ export default function Settings() {
         <div className="border-t border-slate-200/20 pt-4 mt-2">
           <SettingRow label="Eye Rest Reminders (20-20-20)" description="Get reminded to look away from screen periodically">
             <ToggleSwitch
+              label="Toggle eye rest reminders"
               enabled={eyeRestCfg.enabled}
               onChange={(v) => {
                 const next = { ...eyeRestCfg, enabled: v };
                 setEyeRestCfg(next);
                 saveEyeRestConfig(next);
                 restartEyeRestScheduler();
+                toast.success(v ? 'Eye rest reminders enabled' : 'Eye rest reminders disabled', { id: 'eye-rest-toggle' });
               }}
             />
           </SettingRow>
@@ -180,6 +232,7 @@ export default function Settings() {
                     setEyeRestCfg(next);
                     saveEyeRestConfig(next);
                     restartEyeRestScheduler();
+                    toast.success(`Eye rest interval: ${next.intervalMinutes} min`, { id: 'eye-rest-interval' });
                   }}
                   className="w-7 h-7 rounded-lg bg-slate-50 text-slate-500 hover:text-slate-800 transition-colors flex items-center justify-center"
                 >-</button>
@@ -190,6 +243,7 @@ export default function Settings() {
                     setEyeRestCfg(next);
                     saveEyeRestConfig(next);
                     restartEyeRestScheduler();
+                    toast.success(`Eye rest interval: ${next.intervalMinutes} min`, { id: 'eye-rest-interval' });
                   }}
                   className="w-7 h-7 rounded-lg bg-slate-50 text-slate-500 hover:text-slate-800 transition-colors flex items-center justify-center"
                 >+</button>
@@ -210,13 +264,19 @@ export default function Settings() {
           </div>
         </SettingRow>
         <SettingRow label="Cycle Energy Mode" description="Adjust suggestions based on menstrual cycle phase">
-          <ToggleSwitch enabled={settings.cycleModeEnabled} onChange={v => update('cycleModeEnabled', v)} />
+          <ToggleSwitch enabled={settings.cycleModeEnabled} onChange={v => update('cycleModeEnabled', v)} label="Toggle cycle energy mode" />
+        </SettingRow>
+      </SettingsSection>
+
+      <SettingsSection icon={HiOutlineMoon} title="Appearance">
+        <SettingRow label="Dark Mode" description="Switch between dark and light interface">
+          <ToggleSwitch enabled={isDark} onChange={toggleTheme} label="Toggle dark mode" />
         </SettingRow>
       </SettingsSection>
 
       <SettingsSection icon={HiOutlineShieldCheck} title="Privacy">
         <SettingRow label="Data Sharing" description="Share anonymized wellness data for product improvement">
-          <ToggleSwitch enabled={settings.dataSharing} onChange={v => update('dataSharing', v)} />
+          <ToggleSwitch enabled={settings.dataSharing} onChange={v => update('dataSharing', v)} label="Toggle data sharing" />
         </SettingRow>
         <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
           <p className="text-xs text-emerald-600 font-medium mb-1">Your Data is Safe</p>

@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from app.services.firebase_service import log_selfcare_action, get_selfcare_today
+from app.middleware import require_auth
 
 selfcare_bp = Blueprint('selfcare', __name__)
 
@@ -7,9 +8,10 @@ DAILY_GOALS = {'stretch': 25, 'eye_rest': 30}
 
 
 @selfcare_bp.route('/log', methods=['POST'])
+@require_auth
 def log_action():
     data = request.get_json(silent=True) or {}
-    user_id = data.get('user_id', 'demo-user-001')
+    user_id = request.uid
     action = data.get('action')
 
     if action not in ('stretch', 'eye_rest'):
@@ -27,8 +29,9 @@ def log_action():
 
 
 @selfcare_bp.route('/today', methods=['GET'])
+@require_auth
 def get_today():
-    user_id = request.args.get('user_id', 'demo-user-001')
+    user_id = request.uid
     counts = get_selfcare_today(user_id)
     return jsonify({
         'counts': counts,

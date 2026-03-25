@@ -240,7 +240,6 @@ let _started = false;
 export function startMealReminderScheduler(intervalMs = 30000) {
   if (_intervalId) clearInterval(_intervalId);
 
-  clearTodayFires();
   console.log('[Helix] Meal reminder scheduler started');
 
   _started = true;

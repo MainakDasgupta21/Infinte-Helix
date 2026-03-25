@@ -2,13 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { HiOutlineClipboardList, HiOutlinePlus, HiOutlineTrash, HiOutlineClock } from 'react-icons/hi';
 import { todoAPI } from '../../services/api';
-import { useAuth } from '../../context/AuthContext';
 import { checkTodoReminders } from '../../services/todoReminder';
 
 export default function TodayTasks() {
-  const { user } = useAuth();
-  const userId = user?.uid || null;
-
   const [todos, setTodos] = useState([]);
   const [text, setText] = useState('');
   const [remindAt, setRemindAt] = useState('');
@@ -16,12 +12,12 @@ export default function TodayTasks() {
 
   const fetchTodos = useCallback(async () => {
     try {
-      const res = await todoAPI.getToday(userId);
+      const res = await todoAPI.getToday();
       const list = res.data?.todos || [];
       setTodos(list);
       checkTodoReminders(list);
     } catch { /* offline */ }
-  }, [userId]);
+  }, []);
 
   useEffect(() => {
     fetchTodos();
@@ -33,7 +29,7 @@ export default function TodayTasks() {
     const trimmed = text.trim();
     if (!trimmed) return;
     try {
-      const res = await todoAPI.create(trimmed, remindAt || null, userId);
+      const res = await todoAPI.create(trimmed, remindAt || null);
       const newTodo = res.data?.todo;
       if (newTodo) {
         setTodos(prev => [...prev, newTodo]);
@@ -50,14 +46,14 @@ export default function TodayTasks() {
   const handleToggle = async (todoId) => {
     setTodos(prev => prev.map(t => t.id === todoId ? { ...t, completed: !t.completed } : t));
     try {
-      await todoAPI.toggle(todoId, userId);
+      await todoAPI.toggle(todoId);
     } catch { /* offline */ }
   };
 
   const handleDelete = async (todoId) => {
     setTodos(prev => prev.filter(t => t.id !== todoId));
     try {
-      await todoAPI.remove(todoId, userId);
+      await todoAPI.remove(todoId);
     } catch { /* offline */ }
   };
 

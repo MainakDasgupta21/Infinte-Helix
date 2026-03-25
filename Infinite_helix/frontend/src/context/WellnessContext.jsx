@@ -24,7 +24,6 @@ const INITIAL_METRICS = {
 
 export function WellnessProvider({ children }) {
   const { user } = useAuth();
-  const userId = user?.uid || null;
   const [todayMetrics, setTodayMetrics] = useState(INITIAL_METRICS);
   const [screenHistory, setScreenHistory] = useState([]);
   const [nudges, setNudges] = useState([]);
@@ -36,7 +35,7 @@ export function WellnessProvider({ children }) {
 
   const fetchDashboard = useCallback(async () => {
     try {
-      const res = await dashboardAPI.getToday(userId);
+      const res = await dashboardAPI.getToday();
       const d = res.data;
       setTodayMetrics({
         screenTime: d.screenTime || INITIAL_METRICS.screenTime,
@@ -65,7 +64,7 @@ export function WellnessProvider({ children }) {
         setDashboardLoading(false);
       }
     }
-  }, [userId]);
+  }, [user]);
 
   const refreshMetrics = useCallback(() => {
     fetchDashboard();
@@ -73,17 +72,17 @@ export function WellnessProvider({ children }) {
 
   const fetchScreenHistory = useCallback(async (days = 7) => {
     try {
-      const res = await dashboardAPI.getScreenHistory(userId, days);
+      const res = await dashboardAPI.getScreenHistory(days);
       setScreenHistory(res.data?.history || []);
     } catch {
       setScreenHistory([]);
     }
-  }, [userId]);
+  }, []);
 
   const addHydration = useCallback(async (amount_ml) => {
     const ml = amount_ml || 250;
     try {
-      await hydrationAPI.log(ml, userId);
+      await hydrationAPI.log(ml);
       toast.success(`+${ml} ml logged \u{1F4A7}`);
     } catch {
       toast.success(`+${ml} ml logged (offline)`);
@@ -95,13 +94,13 @@ export function WellnessProvider({ children }) {
         ml_today: prev.hydration.ml_today + ml,
       },
     }));
-  }, [userId]);
+  }, []);
 
   const logSelfCare = useCallback(async (action) => {
     const label = action === 'stretch' ? 'Stretch break' : 'Eye rest';
     const emoji = action === 'stretch' ? '\u{1F9D8}' : '\u{1F441}\uFE0F';
     try {
-      await selfCareAPI.log(action, userId);
+      await selfCareAPI.log(action);
       toast.success(`${label} logged ${emoji}`);
     } catch {
       toast.success(`${label} logged (offline)`);
@@ -113,7 +112,7 @@ export function WellnessProvider({ children }) {
         [action]: (prev.selfCare[action] || 0) + 1,
       },
     }));
-  }, [userId]);
+  }, []);
 
   const dismissNudge = useCallback(async (id) => {
     setNudges(prev => prev.map(n => n.id === id ? { ...n, dismissed: true } : n));

@@ -1,9 +1,11 @@
 from flask import Blueprint, request, jsonify, current_app
+from app.middleware import require_auth
 
 sentiment_bp = Blueprint('sentiment', __name__)
 
 
 @sentiment_bp.route('/analyze', methods=['POST'])
+@require_auth
 def analyze_sentiment():
     data = request.get_json()
     text = data.get('text', '')

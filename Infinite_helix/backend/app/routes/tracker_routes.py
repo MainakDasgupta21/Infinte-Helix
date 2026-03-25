@@ -1,11 +1,13 @@
 from flask import Blueprint, jsonify
 from app.tracker.screen_tracker import screen_tracker
+from app.middleware import require_auth
 import app as app_module
 
 tracker_bp = Blueprint('tracker', __name__)
 
 
 @tracker_bp.route('/status', methods=['GET'])
+@require_auth
 def get_status():
     screen_data = screen_tracker.get_screen_time()
     system_data = screen_tracker.get_system_stats()
@@ -30,6 +32,7 @@ def get_status():
 
 
 @tracker_bp.route('/start', methods=['POST'])
+@require_auth
 def start_tracker():
     monitor = app_module.activity_monitor
     if monitor and not monitor._running:
@@ -40,6 +43,7 @@ def start_tracker():
 
 
 @tracker_bp.route('/stop', methods=['POST'])
+@require_auth
 def stop_tracker():
     monitor = app_module.activity_monitor
     if monitor:

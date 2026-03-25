@@ -4,6 +4,8 @@ from app.services.firebase_service import (
     get_hydration_today, get_activity_streak, get_mood_logs_for_period,
     save_screen_time, get_screen_time_history, get_selfcare_today,
 )
+from app.services.settings_service import get_user_settings
+from app.middleware import require_auth
 import app as app_module
 import time
 from datetime import datetime, timedelta
@@ -12,8 +14,9 @@ dashboard_bp = Blueprint('dashboard', __name__)
 
 
 @dashboard_bp.route('/today', methods=['GET'])
+@require_auth
 def get_today():
-    user_id = request.args.get('user_id', 'demo-user-001')
+    user_id = request.uid
 
     screen_data = screen_tracker.get_screen_time(user_id)
     save_screen_time(user_id, screen_tracker.get_snapshot_for_save(user_id))
@@ -26,13 +29,16 @@ def get_today():
     except Exception:
         ml_today = 0
 
+    settings = get_user_settings(user_id)
+    hydration_goal = settings.get('hydration_goal_ml', 2000)
+
     continuous = activity.get('continuous_work_minutes', 0)
     typing = activity.get('typing_intensity', 0)
     session_min = activity.get('session_duration_minutes', 0)
 
     focus_score = min(100, int(50 + typing * 0.3 + min(continuous, 90) * 0.2))
     breaks_taken = max(1, int(session_min / 60)) if session_min > 30 else 0
-    score = _calculate_wellness_score(focus_score, breaks_taken, ml_today, continuous)
+    score = _calculate_wellness_score(focus_score, breaks_taken, ml_today, continuous, hydration_goal)
 
     breakdown = screen_data.get('breakdown', {})
 
@@ -74,7 +80,7 @@ def get_today():
         },
         'hydration': {
             'ml_today': ml_today,
-            'goal_ml': 2000,
+            'goal_ml': hydration_goal,
             'default_amount_ml': 250,
         },
         'score': score,
@@ -140,18 +146,19 @@ def _get_current_mood(user_id, typing_intensity):
     return 'focused' if typing_intensity > 30 else 'neutral'
 
 
-def _calculate_wellness_score(focus, breaks, ml_today, continuous):
+def _calculate_wellness_score(focus, breaks, ml_today, continuous, hydration_goal=2000):
     focus_norm = min(focus, 100) * 0.25
     break_norm = min(breaks / 6, 1.0) * 100 * 0.20
-    hydration_norm = min(ml_today / 2000, 1.0) * 100 * 0.20
+    hydration_norm = min(ml_today / max(hydration_goal, 1), 1.0) * 100 * 0.20
     overwork_penalty = max(0, continuous - 120) * 0.15
     base = focus_norm + break_norm + hydration_norm + 35 - overwork_penalty
     return max(10, min(100, int(base)))
 
 
 @dashboard_bp.route('/screen-history', methods=['GET'])
+@require_auth
 def get_screen_history():
-    user_id = request.args.get('user_id', 'demo-user-001')
+    user_id = request.uid
     days = request.args.get('days', 7, type=int)
     days = max(1, min(days, 30))
 

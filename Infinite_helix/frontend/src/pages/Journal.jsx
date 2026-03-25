@@ -17,7 +17,7 @@ export default function Journal() {
 
   const fetchEntries = useCallback(async () => {
     try {
-      const res = await journalAPI.list({ user_id: user?.uid || 'demo-user-001', limit: 10 });
+      const res = await journalAPI.list({ limit: 10 });
       if (Array.isArray(res.data)) {
         setEntries(res.data);
       }
@@ -55,7 +55,7 @@ export default function Journal() {
     setSubmitError(null);
 
     try {
-      const res = await journalAPI.create({ text, user_id: user?.uid || 'demo-user-001' });
+      const res = await journalAPI.create({ text });
       if (res.data) {
         setAnalysis({
           emotion: res.data.emotion,

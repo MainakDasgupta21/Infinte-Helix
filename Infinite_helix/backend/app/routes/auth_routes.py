@@ -1,42 +1,9 @@
 from flask import Blueprint, request, jsonify
-from functools import wraps
 from datetime import datetime
 
+from app.middleware import require_auth, _verify_firebase_token
+
 auth_bp = Blueprint('auth', __name__)
-
-_users_store = {}
-
-
-def _verify_firebase_token(id_token):
-    """Verify Firebase ID token. Returns decoded claims or None."""
-    try:
-        from app.services.firebase_service import init_firebase
-        init_firebase()
-        import firebase_admin.auth as fb_auth
-        return fb_auth.verify_id_token(id_token)
-    except Exception:
-        return None
-
-
-def require_auth(f):
-    """Decorator that extracts and verifies the Firebase Bearer token."""
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        header = request.headers.get('Authorization', '')
-        if not header.startswith('Bearer '):
-            return jsonify({'error': 'Missing authorization token'}), 401
-
-        token = header.split('Bearer ')[1]
-        claims = _verify_firebase_token(token)
-
-        if claims is None:
-            return jsonify({'error': 'Invalid or expired token'}), 401
-
-        request.uid = claims.get('uid')
-        request.email = claims.get('email')
-        request.auth_claims = claims
-        return f(*args, **kwargs)
-    return decorated
 
 
 @auth_bp.route('/register', methods=['POST'])
@@ -163,7 +130,8 @@ def _save_user(uid, user_doc):
     if db:
         db.collection('users').document(uid).set(user_doc, merge=True)
     else:
-        _users_store[uid] = user_doc
+        from app.services.local_store import get_local_store
+        get_local_store().upsert('users', uid, user_doc)
 
 
 def _get_user(uid):
@@ -172,4 +140,5 @@ def _get_user(uid):
     if db:
         doc = db.collection('users').document(uid).get()
         return doc.to_dict() if doc.exists else None
-    return _users_store.get(uid)
+    from app.services.local_store import get_local_store
+    return get_local_store().get_by_id('users', uid)

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { auth } from './firebase';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
@@ -6,6 +7,19 @@ const api = axios.create({
   baseURL: API_URL,
   timeout: 15000,
   headers: { 'Content-Type': 'application/json' },
+});
+
+api.interceptors.request.use(async (config) => {
+  try {
+    const currentUser = auth?.currentUser;
+    if (currentUser) {
+      const token = await currentUser.getIdToken();
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  } catch {
+    // token retrieval failed — proceed without auth
+  }
+  return config;
 });
 
 api.interceptors.response.use(
@@ -35,9 +49,9 @@ export const sentimentAPI = {
 };
 
 export const dashboardAPI = {
-  getToday: (userId) => api.get('/dashboard/today', userId ? { params: { user_id: userId } } : undefined),
-  getScreenHistory: (userId, days = 7) =>
-    api.get('/dashboard/screen-history', { params: { ...(userId && { user_id: userId }), days } }),
+  getToday: () => api.get('/dashboard/today'),
+  getScreenHistory: (days = 7) =>
+    api.get('/dashboard/screen-history', { params: { days } }),
 };
 
 export const journalAPI = {
@@ -47,7 +61,7 @@ export const journalAPI = {
 };
 
 export const reportsAPI = {
-  getWeekly: (userId) => api.get('/reports/weekly', userId ? { params: { user_id: userId } } : undefined),
+  getWeekly: () => api.get('/reports/weekly'),
 };
 
 export const trackerAPI = {
@@ -65,16 +79,19 @@ export const calendarAPI = {
   getMeetings: () => api.get('/calendar/meetings'),
   getNext: () => api.get('/calendar/next'),
   getStatus: () => api.get('/calendar/status'),
-  authorize: () => api.get('/calendar/authorize'),
-  disconnect: () => api.post('/calendar/disconnect'),
+  authorize: (provider = 'microsoft') =>
+    api.get('/calendar/authorize', { params: { provider } }),
+  disconnect: (provider = 'microsoft') =>
+    api.post('/calendar/disconnect', { provider }),
+  createEvent: (event) => api.post('/calendar/events', event),
 };
 
 export const chatAPI = {
-  sendMessage: (message, user_id, page_context) =>
-    api.post('/chat/message', { message, user_id, page_context }),
-  getHistory: (user_id, limit) => api.get('/chat/history', { params: { user_id, limit } }),
-  clearHistory: (user_id) => api.delete('/chat/history', { data: { user_id } }),
-  getQuickReplies: (user_id) => api.get('/chat/quick-replies', { params: { user_id } }),
+  sendMessage: (message, page_context) =>
+    api.post('/chat/message', { message, page_context }),
+  getHistory: (limit) => api.get('/chat/history', { params: { limit } }),
+  clearHistory: () => api.delete('/chat/history'),
+  getQuickReplies: () => api.get('/chat/quick-replies'),
 };
 
 export const cycleAPI = {
@@ -83,16 +100,17 @@ export const cycleAPI = {
 };
 
 export const hydrationAPI = {
-  log: (amount_ml = 250, userId) => api.post('/hydration/log', { amount_ml, ...(userId && { user_id: userId }) }),
-  getToday: (userId) => api.get('/hydration/today', userId ? { params: { user_id: userId } } : undefined),
+  log: (amount_ml = 250) => api.post('/hydration/log', { amount_ml }),
+  getToday: () => api.get('/hydration/today'),
 };
 
 export const selfCareAPI = {
-  log: (action, userId) => api.post('/selfcare/log', { action, ...(userId && { user_id: userId }) }),
-  getToday: (userId) => api.get('/selfcare/today', userId ? { params: { user_id: userId } } : undefined),
+  log: (action) => api.post('/selfcare/log', { action }),
+  getToday: () => api.get('/selfcare/today'),
 };
 
 export const todoAPI = {
+<<<<<<< HEAD
   create: (text, remindAt, userId, date, category) =>
     api.post('/todos', { text, remind_at: remindAt || null, date: date || null, category: category || 'work', ...(userId && { user_id: userId }) }),
   getToday: (userId) =>
@@ -107,14 +125,26 @@ export const todoAPI = {
     api.post(`/todos/${todoId}/toggle`, { ...(userId && { user_id: userId }) }),
   remove: (todoId, userId) =>
     api.delete(`/todos/${todoId}`, { data: { ...(userId && { user_id: userId }) } }),
+=======
+  create: (text, remindAt) =>
+    api.post('/todos', { text, remind_at: remindAt || null }),
+  getToday: () => api.get('/todos/today'),
+  toggle: (todoId) => api.post(`/todos/${todoId}/toggle`),
+  remove: (todoId) => api.delete(`/todos/${todoId}`),
+};
+
+export const settingsAPI = {
+  get: () => api.get('/user/settings'),
+  update: (settings) => api.put('/user/settings', { settings }),
+>>>>>>> 9aa662e (Add middleware, calendar providers, theme support, and UI improvement)
 };
 
 export const privateCareAPI = {
-  log: (type, note, userId) => api.post('/privatecare/log', { type, note, ...(userId && { user_id: userId }) }),
-  getHistory: (userId, days = 90) =>
-    api.get('/privatecare/history', { params: { ...(userId && { user_id: userId }), days } }),
-  getPeriodHistory: (userId, start, end) =>
-    api.get('/privatecare/period-history', { params: { ...(userId && { user_id: userId }), start, end } }),
+  log: (type, note) => api.post('/privatecare/log', { type, note }),
+  getHistory: (days = 90) =>
+    api.get('/privatecare/history', { params: { days } }),
+  getPeriodHistory: (start, end) =>
+    api.get('/privatecare/period-history', { params: { start, end } }),
 };
 
 export default api;

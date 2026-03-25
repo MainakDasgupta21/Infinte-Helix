@@ -1,30 +1,15 @@
 from flask import Blueprint, request, jsonify
-from app.models.user import default_user
 from app.services.firebase_service import get_db
+from app.services.settings_service import get_user_settings
+from app.middleware import require_auth
 
 user_bp = Blueprint('user', __name__)
 
-_user_settings_cache = {}
-
-
-def _load_settings(user_id):
-    """Load settings from Firestore, falling back to in-memory cache then defaults."""
-    db = get_db()
-    if db:
-        try:
-            doc = db.collection('users').document(user_id).get()
-            if doc.exists:
-                return doc.to_dict().get('settings', {})
-        except Exception:
-            pass
-    if user_id in _user_settings_cache:
-        return _user_settings_cache[user_id]
-    return default_user(user_id, 'User', '')['settings']
-
 
 def _save_settings(user_id, settings):
-    """Save settings to Firestore and in-memory cache."""
-    _user_settings_cache[user_id] = settings
+    """Save settings to Firestore and local SQLite."""
+    from app.services.local_store import get_local_store
+    get_local_store().upsert('user_settings', user_id, settings)
     db = get_db()
     if db:
         try:
@@ -36,22 +21,27 @@ def _save_settings(user_id, settings):
 
 
 @user_bp.route('/settings', methods=['GET'])
+@require_auth
 def get_settings():
-    user_id = request.args.get('user_id', 'demo-user-001')
-    return jsonify(_load_settings(user_id))
+    user_id = request.uid
+    return jsonify(get_user_settings(user_id))
 
 
 @user_bp.route('/settings', methods=['PUT'])
+@require_auth
 def update_settings():
-    user_id = request.get_json().get('user_id', 'demo-user-001')
-    settings = request.get_json().get('settings', {})
-    _save_settings(user_id, settings)
-    return jsonify({'status': 'updated', 'settings': settings})
+    user_id = request.uid
+    incoming = request.get_json().get('settings', {})
+    existing = get_user_settings(user_id)
+    merged = {**existing, **incoming}
+    _save_settings(user_id, merged)
+    return jsonify({'status': 'updated', 'settings': merged})
 
 
 @user_bp.route('/profile', methods=['GET'])
+@require_auth
 def get_profile():
-    user_id = request.args.get('user_id', 'demo-user-001')
+    user_id = request.uid
     db = get_db()
     if db:
         try:

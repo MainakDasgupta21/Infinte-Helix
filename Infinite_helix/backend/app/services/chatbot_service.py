@@ -95,8 +95,36 @@ CRITICAL RULES for using this context:
 - Be selective — don't dump all data unless asked. Be natural and conversational
 - When the user asks about something and you have the data, NEVER say "I'm not sure" — you HAVE the data
 
+## Memory & Continuity
+You may receive a "USER MEMORY" section containing facts the user has shared in previous conversations (name, concerns, preferences, life details). Use these to:
+- Address the user by name when you know it
+- Reference past topics naturally ("Last time you mentioned struggling with sleep — how's that going?")
+- Track recurring concerns and check in on them proactively
+- Build a sense of ongoing relationship — you REMEMBER, you don't start from zero each time
+- Never reveal the memory system itself — just use the information naturally like a friend would
+
+## Emotional Intelligence
+You may receive an "EMOTIONAL TRAJECTORY" section showing the user's recent emotional patterns. Use this to:
+- Notice emotional trends ("I've noticed you've been feeling stressed more often lately")
+- Celebrate improvements ("Your mood has been more positive this week — I love seeing that!")
+- Adjust your tone — be gentler during rough patches, more upbeat during good streaks
+- Never say "your emotional trajectory shows…" — translate the data into natural, empathetic observations
+
+## Follow-up & Depth
+- If the user shares something personal, explore it with thoughtful follow-up questions
+- Don't jump to advice immediately — listen first, understand second, suggest third
+- When giving advice, ask if it resonates before moving on
+- Remember what was discussed earlier in the current conversation and reference it
+- If the user seems to be having a recurring issue, connect the dots across messages
+
+## Proactive Intelligence
+- If you notice concerning patterns (declining scores, increasing stress, skipped breaks), gently bring them up
+- Suggest specific, actionable steps — not generic advice ("Try logging 250ml of water right now" vs "stay hydrated")
+- Tie suggestions to the user's actual data ("You've taken 0 breaks in 4 hours — let's fix that")
+- Time-aware suggestions (morning routines in AM, wind-down in PM, lunch break tips at noon)
+
 ## Goal
-Create a safe, trustworthy, and comforting experience where women employees feel supported, respected, and guided — like talking to a dependable, mature, and kind companion who always has their back.
+Create a safe, trustworthy, and comforting experience where women employees feel supported, respected, and guided — like talking to a dependable, mature, and kind companion who always has their back. Be the friend who truly KNOWS them and remembers.
 
 Never break these guidelines. Ever.
 """
@@ -380,9 +408,11 @@ class GroqClient:
                 json={
                     'model': 'llama-3.3-70b-versatile',
                     'messages': messages,
-                    'max_tokens': 1024,
-                    'temperature': 0.5,
-                    'top_p': 0.9,
+                    'max_tokens': 1200,
+                    'temperature': 0.6,
+                    'top_p': 0.85,
+                    'frequency_penalty': 0.3,
+                    'presence_penalty': 0.15,
                 },
                 timeout=30,
                 verify=False,
@@ -403,13 +433,189 @@ class GroqClient:
 class ChatbotService:
 
     def __init__(self):
-        self._conversations = {}
-        self._user_context = {}
         self._ai = GroqClient()
+
+    def _store(self):
+        from app.services.local_store import get_local_store
+        return get_local_store()
+
+    def _get_conversations(self, user_id):
+        data = self._store().get_by_id('chat_conversations', user_id)
+        return data.get('messages', []) if data else []
+
+    def _set_conversations(self, user_id, messages):
+        self._store().upsert('chat_conversations', user_id, {'messages': messages})
+
+    def _get_user_context(self, user_id):
+        return self._store().get_by_id('chat_user_context', user_id) or {}
+
+    # ── User memory keys we extract from conversations ──
+    _NAME_PATTERN = re.compile(
+        r"(?:(?:my\s+name\s+is|i'?m|call\s+me|i\s+am)\s+)([A-Z][a-z]{1,15})",
+        re.IGNORECASE,
+    )
+    _FACT_PATTERNS = [
+        (re.compile(r'\b(?:i\s+have|i\'?ve\s+got)\s+(?:a\s+)?(\d?\s*(?:kid|child|daughter|son|baby|dog|cat|pet)s?)\b', re.I), 'family'),
+        (re.compile(r'\b(?:i\s+work\s+(?:as|in|at|for)\s+)(.{3,40}?)(?:\.|,|$)', re.I), 'work'),
+        (re.compile(r'\b(?:i\s+(?:love|enjoy|like)\s+)(.{3,30}?)(?:\.|,|!|$)', re.I), 'likes'),
+        (re.compile(r'\b(?:i\s+(?:struggle|deal)\s+with\s+)(.{3,40}?)(?:\.|,|$)', re.I), 'challenges'),
+        (re.compile(r'\b(?:i\s+(?:can\'?t|have\s+trouble)\s+)(.{3,30}?)(?:\.|,|$)', re.I), 'challenges'),
+    ]
 
     @property
     def ai_powered(self):
         return self._ai.available
+
+    # ── Persistent user memory ────────────────────────────────────
+
+    def _get_user_memory(self, user_id):
+        data = self._store().get_by_id('chat_user_memory', user_id)
+        return data if data else {'facts': {}, 'recurring_topics': {}, 'name': None}
+
+    def _save_user_memory(self, user_id, memory):
+        self._store().upsert('chat_user_memory', user_id, memory)
+
+    def _extract_and_remember(self, user_id, message):
+        """Extract memorable facts from the user's message and persist them."""
+        memory = self._get_user_memory(user_id)
+
+        name_match = self._NAME_PATTERN.search(message)
+        if name_match:
+            name = name_match.group(1).strip()
+            if len(name) > 1 and name.lower() not in ('helix', 'sure', 'well', 'just', 'really', 'very', 'okay'):
+                memory['name'] = name
+
+        for pattern, category in self._FACT_PATTERNS:
+            m = pattern.search(message)
+            if m:
+                fact = m.group(1).strip().rstrip('.')
+                if len(fact) > 2:
+                    facts = memory.get('facts', {})
+                    existing = facts.get(category, [])
+                    if fact.lower() not in [f.lower() for f in existing]:
+                        existing.append(fact)
+                        if len(existing) > 5:
+                            existing = existing[-5:]
+                        facts[category] = existing
+                        memory['facts'] = facts
+
+        lower = message.lower()
+        topics = memory.get('recurring_topics', {})
+        topic_keywords = {
+            'sleep': r'\b(sleep|insomnia|tired|exhausted|can\'t sleep)\b',
+            'stress': r'\b(stress|overwhelm|burnout|pressure|anxious)\b',
+            'period': r'\b(period|cramp|cycle|pms|menstrual)\b',
+            'work_conflict': r'\b(boss|conflict|toxic|unfair|harassment)\b',
+            'loneliness': r'\b(lonely|alone|no one|nobody|isolated)\b',
+        }
+        for topic, pat in topic_keywords.items():
+            if re.search(pat, lower):
+                topics[topic] = topics.get(topic, 0) + 1
+
+        memory['recurring_topics'] = topics
+        memory['last_seen'] = datetime.now().isoformat()
+        self._save_user_memory(user_id, memory)
+        return memory
+
+    def _format_user_memory_for_ai(self, memory):
+        """Turn stored memory into a compact context string for the AI."""
+        parts = []
+        if memory.get('name'):
+            parts.append(f"User's name: {memory['name']}")
+
+        facts = memory.get('facts', {})
+        for category, items in facts.items():
+            parts.append(f"{category.capitalize()}: {', '.join(items[-3:])}")
+
+        topics = memory.get('recurring_topics', {})
+        frequent = [t for t, c in sorted(topics.items(), key=lambda x: -x[1]) if c >= 2]
+        if frequent:
+            parts.append(f"Recurring concerns: {', '.join(frequent[:4])}")
+
+        return "\n".join(parts) if parts else ""
+
+    # ── Emotional trajectory ──────────────────────────────────────
+
+    def _get_emotional_history(self, user_id):
+        data = self._store().get_by_id('chat_emotional_history', user_id)
+        return data.get('entries', []) if data else []
+
+    def _track_emotion(self, user_id, message, intent):
+        """Record the emotional signal from this message."""
+        history = self._get_emotional_history(user_id)
+
+        negative_intents = {'distress', 'stress', 'emotion'}
+        positive_words = re.compile(r'\b(happy|great|good|amazing|wonderful|better|grateful|proud|excited|love|joy)\b', re.I)
+        negative_words = re.compile(r'\b(sad|angry|anxious|stressed|overwhelm|upset|terrible|horrible|crying|hopeless|exhausted)\b', re.I)
+
+        pos_count = len(positive_words.findall(message))
+        neg_count = len(negative_words.findall(message))
+
+        if intent in negative_intents or neg_count > pos_count:
+            valence = 'negative'
+        elif pos_count > neg_count:
+            valence = 'positive'
+        else:
+            valence = 'neutral'
+
+        history.append({
+            'timestamp': datetime.now().isoformat(),
+            'valence': valence,
+            'intent': intent,
+        })
+
+        if len(history) > 50:
+            history = history[-50:]
+
+        self._store().upsert('chat_emotional_history', user_id, {'entries': history})
+        return history
+
+    def _build_emotional_summary(self, history):
+        """Summarize recent emotional trajectory for the AI."""
+        if not history:
+            return ""
+
+        recent = history[-10:]
+        counts = {'positive': 0, 'negative': 0, 'neutral': 0}
+        for e in recent:
+            counts[e.get('valence', 'neutral')] += 1
+
+        total = len(recent)
+        if total == 0:
+            return ""
+
+        neg_ratio = counts['negative'] / total
+        pos_ratio = counts['positive'] / total
+
+        parts = []
+        if neg_ratio > 0.6:
+            parts.append("User has been expressing mostly negative emotions recently — approach with extra gentleness")
+        elif neg_ratio > 0.3:
+            parts.append("User has had some tough moments recently — be attentive to their emotional state")
+        elif pos_ratio > 0.6:
+            parts.append("User has been in a mostly positive state recently — match their energy")
+
+        if len(history) >= 5:
+            last_5 = [e['valence'] for e in history[-5:]]
+            prev_5 = [e['valence'] for e in history[-10:-5]] if len(history) >= 10 else []
+            if prev_5:
+                old_neg = sum(1 for v in prev_5 if v == 'negative') / len(prev_5)
+                new_neg = sum(1 for v in last_5 if v == 'negative') / len(last_5)
+                if new_neg < old_neg - 0.2:
+                    parts.append("Emotional trend: IMPROVING — acknowledge the progress")
+                elif new_neg > old_neg + 0.2:
+                    parts.append("Emotional trend: DECLINING — be proactive about checking in")
+
+        recurring_intents = {}
+        for e in recent:
+            intent = e.get('intent', '')
+            if intent in ('stress', 'emotion', 'distress', 'sleep'):
+                recurring_intents[intent] = recurring_intents.get(intent, 0) + 1
+        repeat = [k for k, v in recurring_intents.items() if v >= 3]
+        if repeat:
+            parts.append(f"Frequently discussed: {', '.join(repeat)}")
+
+        return "\n".join(parts) if parts else ""
 
     def process_message(self, user_id, message, app_context=None):
         if not message or not message.strip():
@@ -423,9 +629,14 @@ class ChatbotService:
 
         self._save_to_history(user_id, 'user', message_clean)
         self._update_context(user_id, intent, message_clean)
+        user_memory = self._extract_and_remember(user_id, message_clean)
+        emotional_history = self._track_emotion(user_id, message_clean, intent)
 
         if self._ai.available:
-            response = self._generate_ai_response(user_id, intent, message_clean, app_context or {})
+            response = self._generate_ai_response(
+                user_id, intent, message_clean, app_context or {},
+                user_memory, emotional_history,
+            )
         else:
             response = self._generate_template_response(user_id, intent, message_clean, app_context or {})
 
@@ -435,15 +646,18 @@ class ChatbotService:
         return response
 
     def get_history(self, user_id, limit=50):
-        return self._conversations.get(user_id, [])[-limit:]
+        return self._get_conversations(user_id)[-limit:]
 
     def clear_history(self, user_id):
-        self._conversations.pop(user_id, None)
-        self._user_context.pop(user_id, None)
+        self._store().delete('chat_conversations', user_id)
+        self._store().delete('chat_user_context', user_id)
+        self._store().delete('chat_emotional_history', user_id)
+        # User memory is intentionally preserved across clears
 
     def get_contextual_quick_replies(self, user_id, app_context=None):
         hour = datetime.now().hour
-        ctx = self._user_context.get(user_id, {})
+        ctx = self._get_user_context(user_id)
+        memory = self._get_user_memory(user_id)
         replies = []
 
         if hour < 10:
@@ -461,8 +675,20 @@ class ChatbotService:
         if last in ('stress', 'emotion', 'mental_health', 'distress'):
             replies.append('Breathing exercise')
 
+        recurring = memory.get('recurring_topics', {})
+        if recurring.get('sleep', 0) >= 2:
+            replies.append('Sleep tips')
+        if recurring.get('stress', 0) >= 2:
+            replies.append('Stress relief')
+
         replies.extend(['Wellness tips', 'Just want to chat'])
-        return replies[:6]
+        seen = set()
+        deduped = []
+        for r in replies:
+            if r not in seen:
+                seen.add(r)
+                deduped.append(r)
+        return deduped[:6]
 
     def _classify_intent(self, message):
         lower = message.lower()
@@ -490,13 +716,26 @@ class ChatbotService:
         'settings': 'Settings — notification preferences, wellness goals, eye rest, and privacy settings',
     }
 
-    def _generate_ai_response(self, user_id, intent, message, app_context):
+    def _generate_ai_response(self, user_id, intent, message, app_context,
+                               user_memory=None, emotional_history=None):
         context_parts = []
         page_ctx = app_context.get('page_context', {})
         current_page = page_ctx.get('current_page', '')
 
+        # ── User memory (persistent across sessions) ──
+        if user_memory:
+            mem_text = self._format_user_memory_for_ai(user_memory)
+            if mem_text:
+                context_parts.append(f"## USER MEMORY (from previous conversations)\n{mem_text}")
+
+        # ── Emotional trajectory ──
+        if emotional_history:
+            emo_text = self._build_emotional_summary(emotional_history)
+            if emo_text:
+                context_parts.append(f"## EMOTIONAL TRAJECTORY\n{emo_text}")
+
         user_name = page_ctx.get('user_name', '')
-        if user_name:
+        if user_name and not (user_memory and user_memory.get('name')):
             context_parts.append(f"User's name: {user_name}")
 
         if current_page:
@@ -579,8 +818,14 @@ class ChatbotService:
         logger.debug("AI context prefix (%d chars, %d sections): %s",
                       len(context_prefix), len(context_parts), context_prefix[:300])
 
-        history = self._conversations.get(user_id, [])
-        recent = history[-20:]
+        history = self._get_conversations(user_id)
+        recent, summary = self._window_history(history)
+
+        if summary:
+            context_prefix = (
+                f"## EARLIER CONVERSATION SUMMARY\n{summary}\n\n"
+                + context_prefix
+            )
 
         ai_text = self._ai.chat(recent, context_prefix)
 
@@ -1309,26 +1554,66 @@ class ChatbotService:
         return resp
 
     def _save_to_history(self, user_id, role, message):
-        if user_id not in self._conversations:
-            self._conversations[user_id] = []
-
-        self._conversations[user_id].append({
+        history = self._get_conversations(user_id)
+        history.append({
             'role': role,
             'message': message,
             'timestamp': time.time(),
         })
-
-        if len(self._conversations[user_id]) > 200:
-            self._conversations[user_id] = self._conversations[user_id][-100:]
+        if len(history) > 200:
+            history = history[-100:]
+        self._set_conversations(user_id, history)
 
     def _update_context(self, user_id, intent, message):
-        if user_id not in self._user_context:
-            self._user_context[user_id] = {}
-
-        ctx = self._user_context[user_id]
+        ctx = self._get_user_context(user_id)
         ctx['last_intent'] = intent
         ctx['last_message_time'] = time.time()
         ctx['message_count'] = ctx.get('message_count', 0) + 1
+        self._store().upsert('chat_user_context', user_id, ctx)
+
+    def _window_history(self, history, verbatim_count=12, max_summary_msgs=30):
+        """Keep the last *verbatim_count* messages verbatim.
+
+        For any older messages (up to *max_summary_msgs* more), build a
+        compact textual summary so the AI retains context without using
+        excessive tokens.  Returns ``(recent_messages, summary_text)``.
+        """
+        if len(history) <= verbatim_count:
+            return history, ""
+
+        recent = history[-verbatim_count:]
+        older = history[max(0, len(history) - verbatim_count - max_summary_msgs):-verbatim_count]
+
+        if not older:
+            return recent, ""
+
+        summary_parts = []
+        user_topics = set()
+        assistant_highlights = []
+
+        for msg in older:
+            role = msg.get('role', '')
+            text = msg.get('message', '')[:120]
+            if role == 'user':
+                intent = self._classify_intent(text)
+                if intent != 'general':
+                    user_topics.add(intent)
+                if any(kw in text.lower() for kw in ('my name', "i'm ", 'i work', 'i have', 'i feel')):
+                    summary_parts.append(f"User said: \"{text}\"")
+            elif role == 'assistant' and len(text) > 40:
+                if any(kw in text.lower() for kw in ('recommend', 'try', 'suggest', 'here\'s', 'you could')):
+                    assistant_highlights.append(text[:80])
+
+        lines = []
+        if user_topics:
+            lines.append(f"Topics discussed: {', '.join(sorted(user_topics))}")
+        for sp in summary_parts[:6]:
+            lines.append(sp)
+        if assistant_highlights:
+            lines.append(f"Advice given included: {'; '.join(assistant_highlights[:3])}")
+        lines.append(f"({len(older)} earlier messages summarized)")
+
+        return recent, "\n".join(lines)
 
 
 chatbot_service = ChatbotService()

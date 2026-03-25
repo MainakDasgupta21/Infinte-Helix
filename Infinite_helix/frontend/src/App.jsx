@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation, Link } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 
@@ -22,6 +22,7 @@ import useBreakReminder from './hooks/useBreakReminder';
 import { WellnessProvider } from './context/WellnessContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { PageContextProvider } from './context/PageContext';
+import { ThemeProvider, useTheme } from './context/ThemeContext';
 
 /* ── Scroll to top on every route change ── */
 function ScrollToTop() {
@@ -31,6 +32,8 @@ function ScrollToTop() {
   }, [pathname]);
   return null;
 }
+
+
 
 /* ── Error Boundary ── */
 class ErrorBoundary extends React.Component {
@@ -107,6 +110,29 @@ function OfflineBanner() {
   );
 }
 
+/* ── Demo Mode Banner ── */
+function DemoModeBanner() {
+  const [demo, setDemo] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
+
+  useEffect(() => {
+    const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+    fetch(`${API_URL}/health`)
+      .then(r => r.json())
+      .then(d => { if (d.demo_mode) setDemo(true); })
+      .catch(() => {});
+  }, []);
+
+  if (!demo || dismissed) return null;
+
+  return (
+    <div className="fixed top-0 left-0 right-0 z-[60] bg-helix-amber/90 backdrop-blur-sm text-helix-bg text-center py-1.5 px-4 text-xs font-medium flex items-center justify-center gap-3">
+      <span>Demo Mode {'\u2014'} data is stored locally and may not persist across deployments.</span>
+      <button onClick={() => setDismissed(true)} className="underline opacity-80 hover:opacity-100">Dismiss</button>
+    </div>
+  );
+}
+
 /* ── 404 Page ── */
 function NotFound() {
   return (
@@ -177,6 +203,7 @@ function AppRoutes() {
           </main>
           <NotificationOverlay />
           <OfflineBanner />
+          <DemoModeBanner />
           <ChatBot />
           <StressInterventionToast
             isStressed={isStressed}
@@ -197,9 +224,38 @@ function AppRoutes() {
   );
 }
 
+function ThemedToaster() {
+  const { isDark } = useTheme();
+  const card = isDark ? '#121218' : '#ffffff';
+  const text = isDark ? '#f0f0f3' : '#1c1c2a';
+  const border = isDark ? '#26262f' : '#dadae4';
+  const shadow = isDark ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.08)';
+
+  return (
+    <Toaster
+      position="bottom-right"
+      toastOptions={{
+        duration: 3000,
+        style: {
+          background: card,
+          color: text,
+          border: `1px solid ${border}`,
+          borderRadius: '14px',
+          fontSize: '13px',
+          padding: '12px 16px',
+          boxShadow: `0 8px 30px ${shadow}`,
+        },
+        success: { iconTheme: { primary: isDark ? '#3db89a' : '#209e82', secondary: card } },
+        error: { iconTheme: { primary: isDark ? '#e07070' : '#cd4444', secondary: card } },
+      }}
+    />
+  );
+}
+
 function App() {
   return (
     <ErrorBoundary>
+<<<<<<< HEAD
       <AuthProvider>
         <BrowserRouter>
           <AppRoutes />
@@ -222,6 +278,16 @@ function App() {
           />
         </BrowserRouter>
       </AuthProvider>
+=======
+      <ThemeProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <AppRoutes />
+            <ThemedToaster />
+          </BrowserRouter>
+        </AuthProvider>
+      </ThemeProvider>
+>>>>>>> 9aa662e (Add middleware, calendar providers, theme support, and UI improvement)
     </ErrorBoundary>
   );
 }

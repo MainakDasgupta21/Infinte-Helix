@@ -39,13 +39,13 @@ def init_firebase():
         else:
             logger.warning(
                 'Firebase credentials not found at %s. '
-                'Running with in-memory storage (data will not persist).', cred_path
+                'Using SQLite local storage (data persists across restarts).', cred_path
             )
             _db = None
     except Exception as e:
         logger.warning(
             'Firebase initialization failed: %s. '
-            'Running with in-memory storage (data will not persist).', e
+            'Using SQLite local storage (data persists across restarts).', e
         )
         _db = None
 
@@ -57,14 +57,15 @@ def get_db():
     return init_firebase()
 
 
-_in_memory_store = {
-    'journal_entries': [],
-    'hydration_logs': [],
-    'mood_logs': [],
-    'work_sessions': [],
-    'screen_time_logs': [],
-}
+def _local():
+    """Lazily return the SQLite-backed local store singleton."""
+    from app.services.local_store import get_local_store
+    return get_local_store()
 
+
+# ---------------------------------------------------------------------------
+# Journal entries
+# ---------------------------------------------------------------------------
 
 def save_journal_entry(user_id, entry):
     db = get_db()
@@ -85,11 +86,11 @@ def save_journal_entry(user_id, entry):
             db.collection('journal_entries').add(doc)
         except Exception as e:
             logger.warning('Firestore write failed for journal entry: %s', e)
-            doc['id'] = len(_in_memory_store['journal_entries']) + 1
-            _in_memory_store['journal_entries'].append(doc)
+            doc['id'] = uuid.uuid4().hex[:12]
+            _local().insert('journal_entries', doc)
     else:
-        doc['id'] = len(_in_memory_store['journal_entries']) + 1
-        _in_memory_store['journal_entries'].append(doc)
+        doc['id'] = uuid.uuid4().hex[:12]
+        _local().insert('journal_entries', doc)
 
     return doc
 
@@ -111,10 +112,14 @@ def get_journal_entries(user_id, limit=20):
             return []
 
     return sorted(
-        [e for e in _in_memory_store['journal_entries'] if e.get('user_id') == user_id],
+        [e for e in _local().get_all('journal_entries') if e.get('user_id') == user_id],
         key=lambda x: x.get('timestamp', ''), reverse=True
     )[:limit]
 
+
+# ---------------------------------------------------------------------------
+# Hydration
+# ---------------------------------------------------------------------------
 
 DEFAULT_AMOUNT_ML = 250
 
@@ -137,9 +142,9 @@ def log_hydration(user_id, amount_ml=None):
             db.collection('hydration_logs').add(doc)
         except Exception as e:
             logger.warning('Firestore write failed for hydration log: %s', e)
-            _in_memory_store['hydration_logs'].append(doc)
+            _local().insert('hydration_logs', doc)
     else:
-        _in_memory_store['hydration_logs'].append(doc)
+        _local().insert('hydration_logs', doc)
 
     return doc
 
@@ -163,11 +168,15 @@ def get_hydration_today(user_id):
             logger.warning('Firestore query failed for hydration: %s', e)
             return {'ml_today': 0, 'entries': 0}
 
-    today_logs = [e for e in _in_memory_store['hydration_logs']
+    today_logs = [e for e in _local().get_all('hydration_logs')
                   if e.get('user_id') == user_id and e.get('date') == today]
     total_ml = sum(e.get('amount_ml', DEFAULT_AMOUNT_ML) for e in today_logs)
     return {'ml_today': total_ml, 'entries': len(today_logs)}
 
+
+# ---------------------------------------------------------------------------
+# Mood logs
+# ---------------------------------------------------------------------------
 
 def save_mood_log(user_id, mood_data):
     db = get_db()
@@ -185,9 +194,9 @@ def save_mood_log(user_id, mood_data):
             db.collection('mood_logs').add(doc)
         except Exception as e:
             logger.warning('Firestore write failed for mood log: %s', e)
-            _in_memory_store['mood_logs'].append(doc)
+            _local().insert('mood_logs', doc)
     else:
-        _in_memory_store['mood_logs'].append(doc)
+        _local().insert('mood_logs', doc)
 
     return doc
 
@@ -218,7 +227,7 @@ def get_mood_logs_for_period(user_id, start_date, end_date):
             logger.warning('Firestore query failed for mood logs period: %s', e)
             return []
 
-    return [e for e in _in_memory_store['mood_logs']
+    return [e for e in _local().get_all('mood_logs')
             if e.get('user_id') == user_id
             and start_date <= e.get('timestamp', '')[:10] <= end_date]
 
@@ -244,7 +253,7 @@ def get_journal_entries_for_period(user_id, start_date, end_date):
             logger.warning('Firestore query failed for journal entries period: %s', e)
             return []
 
-    return [e for e in _in_memory_store['journal_entries']
+    return [e for e in _local().get_all('journal_entries')
             if e.get('user_id') == user_id
             and start_date <= e.get('timestamp', '')[:10] <= end_date]
 
@@ -270,15 +279,21 @@ def get_hydration_for_period(user_id, start_date, end_date):
             logger.warning('Firestore query failed for hydration period: %s', e)
             return []
 
-    return [e for e in _in_memory_store['hydration_logs']
+    return [e for e in _local().get_all('hydration_logs')
             if e.get('user_id') == user_id
             and start_date <= e.get('date', '') <= end_date]
 
 
+# ---------------------------------------------------------------------------
+# Screen time
+# ---------------------------------------------------------------------------
+
 def save_screen_time(user_id, data):
     """Upsert a screen-time snapshot for a given date."""
     db = get_db()
+    doc_id = f'{user_id}_{data["date"]}'
     doc = {
+        'id': doc_id,
         'user_id': user_id,
         'date': data['date'],
         'total_hours': data.get('total_hours', 0),
@@ -288,23 +303,13 @@ def save_screen_time(user_id, data):
 
     if db:
         try:
-            doc_id = f'{user_id}_{data["date"]}'
             db.collection('screen_time_logs').document(doc_id).set(doc)
         except Exception as e:
             logger.warning('Firestore write failed for screen time: %s', e)
-            _upsert_in_memory_screen_time(doc)
+            _local().upsert('screen_time_logs', doc_id, doc)
     else:
-        _upsert_in_memory_screen_time(doc)
+        _local().upsert('screen_time_logs', doc_id, doc)
     return doc
-
-
-def _upsert_in_memory_screen_time(doc):
-    store = _in_memory_store['screen_time_logs']
-    for i, existing in enumerate(store):
-        if existing.get('user_id') == doc['user_id'] and existing.get('date') == doc['date']:
-            store[i] = doc
-            return
-    store.append(doc)
 
 
 def get_screen_time_history(user_id, days=7):
@@ -332,11 +337,15 @@ def get_screen_time_history(user_id, days=7):
             return []
 
     return sorted(
-        [e for e in _in_memory_store['screen_time_logs']
+        [e for e in _local().get_all('screen_time_logs')
          if e.get('user_id') == user_id and start <= e.get('date', '') <= end],
         key=lambda x: x.get('date', ''),
     )
 
+
+# ---------------------------------------------------------------------------
+# Self-care
+# ---------------------------------------------------------------------------
 
 def log_selfcare_action(user_id, action_type):
     """Log a self-care action (stretch, eye_rest). action_type: 'stretch' | 'eye_rest'."""
@@ -352,9 +361,9 @@ def log_selfcare_action(user_id, action_type):
             db.collection('selfcare_logs').add(doc)
         except Exception as e:
             logger.warning('Firestore write failed for selfcare log: %s', e)
-            _in_memory_store.setdefault('selfcare_logs', []).append(doc)
+            _local().insert('selfcare_logs', doc)
     else:
-        _in_memory_store.setdefault('selfcare_logs', []).append(doc)
+        _local().insert('selfcare_logs', doc)
     return doc
 
 
@@ -383,7 +392,7 @@ def get_selfcare_today(user_id):
             logger.warning('Firestore query failed for selfcare today: %s', e)
             return counts
 
-    for e in _in_memory_store.get('selfcare_logs', []):
+    for e in _local().get_all('selfcare_logs'):
         if e.get('user_id') == user_id and e.get('date') == today:
             action = e.get('action', '')
             if action in counts:
@@ -412,10 +421,14 @@ def get_selfcare_for_period(user_id, start_date, end_date):
             logger.warning('Firestore query failed for selfcare period: %s', e)
             return []
 
-    return [e for e in _in_memory_store.get('selfcare_logs', [])
+    return [e for e in _local().get_all('selfcare_logs')
             if e.get('user_id') == user_id
             and start_date <= e.get('date', '') <= end_date]
 
+
+# ---------------------------------------------------------------------------
+# Private care
+# ---------------------------------------------------------------------------
 
 def log_privatecare(user_id, care_type, note=''):
     """Log a private care action (pad_change, freshen_up, etc.)."""
@@ -433,9 +446,9 @@ def log_privatecare(user_id, care_type, note=''):
             db.collection('privatecare_logs').add(doc)
         except Exception as e:
             logger.warning('Firestore write failed for privatecare log: %s', e)
-            _in_memory_store.setdefault('privatecare_logs', []).append(doc)
+            _local().insert('privatecare_logs', doc)
     else:
-        _in_memory_store.setdefault('privatecare_logs', []).append(doc)
+        _local().insert('privatecare_logs', doc)
     return doc
 
 
@@ -461,7 +474,7 @@ def get_privatecare_logs(user_id, days=90):
             return []
 
     return sorted(
-        [e for e in _in_memory_store.get('privatecare_logs', [])
+        [e for e in _local().get_all('privatecare_logs')
          if e.get('user_id') == user_id and e.get('date', '') >= cutoff],
         key=lambda x: x.get('timestamp', ''), reverse=True,
     )
@@ -489,12 +502,16 @@ def get_privatecare_for_period(user_id, start_date, end_date):
             return []
 
     return sorted(
-        [e for e in _in_memory_store.get('privatecare_logs', [])
+        [e for e in _local().get_all('privatecare_logs')
          if e.get('user_id') == user_id
          and start_date <= e.get('date', '') <= end_date],
         key=lambda x: x.get('timestamp', ''), reverse=True,
     )
 
+
+# ---------------------------------------------------------------------------
+# Activity streak
+# ---------------------------------------------------------------------------
 
 def get_activity_streak(user_id):
     """Count consecutive days (ending today) with at least one journal or hydration entry."""
@@ -545,9 +562,9 @@ def save_todo(user_id, text, remind_at=None, date=None, category=None):
             db.collection('personal_todos').document(todo_id).set(doc)
         except Exception as e:
             logger.warning('Firestore write failed for todo: %s', e)
-            _in_memory_store.setdefault('personal_todos', []).append(doc)
+            _local().insert('personal_todos', doc)
     else:
-        _in_memory_store.setdefault('personal_todos', []).append(doc)
+        _local().insert('personal_todos', doc)
     return doc
 
 
@@ -606,6 +623,7 @@ def get_todos_upcoming(user_id):
             return []
 
     return sorted(
+<<<<<<< HEAD
         [t for t in _in_memory_store.get('personal_todos', [])
          if t.get('user_id') == user_id and t.get('date', '') >= today and not t.get('completed', False)],
         key=lambda x: (x.get('date', ''), x.get('remind_at') or '99:99'),
@@ -638,6 +656,11 @@ def get_todo_history(user_id, days=30):
          if t.get('user_id') == user_id and t.get('date', '') >= cutoff],
         key=lambda x: (x.get('date', ''), x.get('timestamp', '')),
         reverse=True,
+=======
+        [t for t in _local().get_all('personal_todos')
+         if t.get('user_id') == user_id and t.get('date') == today],
+        key=lambda x: x.get('timestamp', ''),
+>>>>>>> 9aa662e (Add middleware, calendar providers, theme support, and UI improvement)
     )
 
 
@@ -651,18 +674,20 @@ def toggle_todo(user_id, todo_id):
                 data = doc.to_dict()
                 if data.get('user_id') != user_id:
                     return None
-                ref.update({'completed': not data.get('completed', False)})
-                data['completed'] = not data.get('completed', False)
+                new_completed = not data.get('completed', False)
+                ref.update({'completed': new_completed})
+                data['completed'] = new_completed
                 return data
             return None
         except Exception as e:
             logger.warning('Firestore toggle failed for todo: %s', e)
             return None
 
-    for t in _in_memory_store.get('personal_todos', []):
-        if t.get('id') == todo_id and t.get('user_id') == user_id:
-            t['completed'] = not t.get('completed', False)
-            return t
+    t = _local().get_by_id('personal_todos', todo_id)
+    if t and t.get('user_id') == user_id:
+        t['completed'] = not t.get('completed', False)
+        _local().upsert('personal_todos', todo_id, t)
+        return t
     return None
 
 
@@ -677,8 +702,65 @@ def delete_todo(user_id, todo_id):
         except Exception as e:
             logger.warning('Firestore delete failed for todo: %s', e)
     else:
-        store = _in_memory_store.get('personal_todos', [])
-        _in_memory_store['personal_todos'] = [
-            t for t in store
-            if not (t.get('id') == todo_id and t.get('user_id') == user_id)
-        ]
+        existing = _local().get_by_id('personal_todos', todo_id)
+        if existing and existing.get('user_id') == user_id:
+            _local().delete('personal_todos', todo_id)
+
+
+# ---------------------------------------------------------------------------
+# Calendar OAuth tokens (per-user, per-provider)
+# ---------------------------------------------------------------------------
+
+def save_calendar_token(user_id, provider, token_data):
+    """Persist an OAuth token for a calendar provider, keyed by user+provider."""
+    db = get_db()
+    doc_id = f'{user_id}_{provider}'
+    doc = {
+        'id': doc_id,
+        'user_id': user_id,
+        'provider': provider,
+        'access_token': token_data.get('access_token'),
+        'refresh_token': token_data.get('refresh_token'),
+        'expires_at': token_data.get('expires_at', 0),
+        'user_info': token_data.get('user_info'),
+        'updated_at': datetime.utcnow().isoformat(),
+    }
+    if db:
+        try:
+            db.collection('calendar_tokens').document(doc_id).set(doc)
+        except Exception as e:
+            logger.warning('Firestore write failed for calendar token: %s', e)
+            _local().upsert('calendar_tokens', doc_id, doc)
+    else:
+        _local().upsert('calendar_tokens', doc_id, doc)
+
+
+def get_calendar_token(user_id, provider):
+    """Retrieve stored OAuth token for a user+provider. Returns dict or None."""
+    db = get_db()
+    doc_id = f'{user_id}_{provider}'
+    if db:
+        try:
+            ref = db.collection('calendar_tokens').document(doc_id)
+            doc = ref.get()
+            if doc.exists:
+                return doc.to_dict()
+        except Exception as e:
+            logger.warning('Firestore read failed for calendar token: %s', e)
+            return None
+    else:
+        return _local().get_by_id('calendar_tokens', doc_id)
+    return None
+
+
+def delete_calendar_token(user_id, provider):
+    """Remove stored OAuth token for a user+provider."""
+    db = get_db()
+    doc_id = f'{user_id}_{provider}'
+    if db:
+        try:
+            db.collection('calendar_tokens').document(doc_id).delete()
+        except Exception as e:
+            logger.warning('Firestore delete failed for calendar token: %s', e)
+    else:
+        _local().delete('calendar_tokens', doc_id)

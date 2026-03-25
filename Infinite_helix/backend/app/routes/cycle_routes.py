@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify
+from app.middleware import require_auth
 
 cycle_bp = Blueprint('cycle', __name__)
 
@@ -79,6 +80,7 @@ CYCLE_SUGGESTIONS = {
 
 
 @cycle_bp.route('/suggestions/<phase>', methods=['GET'])
+@require_auth
 def get_suggestions(phase):
     if phase not in CYCLE_SUGGESTIONS:
         return jsonify({'error': 'Invalid phase. Use: menstrual, follicular, ovulatory, luteal'}), 400
@@ -86,6 +88,7 @@ def get_suggestions(phase):
 
 
 @cycle_bp.route('/phase', methods=['POST'])
+@require_auth
 def set_phase():
     data = request.get_json()
     phase = data.get('phase', '')

@@ -6,12 +6,12 @@ export default function useEmotionAnalysis() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const analyze = useCallback(async (text, userId = 'demo-user-001') => {
+  const analyze = useCallback(async (text) => {
     setLoading(true);
     setError(null);
 
     try {
-      const res = await journalAPI.create({ text, user_id: userId });
+      const res = await journalAPI.create({ text });
       const data = res.data;
 
       const combined = {

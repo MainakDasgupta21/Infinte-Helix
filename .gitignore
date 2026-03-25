@@ -5,4 +5,10 @@ __pycache__/
 *.pyc
 **/firebase-credentials.json
 **/serviceAccountKey.json
+<<<<<<< HEAD
 **/model_cache/
+=======
+**/data/local.db
+**/data/local.db-wal
+**/data/local.db-shm
+>>>>>>> 9aa662e (Add middleware, calendar providers, theme support, and UI improvement)

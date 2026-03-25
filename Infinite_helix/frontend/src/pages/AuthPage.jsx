@@ -35,7 +35,7 @@ export default function AuthPage() {
   const [serverError, setServerError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
-  const { user, signIn, signUp, signInWithGoogle, loading, registrationInProgress } = useAuth();
+  const { user, signIn, signUp, signInWithGoogle, resetPassword, loading, registrationInProgress } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -45,6 +45,7 @@ export default function AuthPage() {
   }, [user, navigate, registrationInProgress]);
 
   const isRegister = mode === 'register';
+  const isForgot = mode === 'forgot';
 
   function validate() {
     const errs = {};
@@ -55,10 +56,12 @@ export default function AuthPage() {
       errs.email = 'Enter a valid email address';
     }
 
-    if (!password) {
-      errs.password = 'Password is required';
-    } else if (isRegister && getStrength(password).level < 2) {
-      errs.password = 'Password is too weak';
+    if (!isForgot) {
+      if (!password) {
+        errs.password = 'Password is required';
+      } else if (isRegister && getStrength(password).level < 2) {
+        errs.password = 'Password is too weak';
+      }
     }
 
     if (isRegister) {
@@ -82,7 +85,10 @@ export default function AuthPage() {
     setIsSubmitting(true);
     setSuccessMsg('');
     try {
-      if (isRegister) {
+      if (isForgot) {
+        await resetPassword(email);
+        setSuccessMsg('Password reset email sent! Check your inbox (and spam folder) for a link to reset your password.');
+      } else if (isRegister) {
         const result = await signUp(email, password, displayName);
         if (result?.registered) {
           setMode('login');
@@ -96,7 +102,7 @@ export default function AuthPage() {
     } catch (err) {
       const msg = err?.message || 'Something went wrong';
       if (msg.includes('user-not-found') || msg.includes('wrong-password') || msg.includes('invalid-credential')) {
-        setServerError('Invalid email or password.');
+        setServerError(isForgot ? 'No account found with this email address.' : 'Invalid email or password.');
       } else if (msg.includes('email-already-in-use')) {
         setServerError('An account with this email already exists.');
       } else if (msg.includes('too-many-requests')) {
@@ -123,8 +129,9 @@ export default function AuthPage() {
     }
   }
 
-  function switchMode() {
-    setMode(isRegister ? 'login' : 'register');
+  function switchMode(target) {
+    const next = target || (isRegister ? 'login' : 'register');
+    setMode(next);
     setErrors({});
     setServerError('');
     setSuccessMsg('');
@@ -161,30 +168,42 @@ export default function AuthPage() {
         {/* Card */}
         <div className="glass-card p-8 glow-accent">
           {/* Toggle */}
-          <div className="flex bg-helix-bg/60 rounded-xl p-1 mb-8">
-            <button
-              type="button"
-              onClick={() => mode !== 'login' && switchMode()}
-              className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all duration-300 ${
-                !isRegister
-                  ? 'bg-gradient-to-r from-helix-accent to-helix-sky text-white shadow-lg'
-                  : 'text-helix-muted hover:text-helix-text'
-              }`}
-            >
-              Sign In
-            </button>
-            <button
-              type="button"
-              onClick={() => mode !== 'register' && switchMode()}
-              className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all duration-300 ${
-                isRegister
-                  ? 'bg-gradient-to-r from-helix-accent to-helix-sky text-white shadow-lg'
-                  : 'text-helix-muted hover:text-helix-text'
-              }`}
-            >
-              Register
-            </button>
-          </div>
+          {!isForgot && (
+            <div className="flex bg-helix-bg/60 rounded-xl p-1 mb-8">
+              <button
+                type="button"
+                onClick={() => mode !== 'login' && switchMode('login')}
+                className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all duration-300 ${
+                  !isRegister
+                    ? 'bg-gradient-to-r from-helix-accent to-helix-sky text-white shadow-lg'
+                    : 'text-helix-muted hover:text-helix-text'
+                }`}
+              >
+                Sign In
+              </button>
+              <button
+                type="button"
+                onClick={() => mode !== 'register' && switchMode('register')}
+                className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all duration-300 ${
+                  isRegister
+                    ? 'bg-gradient-to-r from-helix-accent to-helix-sky text-white shadow-lg'
+                    : 'text-helix-muted hover:text-helix-text'
+                }`}
+              >
+                Register
+              </button>
+            </div>
+          )}
+
+          {/* Forgot Password heading */}
+          {isForgot && (
+            <div className="mb-6">
+              <h2 className="text-xl font-display font-bold text-helix-text">Reset Password</h2>
+              <p className="text-sm text-helix-muted mt-1">
+                Enter your email address and we'll send you a link to reset your password.
+              </p>
+            </div>
+          )}
 
           {/* Server Error */}
           {serverError && (
@@ -240,43 +259,58 @@ export default function AuthPage() {
               }
             />
 
-            {/* Password */}
-            <Field
-              id="password"
-              label="Password"
-              type={showPassword ? 'text' : 'password'}
-              value={password}
-              onChange={setPassword}
-              error={errors.password}
-              placeholder={isRegister ? 'Create a strong password' : 'Enter your password'}
-              icon={
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-              }
-              trailing={
+            {/* Password (hidden in forgot mode) */}
+            {!isForgot && (
+              <Field
+                id="password"
+                label="Password"
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={setPassword}
+                error={errors.password}
+                placeholder={isRegister ? 'Create a strong password' : 'Enter your password'}
+                icon={
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                }
+                trailing={
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="text-helix-muted hover:text-helix-text transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showPassword ? (
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                      </svg>
+                    ) : (
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    )}
+                  </button>
+                }
+              />
+            )}
+
+            {/* Forgot Password link (login mode only) */}
+            {!isRegister && !isForgot && (
+              <div className="flex justify-end -mt-1">
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="text-helix-muted hover:text-helix-text transition-colors"
-                  tabIndex={-1}
+                  onClick={() => switchMode('forgot')}
+                  className="text-xs text-helix-accent hover:text-helix-pink font-medium transition-colors"
                 >
-                  {showPassword ? (
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                    </svg>
-                  ) : (
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                  )}
+                  Forgot Password?
                 </button>
-              }
-            />
+              </div>
+            )}
 
-            {/* Strength meter (register only) */}
-            {isRegister && password.length > 0 && (
+            {/* Strength meter (register only, hidden in forgot mode) */}
+            {isRegister && !isForgot && password.length > 0 && (
               <div className="space-y-2">
                 <div className="flex gap-1">
                   {[0, 1, 2, 3, 4].map((i) => (
@@ -310,8 +344,8 @@ export default function AuthPage() {
               </div>
             )}
 
-            {/* Confirm Password */}
-            {isRegister && (
+            {/* Confirm Password (register only, hidden in forgot mode) */}
+            {isRegister && !isForgot && (
               <Field
                 id="confirmPassword"
                 label="Confirm Password"
@@ -339,6 +373,8 @@ export default function AuthPage() {
             >
               {isSubmitting ? (
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : isForgot ? (
+                'Send Reset Link'
               ) : isRegister ? (
                 'Create Account'
               ) : (
@@ -347,39 +383,60 @@ export default function AuthPage() {
             </button>
           </form>
 
-          {/* Divider */}
-          <div className="flex items-center gap-4 my-6">
-            <div className="flex-1 h-px bg-helix-border" />
-            <span className="text-xs text-helix-muted uppercase tracking-wider">or continue with</span>
-            <div className="flex-1 h-px bg-helix-border" />
-          </div>
+          {/* Divider & Google (hidden in forgot mode) */}
+          {!isForgot && (
+            <>
+              <div className="flex items-center gap-4 my-6">
+                <div className="flex-1 h-px bg-helix-border" />
+                <span className="text-xs text-helix-muted uppercase tracking-wider">or continue with</span>
+                <div className="flex-1 h-px bg-helix-border" />
+              </div>
 
-          {/* Google Sign-In */}
-          <button
-            type="button"
-            onClick={handleGoogle}
-            disabled={isSubmitting}
-            className="w-full py-3.5 rounded-xl bg-helix-surface border border-helix-border hover:border-helix-border-light
-                       text-helix-text font-semibold text-sm transition-all duration-200
-                       hover:bg-helix-card active:scale-[0.98]
-                       disabled:opacity-50 disabled:cursor-not-allowed
-                       flex items-center justify-center gap-3"
-          >
-            <svg className="w-5 h-5" viewBox="0 0 24 24">
-              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
-              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18A10.96 10.96 0 001 12c0 1.77.42 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05" />
-              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-            </svg>
-            Continue with Google
-          </button>
+              <button
+                type="button"
+                onClick={handleGoogle}
+                disabled={isSubmitting}
+                className="w-full py-3.5 rounded-xl bg-helix-surface border border-helix-border hover:border-helix-border-light
+                           text-helix-text font-semibold text-sm transition-all duration-200
+                           hover:bg-helix-card active:scale-[0.98]
+                           disabled:opacity-50 disabled:cursor-not-allowed
+                           flex items-center justify-center gap-3"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24">
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18A10.96 10.96 0 001 12c0 1.77.42 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05" />
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                </svg>
+                Continue with Google
+              </button>
+            </>
+          )}
 
           {/* Mode switch */}
           <p className="text-center text-sm text-helix-muted mt-6">
-            {isRegister ? 'Already have an account?' : "Don't have an account?"}{' '}
-            <button type="button" onClick={switchMode} className="text-helix-accent hover:text-helix-pink font-semibold transition-colors">
-              {isRegister ? 'Sign In' : 'Register'}
-            </button>
+            {isForgot ? (
+              <>
+                Remember your password?{' '}
+                <button type="button" onClick={() => switchMode('login')} className="text-helix-accent hover:text-helix-pink font-semibold transition-colors">
+                  Back to Sign In
+                </button>
+              </>
+            ) : isRegister ? (
+              <>
+                Already have an account?{' '}
+                <button type="button" onClick={() => switchMode('login')} className="text-helix-accent hover:text-helix-pink font-semibold transition-colors">
+                  Sign In
+                </button>
+              </>
+            ) : (
+              <>
+                Don't have an account?{' '}
+                <button type="button" onClick={() => switchMode('register')} className="text-helix-accent hover:text-helix-pink font-semibold transition-colors">
+                  Register
+                </button>
+              </>
+            )}
           </p>
         </div>
 

@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { HiOutlineShieldCheck, HiOutlineClock, HiOutlineCalendar } from 'react-icons/hi';
 import { privateCareAPI } from '../../services/api';
-import { useAuth } from '../../context/AuthContext';
 import {
   loadPrivateCareConfig,
   savePrivateCareConfig,
@@ -40,9 +39,6 @@ function formatDate(dateStr) {
 }
 
 export default function PrivateCareTracker() {
-  const { user } = useAuth();
-  const userId = user?.uid || null;
-
   const [cfg, setCfg] = useState(loadPrivateCareConfig);
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -53,14 +49,14 @@ export default function PrivateCareTracker() {
 
   const fetchHistory = useCallback(async () => {
     try {
-      const res = await privateCareAPI.getHistory(userId, 90);
+      const res = await privateCareAPI.getHistory(90);
       setLogs(res.data?.logs || []);
     } catch {
       // offline
     } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, []);
 
   useEffect(() => {
     fetchHistory();
@@ -69,7 +65,7 @@ export default function PrivateCareTracker() {
   const handleLog = async () => {
     setLogAnim(true);
     try {
-      await privateCareAPI.log(selectedType, note, userId);
+      await privateCareAPI.log(selectedType, note);
       toast.success('Care action logged \u{1F33C}');
       setNote('');
       fetchHistory();

@@ -9,9 +9,10 @@ from app.services.firebase_service import (
     get_screen_time_history,
     get_selfcare_for_period,
 )
+from app.services.settings_service import get_user_settings
 
 DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-HYDRATION_GOAL = 2000
+DEFAULT_HYDRATION_GOAL = 2000
 SCREEN_GOAL_HOURS = 8
 POSITIVE_EMOTIONS = {'joy', 'happy', 'surprise', 'excited', 'grateful'}
 NEGATIVE_EMOTIONS = {'anger', 'sadness', 'fear', 'disgust', 'anxious', 'stressed'}
@@ -21,6 +22,9 @@ class WellnessReportService:
     """Generates weekly wellness reports from real user data stored in the DB."""
 
     def generate_weekly(self, user_id):
+        settings = get_user_settings(user_id)
+        hydration_goal = settings.get('hydration_goal_ml', DEFAULT_HYDRATION_GOAL)
+
         today = datetime.utcnow()
         monday = today - timedelta(days=today.weekday())
         sunday = monday + timedelta(days=6)
@@ -81,7 +85,7 @@ class WellnessReportService:
         best_idx = (hydration_totals.index(max(hydration_totals))
                     if hydration_totals and max(hydration_totals) > 0 else 0)
         best_hydration_day = DAY_NAMES[monday.weekday() + best_idx] if hydration_totals else 'N/A'
-        hydration_pct = min(100, round(avg_hydration / HYDRATION_GOAL * 100)) if HYDRATION_GOAL else 0
+        hydration_pct = min(100, round(avg_hydration / hydration_goal * 100)) if hydration_goal else 0
 
         top_emotion = emotion_counts.most_common(1)[0][0] if emotion_counts else 'neutral'
         mood_trend = self._mood_trend(daily_emotions, days_in_range)
@@ -118,11 +122,12 @@ class WellnessReportService:
             scr = daily_screen.get(day_str)
             screen_h = scr.get('total_hours', 0) if scr else 0
             dscore = self._daily_score(
-                daily_hydration.get(day_str, 0),
-                len(day_emos),
-                day_str in journal_dates,
-                screen_h,
-            )
+                    daily_hydration.get(day_str, 0),
+                    len(day_emos),
+                    day_str in journal_dates,
+                    screen_h,
+                    hydration_goal,
+                )
             daily_scores.append({'day': day_name, 'score': dscore, 'mood': day_mood})
 
         current_score = round(sum(d['score'] for d in daily_scores) / num_days) if daily_scores else 0
@@ -143,12 +148,12 @@ class WellnessReportService:
         eye_rest_suggested = num_days * 30
 
         insights = self._insights(
-            journal_count, avg_hydration, HYDRATION_GOAL,
+            journal_count, avg_hydration, hydration_goal,
             top_emotion, emotion_distribution, daily_scores, streak,
             total_focus,
         )
         recommendations = self._recommendations(
-            avg_hydration, HYDRATION_GOAL, journal_count, num_days,
+            avg_hydration, hydration_goal, journal_count, num_days,
             emotion_distribution, daily_scores, total_focus,
         )
 
@@ -171,7 +176,7 @@ class WellnessReportService:
                 'breaks_per_day': round(total_breaks_est / num_days, 1),
                 'avg_break_interval_min': avg_break_interval,
                 'hydration_avg_ml': avg_hydration,
-                'hydration_goal_ml': HYDRATION_GOAL,
+                'hydration_goal_ml': hydration_goal,
                 'mood_trend': mood_trend,
                 'top_emotion': top_emotion,
                 'journal_entries': journal_count,
@@ -189,7 +194,7 @@ class WellnessReportService:
             'self_care': {
                 'hydration': {
                     'avg_ml': avg_hydration,
-                    'goal_ml': HYDRATION_GOAL,
+                    'goal_ml': hydration_goal,
                     'completion_pct': hydration_pct,
                     'best_day': best_hydration_day,
                     'total_ml': total_hydration,
@@ -251,8 +256,9 @@ class WellnessReportService:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _daily_score(hydration_ml, emotion_count, has_journal, screen_hours):
-        h = min(25, round(hydration_ml / HYDRATION_GOAL * 25))
+    def _daily_score(hydration_ml, emotion_count, has_journal, screen_hours,
+                     hydration_goal=DEFAULT_HYDRATION_GOAL):
+        h = min(25, round(hydration_ml / max(hydration_goal, 1) * 25))
         e = min(20, emotion_count * 7)
         j = 15 if has_journal else 0
         s = min(40, round(screen_hours / SCREEN_GOAL_HOURS * 40))

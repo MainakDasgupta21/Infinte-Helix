@@ -1,0 +1,392 @@
+================================================================================
+  PROJECT SUMMARY
+  AI-Powered Micro-Wellness & Productivity Assistant for Women Employees
+  Codename: Infinite Helix
+================================================================================
+
+1. PROJECT OVERVIEW
+--------------------------------------------------------------------------------
+Infinite Helix is a full-stack AI-powered desktop/web application designed to
+help women employees manage work, emotions, energy, and mental well-being
+throughout the workday. It delivers context-aware wellness nudges, emotion AI
+analysis, cycle-aware insights, and productivity tracking — all while keeping
+sensitive features optional and private.
+
+The project was built by Team Infinite Helix for a hackathon, with a focus on
+women-centric wellness while maintaining inclusivity (e.g., cycle tracking is
+optional and private).
+
+
+2. TECH STACK
+--------------------------------------------------------------------------------
+Layer               Technology
+-----------------   -----------------------------------------------------------
+Frontend            React 18, React Router 6, Tailwind CSS 3, Create React App
+Charts              Chart.js, react-chartjs-2
+HTTP Client         axios
+Toasts/Alerts       react-hot-toast
+Backend             Python Flask 3, Flask-CORS
+AI / ML             HuggingFace Transformers (DistilRoBERTa, RoBERTa)
+Chat LLM            Groq API (HTTP) — falls back to rule-based replies
+Database            Firebase Cloud Firestore (primary), SQLite (fallback)
+Authentication      Firebase Auth (client) + Firebase Admin SDK (server verify)
+Desktop Tracking    psutil, pynput (keyboard/mouse/idle monitoring)
+Notifications       plyer (desktop toasts), Web Notifications API (browser)
+Calendar            Google Calendar API v3, Microsoft Graph / Outlook
+Icons               react-icons
+
+
+3. PROJECT STRUCTURE
+--------------------------------------------------------------------------------
+Repository Root
+├── README.md                        Repo overview, links to docs
+├── scripts/generate_pdf.py          PDF generation from Markdown docs
+│
+└── Infinite_helix/                  Main application
+    ├── README.md                    Quick start, architecture, features
+    ├── SETUP.md                     Detailed setup/run instructions
+    │
+    ├── backend/                     Python Flask REST API
+    │   ├── run.py                   Entry point (loads .env, starts server)
+    │   ├── setup_demo.py            One-command demo setup
+    │   ├── requirements.txt         Python dependencies
+    │   ├── .env / .env.example      Environment configuration
+    │   ├── config/
+    │   │   ├── settings.py          App config (ports, demo mode, API keys)
+    │   │   └── firebase-credentials.json
+    │   ├── data/
+    │   │   └── local.db             SQLite fallback database
+    │   └── app/
+    │       ├── __init__.py          Flask app factory (create_app)
+    │       ├── middleware.py        Auth middleware (Firebase token verify)
+    │       ├── ai/                  AI models
+    │       │   ├── emotion_detector.py    Emotion classification (7 classes)
+    │       │   ├── sentiment_analyzer.py  Sentiment analysis
+    │       │   └── nudge_engine.py        Smart nudge generation
+    │       ├── tracker/             Activity monitoring
+    │       │   ├── activity_monitor.py    Keyboard/mouse tracking
+    │       │   └── screen_tracker.py      Screen time tracking
+    │       ├── notifications/
+    │       │   └── notification_manager.py  In-app queue + desktop toasts
+    │       ├── models/              Data models
+    │       │   ├── user.py
+    │       │   ├── work_session.py
+    │       │   └── mood_log.py
+    │       ├── routes/              17 API blueprint modules
+    │       │   ├── auth_routes.py
+    │       │   ├── emotion_routes.py
+    │       │   ├── sentiment_routes.py
+    │       │   ├── journal_routes.py
+    │       │   ├── dashboard_routes.py
+    │       │   ├── reports_routes.py
+    │       │   ├── tracker_routes.py
+    │       │   ├── nudge_routes.py
+    │       │   ├── calendar_routes.py
+    │       │   ├── cycle_routes.py
+    │       │   ├── hydration_routes.py
+    │       │   ├── selfcare_routes.py
+    │       │   ├── privatecare_routes.py
+    │       │   ├── todo_routes.py
+    │       │   ├── user_routes.py
+    │       │   └── chatbot_routes.py
+    │       └── services/            Business logic & integrations
+    │           ├── firebase_service.py      Firestore CRUD + init
+    │           ├── local_store.py           SQLite fallback store
+    │           ├── chatbot_service.py       Helix chatbot (Groq / rule-based)
+    │           ├── wellness_report_service.py  Weekly report generation
+    │           ├── settings_service.py      User settings management
+    │           ├── calendar_service.py      Calendar manager (multi-provider)
+    │           ├── calendar_provider.py     Abstract calendar provider
+    │           ├── google_calendar.py       Google Calendar integration
+    │           └── microsoft_calendar.py    Microsoft Graph integration
+    │
+    ├── frontend/                    React 18 + Tailwind CSS SPA
+    │   ├── package.json             Node dependencies
+    │   ├── tailwind.config.js       Custom helix-* theme
+    │   ├── public/
+    │   │   ├── index.html
+    │   │   └── logo.png
+    │   ├── build/                   Production build output
+    │   └── src/
+    │       ├── index.js             App entry point
+    │       ├── index.css            Global styles + Tailwind imports
+    │       ├── App.jsx              Root component, routing, layout
+    │       ├── pages/               Page-level components
+    │       │   ├── Dashboard.jsx
+    │       │   ├── Journal.jsx
+    │       │   ├── Reports.jsx
+    │       │   ├── Calendar.jsx
+    │       │   ├── CycleMode.jsx
+    │       │   ├── Settings.jsx
+    │       │   └── AuthPage.jsx
+    │       ├── components/          20+ feature components
+    │       │   ├── Common/Sidebar.jsx
+    │       │   ├── ChatBot/ChatBot.jsx
+    │       │   ├── Dashboard/       (tasks, hydration, nudges, charts, etc.)
+    │       │   ├── Journal/
+    │       │   ├── Reports/
+    │       │   ├── Calendar/
+    │       │   ├── CycleMode/
+    │       │   ├── Settings/
+    │       │   └── Notifications/
+    │       ├── context/             React context providers
+    │       │   ├── AuthContext.jsx       Firebase auth state
+    │       │   ├── WellnessContext.jsx   Dashboard metrics, nudges, scheduling
+    │       │   ├── ThemeContext.jsx      Light/dark theme toggling
+    │       │   └── PageContextProvider  Page metadata for chatbot
+    │       ├── hooks/               Custom React hooks
+    │       │   ├── useEmotionAnalysis.js
+    │       │   ├── useWellnessPolling.js
+    │       │   └── usePeriodTracker.js
+    │       └── services/            Client-side services
+    │           ├── api.js               axios instance + auth headers
+    │           ├── firebase.js          Firebase client SDK config
+    │           ├── notifications.js     Browser notification helpers
+    │           ├── mealReminders.js
+    │           ├── eyeRestReminder.js
+    │           ├── privateCareReminder.js
+    │           └── todoReminder.js
+    │
+    ├── docs/                        Documentation
+    │   ├── Product_Architecture_Dossier.md
+    │   ├── Infinite_Helix_Management_Proposal.md / .pdf
+    │   ├── PROJECT_ANALYSIS.md
+    │   ├── ARCHITECTURE_PLAN.html
+    │   ├── API documentation (HTML)
+    │   ├── CHATBOT_TEST_SUITE.md
+    │   ├── setup-demo.md
+    │   └── Hackathon pitch materials
+    │
+    └── prototype/                   Static hackathon demo
+        ├── index.html
+        ├── README.md
+        └── assets/
+
+
+4. KEY FEATURES
+--------------------------------------------------------------------------------
+4.1  Work Behavior Tracking
+     - Keyboard and mouse activity monitoring via pynput
+     - Idle detection and continuous work duration tracking via psutil
+     - Screen time measurement and history
+
+4.2  Context-Aware Wellness Nudges
+     - Smart reminders for hydration, stretching, eye rest, and breathing
+     - Designed to feel supportive rather than intrusive
+     - Nudge generation, pending queue, and dismissal workflow
+     - Adjustable cooldown intervals (reduced in demo mode)
+
+4.3  Emotion & Sentiment AI
+     - HuggingFace Transformers models for emotion detection (7 classes)
+       and sentiment analysis
+     - Confidence scores for each analysis
+     - Supportive reframing suggestions when stress is detected
+     - Falls back to keyword-based detection in demo mode
+
+4.4  Cycle Energy Mode (Private Care)
+     - Optional menstrual phase logging — fully toggleable and private
+     - Phase-specific wellness suggestions (energy-level-aware nudges)
+     - Period history tracking
+     - Adjusts recommendations based on current cycle phase
+
+4.5  Calendar & Pre-Meeting Calm
+     - Google Calendar API and Microsoft Graph/Outlook integration
+     - OAuth2 flows for both providers
+     - Meeting detection and pre-meeting breathing/calm suggestions
+     - Demo mode provides mock meeting data
+
+4.6  Chatbot "Helix"
+     - AI-powered conversational assistant
+     - Uses Groq API for LLM-based responses when API key is available
+     - Falls back to template/rule-based replies otherwise
+     - Context-aware (knows current page, user state)
+     - Chat history management and quick reply suggestions
+     - Safety boundaries and intent classification
+
+4.7  Multi-Channel Notifications
+     - Desktop toasts via plyer (cross-platform)
+     - Browser Web Notifications API
+     - In-app notification overlay
+     - Meal, eye rest, and private care reminders with scheduling
+
+4.8  Dashboard & Reports
+     - Real-time wellness score aggregation
+     - Screen time charts and stress heatmaps
+     - Weekly wellness report cards
+     - Hydration and self-care tracking visualizations
+
+4.9  Emotion Journal
+     - Write free-form journal entries
+     - Instant AI emotion and sentiment analysis on each entry
+     - Entry history with browsing
+
+4.10 Todo / Task Management
+     - Create, view, toggle, and delete daily tasks
+     - Today's task view integrated into dashboard
+
+4.11 User Settings & Theming
+     - Light and dark mode theme toggle
+     - User profile management
+     - Configurable settings via API
+
+
+5. API ENDPOINTS
+--------------------------------------------------------------------------------
+Method  Endpoint                          Purpose
+------  --------------------------------  --------------------------------------
+GET     /api/health                       Health check + demo mode status
+
+POST    /api/auth/register                User registration
+POST    /api/auth/sync                    Profile sync on login
+GET     /api/auth/profile                 Get user profile
+
+POST    /api/emotion/analyze              Emotion detection on text
+POST    /api/sentiment/analyze            Sentiment analysis on text
+
+POST    /api/journal                      Create journal entry (with AI analysis)
+GET     /api/journal                      List journal entries
+GET     /api/journal/<entry_id>           Get specific journal entry
+
+GET     /api/dashboard/today              Live dashboard metrics
+GET     /api/dashboard/screen-history     Screen time history
+
+GET     /api/reports/weekly               Weekly wellness report
+
+GET     /api/tracker/status               Real-time activity stats
+POST    /api/tracker/start                Start activity tracking
+POST    /api/tracker/stop                 Stop activity tracking
+
+POST    /api/nudge/generate               Generate context-aware nudge
+GET     /api/nudge/pending                Get pending nudges
+POST    /api/nudge/<id>/dismiss           Dismiss a nudge
+
+GET     /api/calendar/meetings            Today's meetings
+GET     /api/calendar/next                Next upcoming meeting
+GET     /api/calendar/status              Calendar connection status
+GET     /api/calendar/authorize           Start OAuth flow
+GET     /api/calendar/callback            Microsoft OAuth callback
+GET     /api/calendar/google/callback     Google OAuth callback
+POST    /api/calendar/disconnect          Disconnect calendar
+POST    /api/calendar/events              Create calendar event
+
+GET     /api/cycle/suggestions/<phase>    Phase-specific suggestions
+POST    /api/cycle/phase                  Log current cycle phase
+
+POST    /api/hydration/log                Log water intake
+GET     /api/hydration/today              Today's hydration count
+
+POST    /api/selfcare/log                 Log self-care activity
+GET     /api/selfcare/today               Today's self-care logs
+
+POST    /api/privatecare/log              Log private care data
+GET     /api/privatecare/history          Private care history
+GET     /api/privatecare/period-history   Period history
+
+POST    /api/todos                        Create a todo item
+GET     /api/todos/today                  Today's todos
+POST    /api/todos/<id>/toggle            Toggle todo completion
+DELETE  /api/todos/<id>                   Delete a todo
+
+GET     /api/user/settings                Get user settings
+PUT     /api/user/settings                Update user settings
+GET     /api/user/profile                 Get user profile
+
+POST    /api/chat/message                 Send chat message to Helix
+GET     /api/chat/history                 Get chat history
+DELETE  /api/chat/history                 Clear chat history
+GET     /api/chat/quick-replies           Get quick reply suggestions
+
+
+6. AUTHENTICATION & SECURITY
+--------------------------------------------------------------------------------
+- Client-side: Firebase Authentication with email/password and Google OAuth 2.0
+- Server-side: Firebase Admin SDK verifies Bearer tokens from request headers
+- Middleware (require_auth) sets request.uid and request.email on each request
+- Demo Mode: bypasses token validation, assigns a fixed demo user ID
+- Calendar OAuth: uses state parameter to associate provider tokens with
+  Firebase user IDs during redirect flows
+- API client (axios) automatically attaches Firebase ID tokens to all requests
+
+
+7. DATABASE & STORAGE
+--------------------------------------------------------------------------------
+Primary:  Firebase Cloud Firestore
+          - Used when valid Firebase credentials are configured
+          - Stores all user data, journal entries, settings, chat history, etc.
+
+Fallback: SQLite (local.db)
+          - Generic "documents" table storing collection name + JSON blobs
+          - Activates when Firestore is unavailable or write operations fail
+          - Enables fully offline / no-credential demo operation
+
+
+8. AI & MACHINE LEARNING
+--------------------------------------------------------------------------------
+Emotion Detection:
+  - Model: DistilRoBERTa-based emotion classifier (HuggingFace)
+  - 7 emotion classes
+  - Demo mode: keyword-based fallback (no model download needed)
+
+Sentiment Analysis:
+  - Model: RoBERTa-based sentiment analyzer (HuggingFace)
+  - Positive/negative/neutral classification with confidence
+  - Demo mode: keyword-based fallback
+
+Chatbot (Helix):
+  - Primary: Groq API for LLM chat completions
+  - Fallback: Template and rule-based response system
+  - Persona-driven system prompt with safety boundaries
+  - Context-aware (current page, user wellness state)
+
+Nudge Engine:
+  - Generates context-aware wellness recommendations
+  - Factors: screen time, activity patterns, hydration, break history
+
+
+9. DEMO MODE
+--------------------------------------------------------------------------------
+Setting DEMO_MODE=true in the backend .env file enables:
+  - Keyword-based emotion/sentiment detection (no model downloads)
+  - SQLite/in-memory storage fallback (no Firebase credentials required)
+  - Realistic mock data for calendar meetings and reports
+  - Reduced nudge cooldown (5 minutes) for demo visibility
+  - Desktop notifications via plyer
+  - Fixed demo user authentication bypass
+
+
+10. HOW TO RUN
+--------------------------------------------------------------------------------
+Backend:
+  cd Infinite_helix/backend
+  python setup_demo.py          # Creates .env, installs dependencies
+  python run.py                 # Starts Flask API on port 5000
+
+Frontend (separate terminal):
+  cd Infinite_helix/frontend
+  npm install
+  npm run dev                   # Starts React dev server on port 3000
+
+Open http://localhost:3000 — register or sign in to begin.
+
+For environment variable configuration, see backend/.env.example.
+
+
+11. DOCUMENTATION
+--------------------------------------------------------------------------------
+- Infinite_helix/docs/Product_Architecture_Dossier.md
+- Infinite_helix/docs/Infinite_Helix_Management_Proposal.md / .pdf
+- Infinite_helix/docs/PROJECT_ANALYSIS.md
+- Infinite_helix/docs/ARCHITECTURE_PLAN.html
+- Infinite_helix/docs/CHATBOT_TEST_SUITE.md
+- Infinite_helix/docs/setup-demo.md
+- Infinite_helix/prototype/ — Static hackathon pitch demo
+
+
+12. TEAM
+--------------------------------------------------------------------------------
+Team Infinite Helix — built for hackathon with a focus on women-centric
+wellness while keeping inclusivity (cycle tracking is optional and private).
+
+================================================================================
+  End of Project Summary
+================================================================================

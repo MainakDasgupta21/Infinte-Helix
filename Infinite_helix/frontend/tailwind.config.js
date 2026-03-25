@@ -1,4 +1,8 @@
 /** @type {import('tailwindcss').Config} */
+function helixColor(varName) {
+  return `rgb(var(--helix-${varName}) / <alpha-value>)`;
+}
+
 module.exports = {
   content: ["./src/**/*.{js,jsx,ts,tsx}"],
   darkMode: 'class', // Enable dark mode toggle later
@@ -6,6 +10,7 @@ module.exports = {
     extend: {
       colors: {
         helix: {
+<<<<<<< HEAD
           // Light feminine base
           bg: '#fdfbff',
           'bg-dark': '#f5f3ff',
@@ -75,6 +80,23 @@ module.exports = {
           muted: '#6b7280',
           border: '#e8e8f0',
           'border-light': '#f0f0f8',
+=======
+          bg:           helixColor('bg'),
+          surface:      helixColor('surface'),
+          card:         helixColor('card'),
+          accent:       helixColor('accent'),
+          'accent-dim': helixColor('accent-dim'),
+          pink:         helixColor('pink'),
+          'pink-dim':   helixColor('pink-dim'),
+          sky:          helixColor('sky'),
+          mint:         helixColor('mint'),
+          amber:        helixColor('amber'),
+          red:          helixColor('red'),
+          text:         helixColor('text'),
+          muted:        helixColor('muted'),
+          border:       helixColor('border'),
+          'border-light': helixColor('border-light'),
+>>>>>>> 9aa662e (Add middleware, calendar providers, theme support, and UI improvement)
         }
       },
       fontFamily: {
@@ -94,6 +116,7 @@ module.exports = {
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+<<<<<<< HEAD
         'mesh-light': 'radial-gradient(ellipse 80% 50% at 50% -20%, rgba(168,180,255,0.08) 0%, transparent 55%), radial-gradient(ellipse 60% 40% at 100% 0%, rgba(240,168,195,0.06) 0%, transparent 45%), radial-gradient(ellipse 50% 60% at 0% 100%, rgba(255,255,255,0.04) 0%, transparent 50%)',
         'lavender-gradient': 'linear-gradient(135deg, #a8b4ff 0%, #919fff 50%, #7a8fff 100%)',
         'blush-gradient': 'linear-gradient(135deg, #f9c9d8 0%, #f4b0cc 50%, #f0a8c3 100%)',
@@ -102,6 +125,9 @@ module.exports = {
       },
       borderRadius: {
         '20': '20px',
+=======
+        'mesh': 'radial-gradient(ellipse 80% 50% at 50% -20%, rgb(var(--helix-accent) / 0.07) 0%, transparent 55%), radial-gradient(ellipse 60% 40% at 100% 0%, rgb(var(--helix-sky) / 0.05) 0%, transparent 45%), radial-gradient(ellipse 50% 60% at 0% 100%, rgb(var(--helix-text) / 0.02) 0%, transparent 50%)',
+>>>>>>> 9aa662e (Add middleware, calendar providers, theme support, and UI improvement)
       }
     },
   },

@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
 import { loadMealReminderConfig, saveMealReminderConfig, MEAL_REMINDER_EVENT } from '../../services/mealReminders';
 
-function ToggleMini({ enabled, onChange }) {
+function ToggleMini({ enabled, onChange, ariaLabel }) {
   return (
     <button
       type="button"
+      role="switch"
+      aria-checked={enabled}
+      aria-label={ariaLabel}
       onClick={() => onChange(!enabled)}
       className={`w-9 h-5 rounded-full p-0.5 transition-colors shrink-0 ${enabled ? 'bg-helix-accent' : 'bg-helix-border'}`}
     >
@@ -26,12 +30,14 @@ export default function MealReminderSettings() {
   const updateMaster = (v) => {
     setMasterEnabled(v);
     saveMealReminderConfig({ masterEnabled: v });
+    toast.success(v ? 'Meal reminders enabled' : 'Meal reminders disabled', { id: 'meal-master' });
   };
 
   const updateRow = (id, patch) => {
     const next = rows.map((r) => (r.id === id ? { ...r, ...patch } : r));
     setRows(next);
     saveMealReminderConfig({ reminders: next, masterEnabled });
+    toast.success('Meal reminder updated', { id: 'meal-row-update' });
   };
 
   return (
@@ -43,7 +49,7 @@ export default function MealReminderSettings() {
             Daily desktop alerts for meals and breaks. Times use your device clock.
           </p>
         </div>
-        <ToggleMini enabled={masterEnabled} onChange={updateMaster} />
+        <ToggleMini enabled={masterEnabled} onChange={updateMaster} ariaLabel="Toggle meal reminders" />
       </div>
 
       {masterEnabled && (
@@ -56,7 +62,7 @@ export default function MealReminderSettings() {
               key={r.id}
               className="flex flex-wrap items-center gap-2 sm:gap-3 py-2 border-b border-helix-border/20 last:border-0"
             >
-              <ToggleMini enabled={r.enabled !== false} onChange={(v) => updateRow(r.id, { enabled: v })} />
+              <ToggleMini enabled={r.enabled !== false} onChange={(v) => updateRow(r.id, { enabled: v })} ariaLabel={`Toggle ${r.label} reminder`} />
               <span className="text-sm text-helix-text flex-1 min-w-[8rem]">{r.label}</span>
               <input
                 type="time"

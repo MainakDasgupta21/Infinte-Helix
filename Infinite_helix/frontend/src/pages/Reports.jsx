@@ -870,7 +870,7 @@ export default function Reports() {
     try {
       setLoading(true);
       setError(null);
-      const res = await reportsAPI.getWeekly(user?.uid);
+      const res = await reportsAPI.getWeekly();
       setReport(res.data);
     } catch {
       setError('Unable to load your wellness report. Please try again.');

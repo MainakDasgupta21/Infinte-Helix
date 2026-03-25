@@ -6,6 +6,7 @@ import {
   signOut as firebaseSignOut,
   onAuthStateChanged,
   updateProfile,
+  sendPasswordResetEmail,
 } from 'firebase/auth';
 import { auth, googleProvider } from '../services/firebase';
 import { authAPI } from '../services/api';
@@ -103,6 +104,11 @@ export function AuthProvider({ children }) {
     return mapFirebaseUser(result.user);
   }, []);
 
+  const resetPassword = useCallback(async (email) => {
+    if (!auth) throw new Error('Firebase not configured');
+    await sendPasswordResetEmail(auth, email);
+  }, []);
+
   const handleSignOut = useCallback(async () => {
     if (auth) await firebaseSignOut(auth);
     setUser(null);
@@ -116,6 +122,7 @@ export function AuthProvider({ children }) {
     signUp,
     signInWithGoogle: signInWithGoogleHandler,
     signOut: handleSignOut,
+    resetPassword,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
