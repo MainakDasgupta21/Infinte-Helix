@@ -255,30 +255,6 @@ function ThemedToaster() {
 function App() {
   return (
     <ErrorBoundary>
-<<<<<<< HEAD
-      <AuthProvider>
-        <BrowserRouter>
-          <AppRoutes />
-          <Toaster
-            position="bottom-right"
-            toastOptions={{
-              duration: 3000,
-              style: {
-                background: 'rgba(255,255,255,0.95)',
-                color: '#2a2a3a',
-                border: '1px solid #e8e8f0',
-                borderRadius: '14px',
-                fontSize: '13px',
-                padding: '12px 16px',
-                boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
-              },
-              success: { iconTheme: { primary: '#16a34a', secondary: 'white' }, style: { background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534' } },
-              error: { iconTheme: { primary: '#dc2626', secondary: 'white' }, style: { background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b' } },
-            }}
-          />
-        </BrowserRouter>
-      </AuthProvider>
-=======
       <ThemeProvider>
         <AuthProvider>
           <BrowserRouter>
@@ -287,7 +263,6 @@ function App() {
           </BrowserRouter>
         </AuthProvider>
       </ThemeProvider>
->>>>>>> 9aa662e (Add middleware, calendar providers, theme support, and UI improvement)
     </ErrorBoundary>
   );
 }

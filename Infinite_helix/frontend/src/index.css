@@ -63,29 +63,17 @@
 
   * {
     scrollbar-width: thin;
-<<<<<<< HEAD
-    scrollbar-color: #d4d3e0 transparent;
-=======
     scrollbar-color: rgb(var(--helix-border)) rgb(var(--helix-bg));
->>>>>>> 9aa662e (Add middleware, calendar providers, theme support, and UI improvement)
   }
   *::-webkit-scrollbar {
     width: 5px;
   }
   *::-webkit-scrollbar-track {
-<<<<<<< HEAD
-    background: transparent;
-  }
-  *::-webkit-scrollbar-thumb {
-    background-color: #c8c7d8;
-    border-radius: 99px;
-=======
     background: rgb(var(--helix-bg));
   }
   *::-webkit-scrollbar-thumb {
     background-color: rgb(var(--helix-border-light));
     border-radius: 3px;
->>>>>>> 9aa662e (Add middleware, calendar providers, theme support, and UI improvement)
   }
 }
 
@@ -99,19 +87,6 @@
     box-shadow: 0 1px 3px rgb(0 0 0 / 0.06), 0 4px 16px rgb(0 0 0 / 0.04);
   }
   .glass-card {
-<<<<<<< HEAD
-    @apply bg-white rounded-2xl border border-slate-200/70;
-    box-shadow: 0 1px 3px rgb(0 0 0 / 0.06), 0 4px 16px rgb(0 0 0 / 0.04);
-  }
-  .glow-lavender {
-    box-shadow: 0 4px 24px rgba(124, 108, 219, 0.18);
-  }
-  .glow-blush {
-    box-shadow: 0 4px 20px rgba(249, 201, 216, 0.2);
-  }
-  .glow-sage {
-    box-shadow: 0 4px 20px rgba(168, 212, 160, 0.2);
-=======
     @apply bg-helix-card/60 backdrop-blur-xl border border-helix-border/40 rounded-[20px];
     box-shadow: var(--helix-card-shadow);
   }
@@ -123,7 +98,6 @@
   }
   .glow-mint {
     box-shadow: 0 0 20px rgb(var(--helix-mint) / 0.12), 0 0 0 1px rgb(var(--helix-mint) / 0.05);
->>>>>>> 9aa662e (Add middleware, calendar providers, theme support, and UI improvement)
   }
   .gradient-text {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-helix-lavender-500 via-helix-blush-300 to-helix-sage-400;

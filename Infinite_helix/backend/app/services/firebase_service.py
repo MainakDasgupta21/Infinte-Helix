@@ -623,7 +623,6 @@ def get_todos_upcoming(user_id):
             return []
 
     return sorted(
-<<<<<<< HEAD
         [t for t in _in_memory_store.get('personal_todos', [])
          if t.get('user_id') == user_id and t.get('date', '') >= today and not t.get('completed', False)],
         key=lambda x: (x.get('date', ''), x.get('remind_at') or '99:99'),
@@ -656,11 +655,6 @@ def get_todo_history(user_id, days=30):
          if t.get('user_id') == user_id and t.get('date', '') >= cutoff],
         key=lambda x: (x.get('date', ''), x.get('timestamp', '')),
         reverse=True,
-=======
-        [t for t in _local().get_all('personal_todos')
-         if t.get('user_id') == user_id and t.get('date') == today],
-        key=lambda x: x.get('timestamp', ''),
->>>>>>> 9aa662e (Add middleware, calendar providers, theme support, and UI improvement)
     )
 
 

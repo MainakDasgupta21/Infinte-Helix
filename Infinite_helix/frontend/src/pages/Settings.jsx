@@ -34,11 +34,7 @@ function ToggleSwitch({ enabled, onChange, label }) {
       aria-checked={enabled}
       aria-label={label}
       onClick={() => onChange(!enabled)}
-<<<<<<< HEAD
-      className={`w-10 h-5.5 rounded-full p-0.5 transition-colors focus:outline-none focus:ring-2 focus:ring-violet-300 ${enabled ? 'bg-violet-600' : 'bg-slate-200'}`}
-=======
       className={`w-10 h-[22px] rounded-full p-0.5 transition-colors focus:outline-none focus:ring-2 focus:ring-helix-accent/50 ${enabled ? 'bg-helix-accent' : 'bg-helix-border'}`}
->>>>>>> 9aa662e (Add middleware, calendar providers, theme support, and UI improvement)
     >
       <div className={`w-4 h-4 rounded-full bg-white transition-transform ${enabled ? 'translate-x-5' : 'translate-x-0'}`} />
     </button>

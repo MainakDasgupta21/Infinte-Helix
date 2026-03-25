@@ -110,7 +110,6 @@ export const selfCareAPI = {
 };
 
 export const todoAPI = {
-<<<<<<< HEAD
   create: (text, remindAt, userId, date, category) =>
     api.post('/todos', { text, remind_at: remindAt || null, date: date || null, category: category || 'work', ...(userId && { user_id: userId }) }),
   getToday: (userId) =>
@@ -125,18 +124,11 @@ export const todoAPI = {
     api.post(`/todos/${todoId}/toggle`, { ...(userId && { user_id: userId }) }),
   remove: (todoId, userId) =>
     api.delete(`/todos/${todoId}`, { data: { ...(userId && { user_id: userId }) } }),
-=======
-  create: (text, remindAt) =>
-    api.post('/todos', { text, remind_at: remindAt || null }),
-  getToday: () => api.get('/todos/today'),
-  toggle: (todoId) => api.post(`/todos/${todoId}/toggle`),
-  remove: (todoId) => api.delete(`/todos/${todoId}`),
 };
 
 export const settingsAPI = {
   get: () => api.get('/user/settings'),
   update: (settings) => api.put('/user/settings', { settings }),
->>>>>>> 9aa662e (Add middleware, calendar providers, theme support, and UI improvement)
 };
 
 export const privateCareAPI = {

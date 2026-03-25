@@ -13,18 +13,6 @@ from app.services.google_calendar import GoogleCalendarProvider
 
 logger = logging.getLogger(__name__)
 
-<<<<<<< HEAD
-GRAPH_BASE = 'https://graph.microsoft.com/v1.0'
-# Read-only: meetings/times from Outlook/Teams calendar; no email, files, or write access.
-SCOPES = 'Calendars.Read User.Read offline_access'
-
-
-def _auth_base():
-    tenant = os.getenv('MS_TENANT_ID', 'common')
-    return f'https://login.microsoftonline.com/{tenant}/oauth2/v2.0'
-
-=======
->>>>>>> 9aa662e (Add middleware, calendar providers, theme support, and UI improvement)
 DEMO_MEETINGS = [
     {
         'id': 'demo-1', 'title': 'Sprint Planning', 'start': '09:00', 'end': '09:45',

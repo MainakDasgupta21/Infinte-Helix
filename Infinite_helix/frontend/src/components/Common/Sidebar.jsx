@@ -155,18 +155,11 @@ export default function Sidebar() {
       {/* Logo */}
       <div className={`transition-all duration-300 ${collapsed ? 'p-4' : 'px-6 pt-7 pb-5'}`}>
         <div className="flex items-center gap-3">
-<<<<<<< HEAD
-          <div className={`rounded-xl bg-gradient-to-br from-violet-600 to-indigo-500 flex items-center justify-center shrink-0
-                          transition-all duration-300 shadow-md shadow-violet-500/20 ${collapsed ? 'w-10 h-10' : 'w-10 h-10'}`}>
-            <span className="text-white font-serif font-bold text-sm tracking-tight">IH</span>
-          </div>
-=======
           <img
             src="/logo.png"
             alt="Infinite Helix"
             className={`rounded-xl shrink-0 object-contain transition-all duration-300 ${collapsed ? 'w-9 h-9' : 'w-10 h-10'}`}
           />
->>>>>>> 9aa662e (Add middleware, calendar providers, theme support, and UI improvement)
           <div className={`overflow-hidden transition-all duration-300 ${collapsed ? 'w-0 opacity-0' : 'w-auto opacity-100'}`}>
             <h1 className="font-serif font-bold text-slate-900 text-base leading-tight whitespace-nowrap">Infinite Helix</h1>
             <p className="text-[11px] text-slate-500 font-body whitespace-nowrap tracking-wide">Your Wellness Sanctuary</p>

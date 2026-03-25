@@ -16,11 +16,8 @@ def create():
     user_id = request.uid
     text = (data.get('text') or '').strip()
     remind_at = data.get('remind_at')
-<<<<<<< HEAD
     date = data.get('date')
     category = data.get('category')
-=======
->>>>>>> 9aa662e (Add middleware, calendar providers, theme support, and UI improvement)
 
     if not text:
         return jsonify({'error': 'text is required'}), 400

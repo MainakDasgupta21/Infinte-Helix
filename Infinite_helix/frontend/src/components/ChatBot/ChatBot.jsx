@@ -61,16 +61,6 @@ function MessageBubble({ msg, isUser, isLatest }) {
           <HiOutlineSparkles className="w-4 h-4 text-white" />
         </div>
       )}
-<<<<<<< HEAD
-      <div
-        className={`max-w-[80%] px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed font-sans ${
-          isUser
-            ? 'bg-helix-accent/20 border border-helix-accent/30 text-slate-700 rounded-br-md'
-            : 'bg-white/90 border border-slate-200/50 text-slate-700 rounded-bl-md'
-        }`}
-        dangerouslySetInnerHTML={{ __html: formatMessage(msg.message) }}
-      />
-=======
       <div className="max-w-[78%] group">
         <div
           className={`px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap
@@ -87,7 +77,6 @@ function MessageBubble({ msg, isUser, isLatest }) {
           {formatTime(msg.timestamp)}
         </div>
       </div>
->>>>>>> 9aa662e (Add middleware, calendar providers, theme support, and UI improvement)
     </div>
   );
 }
@@ -101,14 +90,8 @@ function QuickReplies({ replies, onSelect, disabled }) {
           key={i}
           onClick={() => onSelect(reply)}
           disabled={disabled}
-<<<<<<< HEAD
-          className="px-3 py-1.5 text-xs font-sans font-medium rounded-full border border-helix-accent/30 text-helix-accent
-                     hover:bg-helix-accent/10 transition-all duration-200 disabled:opacity-50
-                     disabled:cursor-not-allowed whitespace-nowrap"
-=======
           className="cb-quick-btn"
           style={{ animationDelay: `${i * 60}ms` }}
->>>>>>> 9aa662e (Add middleware, calendar providers, theme support, and UI improvement)
         >
           {reply}
         </button>
@@ -123,19 +106,11 @@ function TypingIndicator() {
       <div className="w-8 h-8 rounded-full cb-avatar flex items-center justify-center mr-2.5 mt-1 shrink-0">
         <HiOutlineSparkles className="w-4 h-4 text-white animate-spin-slow" />
       </div>
-<<<<<<< HEAD
-      <div className="bg-white/90 border border-slate-200/50 rounded-2xl rounded-bl-md px-4 py-3">
-        <div className="flex gap-1">
-          <span className="w-2 h-2 bg-slate-300 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-          <span className="w-2 h-2 bg-slate-300 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-          <span className="w-2 h-2 bg-slate-300 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-=======
       <div className="cb-bubble-assistant rounded-2xl rounded-bl-sm px-5 py-3.5">
         <div className="flex gap-1.5 items-center">
           <span className="w-2 h-2 rounded-full cb-typing-dot" style={{ animationDelay: '0ms' }} />
           <span className="w-2 h-2 rounded-full cb-typing-dot" style={{ animationDelay: '160ms' }} />
           <span className="w-2 h-2 rounded-full cb-typing-dot" style={{ animationDelay: '320ms' }} />
->>>>>>> 9aa662e (Add middleware, calendar providers, theme support, and UI improvement)
         </div>
       </div>
     </div>
@@ -455,26 +430,6 @@ export default function ChatBot() {
         )}
       </button>
 
-<<<<<<< HEAD
-      {/* Chat Window */}
-      {isOpen && (
-        <div className="fixed bottom-24 right-6 z-50 w-[380px] max-w-[calc(100vw-2rem)]
-                       h-[560px] max-h-[calc(100vh-8rem)]
-                       bg-slate-50/95 backdrop-blur-xl border border-slate-200/50
-                       rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-slide-up font-sans antialiased">
-          {/* Header */}
-          <div className="px-4 py-3 border-b border-slate-200/40 bg-white/60 flex items-center justify-between shrink-0">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-helix-accent to-helix-pink flex items-center justify-center">
-                <HiOutlineSparkles className="w-4 h-4 text-white" />
-              </div>
-              <div>
-                <h3 className="text-sm font-semibold text-slate-800">Helix</h3>
-                <div className="flex items-center gap-1">
-                  <span className={`w-1.5 h-1.5 rounded-full ${aiPowered ? 'bg-emerald-400' : 'bg-amber-400'}`} />
-                  <span className="text-[10px] text-slate-400 font-medium">
-                    {aiPowered ? 'AI Companion' : 'Your supportive companion'}
-=======
       {/* ── Chat Window ── */}
       {isVisible && (
         <div
@@ -502,7 +457,6 @@ export default function ChatBot() {
                   <h3 className="text-[15px] font-bold text-white leading-tight tracking-tight">Helix</h3>
                   <span className="text-[11px] text-white/60 leading-tight">
                     {aiPowered ? 'AI-powered companion' : 'Your wellness companion'}
->>>>>>> 9aa662e (Add middleware, calendar providers, theme support, and UI improvement)
                   </span>
                 </div>
               </div>
@@ -525,20 +479,10 @@ export default function ChatBot() {
                 </button>
               </div>
             </div>
-<<<<<<< HEAD
-            <button
-              onClick={clearChat}
-              className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
-              title="Clear conversation"
-            >
-              <HiOutlineTrash className="w-4 h-4 text-slate-400" />
-            </button>
-=======
             {/* Decorative wave separator */}
             <svg className="w-full h-3 -mb-px" viewBox="0 0 420 12" preserveAspectRatio="none">
               <path d="M0 0 Q105 12 210 6 Q315 0 420 8 L420 12 L0 12 Z" fill="var(--cb-body-bg)" />
             </svg>
->>>>>>> 9aa662e (Add middleware, calendar providers, theme support, and UI improvement)
           </div>
 
           {/* ── Messages ── */}
@@ -579,38 +523,6 @@ export default function ChatBot() {
             </div>
           )}
 
-<<<<<<< HEAD
-          {/* Input */}
-          <div className="px-3 pb-3 pt-1 border-t border-slate-200/30 shrink-0">
-            <div className="flex items-center gap-2 bg-white rounded-xl border border-slate-200/50 px-3 py-2">
-              <input
-                ref={inputRef}
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Share what's on your mind..."
-                maxLength={2000}
-                className="flex-1 bg-transparent text-sm font-sans text-slate-700 placeholder:text-slate-400
-                          outline-none"
-                disabled={loading}
-              />
-
-              {recognitionRef.current && (
-                <button
-                  onClick={toggleVoice}
-                  className={`p-1.5 rounded-lg transition-all ${
-                    isListening
-                      ? 'bg-rose-100 text-rose-500 animate-pulse'
-                      : 'hover:bg-slate-100 text-slate-400'
-                  }`}
-                  title={isListening ? 'Stop listening' : 'Voice input'}
-                >
-                  {isListening ? (
-                    <HiOutlineStop className="w-4 h-4" />
-                  ) : (
-                    <HiOutlineMicrophone className="w-4 h-4" />
-=======
           {/* ── Input Area ── */}
           <div className="cb-input-area shrink-0">
             <div className="px-4 pb-4 pt-3 max-sm:pb-6">
@@ -649,7 +561,6 @@ export default function ChatBot() {
                         <HiOutlineMicrophone className="w-4 h-4" />
                       )}
                     </button>
->>>>>>> 9aa662e (Add middleware, calendar providers, theme support, and UI improvement)
                   )}
                   <button
                     onClick={() => sendMessage()}
@@ -668,19 +579,6 @@ export default function ChatBot() {
                   </span>
                 </div>
               )}
-<<<<<<< HEAD
-
-              <button
-                onClick={() => sendMessage()}
-                disabled={!input.trim() || loading}
-                className="p-1.5 rounded-lg bg-violet-100 text-violet-600
-                          hover:bg-violet-200 transition-all disabled:opacity-30
-                          disabled:cursor-not-allowed"
-              >
-                <HiOutlinePaperAirplane className="w-4 h-4 rotate-90" />
-              </button>
-=======
->>>>>>> 9aa662e (Add middleware, calendar providers, theme support, and UI improvement)
             </div>
           </div>
         </div>

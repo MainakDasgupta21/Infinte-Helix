@@ -1,10 +1,7 @@
 from flask import Blueprint, request, jsonify, current_app
 from app.services.firebase_service import save_journal_entry, get_journal_entries
-<<<<<<< HEAD
 from app.ai.wellness_advisor import generate_wellness_suggestions
-=======
 from app.middleware import require_auth
->>>>>>> 9aa662e (Add middleware, calendar providers, theme support, and UI improvement)
 
 journal_bp = Blueprint('journal', __name__)
 

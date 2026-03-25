@@ -143,17 +143,10 @@ export default function Calendar() {
   }, [meetings, status, loading, teamsMeetings, upcomingCount, meetingHours, freeHours, activeProvider, updatePageContext]);
 
   const stats = [
-<<<<<<< HEAD
-    { label: 'Meetings Today', value: String(meetings.length), color: 'text-violet-600' },
-    { label: 'Teams Calls', value: String(teamsMeetings.length), color: 'text-violet-600' },
-    { label: 'Meeting Hours', value: `${meetingHours}h`, color: 'text-blue-600' },
-    { label: 'Free Time', value: `${freeHours.toFixed(1)}h`, color: 'text-emerald-600' },
-=======
     { label: 'Meetings Today', value: String(meetings.length), color: 'text-helix-accent' },
     { label: 'Video Calls', value: String(teamsMeetings.length + meetings.filter(m => m.is_meet).length), color: 'text-indigo-400' },
     { label: 'Meeting Hours', value: `${meetingHours}h`, color: 'text-helix-sky' },
     { label: 'Free Time', value: `${freeHours.toFixed(1)}h`, color: 'text-helix-mint' },
->>>>>>> 9aa662e (Add middleware, calendar providers, theme support, and UI improvement)
   ];
 
   return (
@@ -161,73 +154,14 @@ export default function Calendar() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-<<<<<<< HEAD
-          <h1 className="text-2xl font-serif font-semibold text-slate-800">Calendar</h1>
-          <p className="text-sm text-slate-500 mt-1">
-            {status.connected
-              ? 'Synced with Microsoft Teams — showing your real meetings'
-=======
           <h1 className="text-2xl font-display font-semibold text-helix-text">Calendar</h1>
           <p className="text-sm text-helix-muted mt-1">
             {activeProvider
               ? `Synced with ${PROVIDER_THEME[activeProvider]?.label || activeProvider} — showing your real meetings`
->>>>>>> 9aa662e (Add middleware, calendar providers, theme support, and UI improvement)
               : 'Pre-meeting calm reminders & schedule overview'}
           </p>
         </div>
 
-<<<<<<< HEAD
-        {status.connected ? (
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-100 border border-emerald-200">
-              <HiOutlineCheckCircle className="w-4 h-4 text-emerald-600" />
-              <span className="text-xs text-emerald-600 font-medium">
-                {status.user?.name || 'Teams Connected'}
-              </span>
-            </div>
-            <button
-              onClick={handleDisconnect}
-              className="px-3 py-2 text-xs text-slate-500 hover:text-rose-500 transition-colors"
-            >
-              Disconnect
-            </button>
-          </div>
-        ) : (
-          <button
-            onClick={handleConnect}
-            className="glass-card px-4 py-2 flex items-center gap-2 text-sm text-violet-600 hover:bg-violet-100 border border-violet-200 transition-colors"
-          >
-            <TeamsIcon className="w-4 h-4" />
-            Connect Microsoft Teams
-          </button>
-        )}
-      </div>
-
-      {!status.connected && (
-        <div className="glass-card p-4 border border-violet-200 bg-violet-50">
-          <div className="flex items-start gap-3">
-            <TeamsIcon className="w-5 h-5 text-violet-600 mt-0.5 shrink-0" />
-            <div>
-              <p className="text-sm text-slate-800 font-medium">Sync your Microsoft Teams meetings</p>
-              <p className="text-xs text-slate-500 mt-1">
-                Sign in with your Microsoft work account (same as Teams or Outlook). We only read
-                your calendar—meeting times, titles, and Teams join links—so we can show your day
-                and send calm reminders. We cannot read email, chat, or files.
-              </p>
-              <p className="text-xs text-slate-500 mt-2">
-                <span className="text-slate-700">For employees:</span> you do not register anything
-                in Azure. <span className="text-slate-700">For IT / one-time setup:</span> add one
-                app registration (client ID + secret) in the server config for the whole company.
-              </p>
-              {!status.configured && (
-                <p className="text-xs text-amber-600 mt-2">
-                  Setup required: Add MS_CLIENT_ID and MS_CLIENT_SECRET to the backend <code className="text-slate-800">.env</code>
-                  (delegated permissions <code className="text-slate-800">Calendars.Read</code>,{' '}
-                  <code className="text-slate-800">User.Read</code>).
-                </p>
-              )}
-            </div>
-=======
         {/* Connected provider badges */}
         <div className="flex items-center gap-2 flex-wrap">
           {connectedProviders.map(p => {
@@ -331,7 +265,6 @@ export default function Calendar() {
                 Reconnect Microsoft
               </button>
             </span>
->>>>>>> 9aa662e (Add middleware, calendar providers, theme support, and UI improvement)
           </div>
         </div>
       )}
