@@ -1,0 +1,278 @@
+================================================================================
+ONE-SHOT PROMPT — PART 7: AI MODULES & WORK BEHAVIOR TRACKING
+================================================================================
+
+Create the AI/ML modules under backend/app/ai/ and the system tracking
+modules under backend/app/tracker/. Also create the standalone stress agent
+at backend/stress_agent.py.
+
+--------------------------------------------------------------------------------
+FILE: backend/app/ai/emotion_detector.py — HUGGINGFACE EMOTION PIPELINE
+--------------------------------------------------------------------------------
+
+Create an EmotionDetector class that uses HuggingFace Transformers:
+
+    class EmotionDetector:
+        __init__(model_name=None, cache_dir=None):
+            - Default model: 'j-hartmann/emotion-english-distilroberta-base'
+            - Load pipeline('text-classification', model=model_name,
+                            return_all_scores=True, cache_dir=cache_dir)
+            - Log success
+
+        analyze(text):
+            - If empty text: return neutral default
+            - Truncate text to 512 characters for model input
+            - Run pipeline on text
+            - Extract all emotion scores from results[0]
+            - Find top emotion (highest score)
+            - Return {
+                emotion: string (top label),
+                confidence: float (top score),
+                all_emotions: [ { label, score }, ... ]
+              }
+
+    The model detects 7 emotion classes:
+      joy, sadness, anger, fear, surprise, disgust, neutral
+
+    Each entry in all_emotions has a label and a float score (0-1).
+
+--------------------------------------------------------------------------------
+FILE: backend/app/ai/sentiment_analyzer.py — HUGGINGFACE SENTIMENT PIPELINE
+--------------------------------------------------------------------------------
+
+Create a SentimentAnalyzer class:
+
+    class SentimentAnalyzer:
+        __init__(model_name=None, cache_dir=None):
+            - Default model: 'cardiffnlp/twitter-roberta-base-sentiment'
+            - Load pipeline('sentiment-analysis', model=model_name,
+                            return_all_scores=True, cache_dir=cache_dir)
+            - Define label mapping:
+              LABEL_0 -> 'negative', LABEL_1 -> 'neutral', LABEL_2 -> 'positive'
+            - Define _REFRAMES list: 7 supportive reframing messages like:
+              "It's okay to feel this way. You've handled similar challenges
+               before — take it one step at a time."
+              (and 6 more similar supportive messages)
+
+        analyze(text):
+            - If empty text: return neutral default
+            - Truncate to 512 characters
+            - Run pipeline on text
+            - Map model labels to human labels (negative/neutral/positive)
+            - Find top sentiment
+            - If top sentiment is 'negative': attach a rotating reframe message
+            - Return {
+                sentiment: string,
+                confidence: float,
+                all_sentiments: [ { label, score }, ... ],
+                reframe: string or null
+              }
+
+--------------------------------------------------------------------------------
+FILE: backend/app/ai/nudge_engine.py — CONTEXT-AWARE NUDGE GENERATION
+--------------------------------------------------------------------------------
+
+Create a NudgeEngine class that generates supportive wellness nudges:
+
+    NUDGE_TEMPLATES = {
+        'hydration': [
+            "Time for a water break! Your body will thank you.",
+            "Staying hydrated boosts focus. Grab a glass of water!",
+            ...  (4-5 templates)
+        ],
+        'stretch': [
+            "Quick stretch break! Roll your shoulders and breathe.",
+            ...
+        ],
+        'eye_rest': [
+            "Time for the 20-20-20 rule: Look at something 20 feet away for 20 seconds.",
+            ...
+        ],
+        'breathing': [
+            "Take 3 deep breaths. Inhale for 4 counts, hold for 4, exhale for 6.",
+            ...
+        ],
+        'break': [
+            "You've been working hard! Take a 5-minute break.",
+            ...
+        ],
+        'posture': [
+            "Quick posture check! Sit up straight, feet flat on the floor.",
+            ...
+        ]
+    }
+
+    class NudgeEngine:
+        __init__(cooldown_minutes=30):
+            - Store cooldown duration
+            - Initialize _last_nudge_times dict (type -> timestamp)
+            - Initialize _pending_nudges list
+
+        generate(context):
+            - context is a dict with: continuous_work_minutes, idle_seconds,
+              last_hydration_minutes_ago, last_stretch_minutes_ago,
+              typing_intensity, screen_time_hours, etc.
+            - Call _evaluate_context(context) to get prioritized nudge types
+            - For each candidate type, check cooldown
+            - Pick highest priority nudge that passes cooldown
+            - Select random template from NUDGE_TEMPLATES[type]
+            - Create nudge: { id, type, message, priority, timestamp, dismissed: false }
+            - Add to _pending_nudges
+            - Return the nudge or None
+
+        _evaluate_context(context):
+            - Evaluate priority scores based on context:
+              * continuous_work > fatigue_threshold -> 'break' (high priority)
+              * screen_time > 2 hours since last eye rest -> 'eye_rest'
+              * last_hydration > 60 min ago -> 'hydration'
+              * last_stretch > 45 min ago -> 'stretch'
+              * typing_intensity > 30 -> 'breathing'
+              * General periodic -> 'posture'
+            - Return sorted list of (type, priority)
+
+        get_pending():
+            - Return list of undismissed nudges
+
+        dismiss(nudge_id):
+            - Mark nudge as dismissed
+
+--------------------------------------------------------------------------------
+FILE: backend/app/ai/wellness_advisor.py — WELLNESS ADVICE ENGINE
+--------------------------------------------------------------------------------
+
+Create a WellnessAdvisor that provides contextual wellness advice:
+
+    class WellnessAdvisor:
+        generate_advice(context):
+            - Based on wellness score, mood, activity patterns
+            - Return personalized advice text
+            - Consider cycle phase if provided
+            - Adjust tone based on time of day
+
+--------------------------------------------------------------------------------
+FILE: backend/app/tracker/activity_monitor.py — KEYBOARD/MOUSE TRACKING
+--------------------------------------------------------------------------------
+
+Create an ActivityMonitor class that tracks user input:
+
+    class ActivityMonitor:
+        __init__(interval=30):
+            - Initialize counters: _keystrokes, _mouse_clicks, _mouse_distance
+            - Initialize timestamps: _last_activity, _session_start, _last_break
+            - Store interval (seconds between stat updates)
+            - _running flag
+
+        start():
+            - Import and start pynput keyboard.Listener and mouse.Listener
+            - Keyboard on_press: increment _keystrokes, update _last_activity
+            - Mouse on_click: increment _mouse_clicks, update _last_activity
+            - Mouse on_move: accumulate _mouse_distance
+            - Enter main loop:
+              * Sleep for interval seconds
+              * Continue while _running is True
+
+        stop():
+            - Set _running = False
+            - Stop listeners
+
+        stats property:
+            - Calculate idle_seconds = now - _last_activity
+            - Calculate continuous_work_minutes = (now - _last_break) / 60
+            - Calculate typing_intensity = _keystrokes / (elapsed_minutes or 1)
+            - Return {
+                keystrokes: int,
+                mouse_clicks: int,
+                mouse_distance: float,
+                idle_seconds: float,
+                continuous_work_minutes: float,
+                typing_intensity: float,
+                last_activity: ISO timestamp,
+                session_start: ISO timestamp
+              }
+
+    Notes:
+    - Runs in a daemon thread (started by run.py)
+    - Counters accumulate across the session (no reset)
+    - idle_seconds resets when any key/mouse event fires
+    - continuous_work_minutes resets when idle_seconds > IDLE_THRESHOLD
+    - pynput import may fail on headless systems; handle gracefully
+
+--------------------------------------------------------------------------------
+FILE: backend/app/tracker/screen_tracker.py — ACTIVE WINDOW TRACKING
+--------------------------------------------------------------------------------
+
+Create a screen tracker using psutil:
+
+    get_screen_data():
+        - Use psutil.process_iter() to get running processes
+        - Categorize common apps into categories:
+          Browsers: chrome, firefox, edge, safari
+          IDE/Code: code, pycharm, intellij, sublime
+          Communication: slack, teams, zoom, discord
+          Office: word, excel, powerpoint, outlook
+          Other: everything else
+        - Track total screen time since tracking started
+        - Return {
+            active_window: string (current foreground app name),
+            total_hours: float,
+            breakdown: { category: hours },
+            top_apps: [ { name, hours }, ... ]
+          }
+
+    Platform note: Getting the active foreground window title varies by OS.
+    On Windows: use ctypes or win32gui. On macOS: use AppKit/subprocess.
+    On Linux: use xdotool or wmctrl. Handle gracefully when unavailable.
+
+--------------------------------------------------------------------------------
+FILE: backend/stress_agent.py — STANDALONE STRESS DETECTOR
+--------------------------------------------------------------------------------
+
+Create a standalone script that runs separately from the Flask app:
+
+    Purpose: Monitor typing patterns (speed, delete key ratio, burst typing)
+    and POST aggregated metrics to the Flask API.
+
+    Implementation:
+    1. Import pynput.keyboard, time, collections, requests
+    2. Create a deque of recent keystrokes: (timestamp, is_delete_key)
+       - Track last 60 seconds of keystrokes
+    3. Set up a pynput keyboard.Listener:
+       - on_press: record (time.time(), key == Key.backspace or Key.delete)
+    4. Every 10 seconds, compute metrics:
+       - typing_speed: keystrokes per minute (from last 10s window)
+       - delete_ratio: fraction of keystrokes that were delete/backspace
+       - burst_count: number of rapid typing bursts (>5 keys in 1 second)
+       - sample_seconds: 10
+       - total_keys: total keystrokes in window
+    5. POST metrics to http://localhost:5000/api/stress/ingest
+       - Catch and log connection errors (server may not be running)
+    6. Main loop:
+       - Start keyboard listener
+       - Loop: sleep 10s, compute and post metrics
+       - Handle KeyboardInterrupt for clean exit
+
+    Usage: python stress_agent.py (run alongside the Flask backend)
+
+--------------------------------------------------------------------------------
+FILE: backend/app/notifications/notification_manager.py
+--------------------------------------------------------------------------------
+
+Create a NotificationManager for desktop notifications:
+
+    class NotificationManager:
+        send_notification(title, message, timeout=10):
+            - Use plyer.notification.notify(
+                title=title,
+                message=message,
+                app_name='Infinite Helix',
+                timeout=timeout
+              )
+            - Wrap in try/except (plyer may fail on some platforms)
+            - Log success or failure
+
+        send_nudge(nudge):
+            - Extract nudge type and message
+            - Call send_notification with appropriate title
+            - Titles by type: 'Hydration Reminder', 'Stretch Time', etc.
+
+    Module singleton: notification_manager = NotificationManager()

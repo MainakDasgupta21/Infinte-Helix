@@ -32,7 +32,7 @@ export default function CycleWeekStrip({ cycleStartIso }) {
 
   return (
     <div className="bento-card p-4">
-      <h3 className="text-xs font-medium text-slate-500 mb-3">This week</h3>
+      <h3 className="text-xs font-medium text-helix-muted mb-3">This week</h3>
       <div className="grid grid-cols-7 gap-1 sm:gap-2">
         {days.map((d) => {
           const isToday = daysBetween(d, today) === 0;
@@ -46,14 +46,14 @@ export default function CycleWeekStrip({ cycleStartIso }) {
               key={d.toISOString()}
               className={`rounded-xl p-2 sm:p-3 text-center border transition-all ${
                 isToday
-                  ? 'bg-violet-100 border-violet-600 ring-1 ring-violet-200'
-                  : 'bg-slate-50 border-slate-200'
+                  ? 'bg-helix-accent/15 border-helix-accent ring-1 ring-helix-accent/20'
+                  : 'bg-helix-surface/50 border-helix-border/50'
               }`}
             >
-              <p className="text-[10px] sm:text-xs text-slate-500 uppercase tracking-wide">{label}</p>
-              <p className="text-sm font-semibold text-slate-800 mt-0.5">{dateNum}</p>
-              <p className="text-[10px] text-slate-500">{monthShort}</p>
-              <p className={`text-xs mt-1 font-medium ${isToday ? 'text-violet-600' : 'text-slate-500'}`}>
+              <p className="text-[10px] sm:text-xs text-helix-muted uppercase tracking-wide">{label}</p>
+              <p className="text-sm font-semibold text-helix-text mt-0.5">{dateNum}</p>
+              <p className="text-[10px] text-helix-muted">{monthShort}</p>
+              <p className={`text-xs mt-1 font-medium ${isToday ? 'text-helix-accent' : 'text-helix-muted'}`}>
                 Day {cd != null ? cd : '—'}
               </p>
             </div>

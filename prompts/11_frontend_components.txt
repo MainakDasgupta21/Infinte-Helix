@@ -1,0 +1,350 @@
+================================================================================
+ONE-SHOT PROMPT — PART 11: FRONTEND COMPONENTS
+================================================================================
+
+Create 20+ React components organized by feature area. Each component uses
+Tailwind utility classes with the helix-* color system, bento-card layout,
+and Framer Motion for animations.
+
+================================================================================
+COMMON COMPONENTS — src/components/Common/
+================================================================================
+
+--------------------------------------------------------------------------------
+Sidebar.jsx — NAVIGATION SIDEBAR (~332 lines)
+--------------------------------------------------------------------------------
+
+Fixed-position left sidebar with two states: collapsed (w-16) and expanded
+(lg:w-56).
+
+Structure:
+  - Logo/brand at top: "IH" monogram (collapsed) / "Infinite Helix" (expanded)
+  - Navigation links (vertical list):
+    * Dashboard (HiOutlineHome icon) -> /dashboard
+    * Tasks (HiOutlineClipboardList) -> /todos
+    * Reports (HiOutlineChartBar) -> /reports
+    * Cycle Mode (custom flower icon) -> /cycle-mode
+    * Calendar (HiOutlineCalendar) -> /calendar
+    * Settings (HiOutlineCog) -> /settings
+  - Each link: active state with accent-colored left border + background tint
+  - Bottom section: user avatar/initials, logout button
+  - Active route detection via useLocation()
+  - Smooth width transition between collapsed/expanded
+  - Mobile: overlay sidebar with backdrop
+
+Styling:
+  - bg-helix-surface border-r border-helix-border/50
+  - z-40 fixed left-0 top-0 h-screen
+  - Icons: w-5 h-5, text-helix-muted (inactive), text-helix-accent (active)
+  - Labels: text-sm font-semibold, hidden when collapsed
+
+--------------------------------------------------------------------------------
+BreakReminderToast.jsx — BREAK REMINDER OVERLAY
+--------------------------------------------------------------------------------
+
+Full-screen or bottom-right toast that appears when a break is due.
+
+Props/Data: uses useBreakReminder() hook
+
+Content:
+  - "Time for a break!" heading
+  - Supportive message: "You've been working for X minutes. A short break
+    will help you recharge."
+  - Suggested activities: stretch, hydrate, eye rest
+  - "Take a Break" button (starts break timer)
+  - "Dismiss" button (snooze for next interval)
+  - Timer display when break is active
+
+Styling:
+  - Glass-card effect with backdrop-blur
+  - Slide-up animation (Framer Motion)
+  - Semi-transparent overlay background
+  - helix-mint accent color for break theme
+
+--------------------------------------------------------------------------------
+StressInterventionToast.jsx — STRESS CALMING OVERLAY
+--------------------------------------------------------------------------------
+
+Full-screen calming overlay that appears when stress is detected.
+
+Props/Data: uses useStressDetector() hook
+
+Trigger: appears when stress level exceeds threshold
+
+Content:
+  - Calming gradient background (soft blue/purple mesh)
+  - "Let's take a moment" heading
+  - Guided breathing exercise:
+    * Animated circle (breathe animation, scale 1 -> 1.05)
+    * Phase text: "Breathe in..." (4s) -> "Hold..." (4s) -> "Breathe out..." (6s)
+    * Cycle counter
+  - "I feel better" button to dismiss and resolve stress
+  - "Continue working" option
+
+Styling:
+  - Fixed inset-0 z-50
+  - Dark overlay with gradient radial glow
+  - Large centered breathing circle with pulse-glow animation
+  - Smooth fade-in transition
+
+================================================================================
+DASHBOARD COMPONENTS — src/components/Dashboard/
+================================================================================
+
+--------------------------------------------------------------------------------
+ProductivityScore.jsx — WELLNESS SCORE RING (~73 lines)
+--------------------------------------------------------------------------------
+
+Circular progress ring showing the wellness score (0-100).
+
+Props: score, streakDays, mood, breaks
+
+Visual:
+  - SVG circle (viewBox="0 0 120 120")
+  - Background circle: stroke-helix-border
+  - Progress arc: stroke-dasharray animation
+    * Color by score: >= 80 helix-mint, >= 60 helix-amber, < 60 helix-red
+  - Center: large score number + "/ 100" label
+  - Below ring:
+    * Streak: fire emoji + "{streakDays} day streak"
+    * Mood: emoji + "{mood}" label
+    * Breaks: "{taken}/{suggested}" with icon
+
+Sizing: fits inside a bento-card
+
+--------------------------------------------------------------------------------
+ScreenTimeChart.jsx — SCREEN TIME DONUT
+--------------------------------------------------------------------------------
+
+Donut chart showing screen time breakdown by app category.
+
+Props: screenTime object { total, breakdown, topApps }
+
+Uses: Chart.js Doughnut via react-chartjs-2
+
+Data mapping:
+  - breakdown object keys -> chart labels
+  - breakdown values -> chart data
+  - Color mapping:
+    Browsers -> helix-sky
+    IDE/Code -> helix-accent
+    Communication -> helix-pink
+    Office -> helix-amber
+    Other -> helix-muted
+
+Center text: "{total}h" total screen time
+Legend: category names with colored dots below the chart
+
+--------------------------------------------------------------------------------
+BreakBalance.jsx — BREAK TRACKER CARD
+--------------------------------------------------------------------------------
+
+Visual comparison of breaks taken vs suggested.
+
+Props: breaks object { taken, suggested, lastBreak }
+
+Visual:
+  - Progress bar: taken/suggested ratio
+  - Pill badges showing count
+  - Last break time display
+  - Color: helix-pink accent
+
+--------------------------------------------------------------------------------
+HydrationTracker.jsx — WATER INTAKE CARD
+--------------------------------------------------------------------------------
+
+Interactive water glass tracker.
+
+Uses: useWellness() for logHydration, todayMetrics.hydration
+
+Visual:
+  - Water glass icons in a row (filled vs empty based on entries)
+  - Each glass = 250ml
+  - Goal: 2000ml (8 glasses)
+  - Progress bar: ml_today / 2000
+  - "+ Log Water" button
+  - Total display: "{ml_today}ml / 2000ml"
+  - Color: helix-sky accent
+
+Interaction: clicking "Log Water" calls logHydration(250)
+
+--------------------------------------------------------------------------------
+FocusTimeline.jsx — FOCUS SESSION VISUALIZATION
+--------------------------------------------------------------------------------
+
+Horizontal timeline showing focus session blocks.
+
+Props: sessions array of { start, end, duration }
+
+Visual:
+  - Horizontal bar divided into time segments
+  - Colored blocks for focus sessions
+  - Gap between blocks = break periods
+  - Time labels at intervals
+  - Total focus time summary
+  - Color: helix-accent for focus blocks
+
+--------------------------------------------------------------------------------
+NudgeFeed.jsx — ACTIVE NUDGE LIST
+--------------------------------------------------------------------------------
+
+Scrollable list of active wellness nudges.
+
+Uses: useWellness() for nudges, dismissNudge
+
+Visual:
+  - Each nudge as a mini card with:
+    * Icon by type (water drop, stretch person, eye, lungs, etc.)
+    * Message text
+    * Dismiss (X) button
+    * Type badge
+  - Nudge type colors:
+    hydration -> helix-sky
+    stretch -> helix-mint
+    eye_rest -> helix-amber
+    breathing -> helix-pink
+    break -> helix-accent
+  - Empty state: "All caught up!" message
+
+--------------------------------------------------------------------------------
+SelfCareTracker.jsx — STRETCH & EYE REST
+--------------------------------------------------------------------------------
+
+Counter card for self-care actions.
+
+Uses: useWellness() for logSelfCare, todayMetrics.selfCare
+
+Visual:
+  - Two sections side by side:
+    * Stretches: count + "Log Stretch" button (person stretching icon)
+    * Eye Rests: count + "Log Eye Rest" button (eye icon)
+  - Increment animation on log
+  - Color: helix-mint accent
+
+--------------------------------------------------------------------------------
+TodayTasks.jsx — QUICK TASK WIDGET
+--------------------------------------------------------------------------------
+
+Compact task list for the dashboard.
+
+Uses: todoAPI for data, toggle, create quick tasks
+
+Visual:
+  - Shows top 5 tasks for today
+  - Checkbox to toggle completion
+  - Quick-add input at bottom
+  - "See all" link to /todos
+  - Category color dots
+  - Overdue tasks highlighted
+
+================================================================================
+REPORT COMPONENTS — src/components/Reports/
+================================================================================
+
+--------------------------------------------------------------------------------
+WellnessScorecard.jsx — SCORE TREND CHART
+--------------------------------------------------------------------------------
+
+Line chart showing daily wellness scores over the past week.
+
+Props: daily_scores array of { date, score }
+Uses: Chart.js Line via react-chartjs-2
+Features: gradient fill under the line, point dots, smooth tension
+
+--------------------------------------------------------------------------------
+WorkHoursChart.jsx — DAILY WORK HOURS BAR CHART
+--------------------------------------------------------------------------------
+
+Bar chart showing daily work hours.
+
+Props: work_hours array of { date, hours }
+Uses: Chart.js Bar via react-chartjs-2
+Features: colored bars by intensity, 8-hour reference line
+
+--------------------------------------------------------------------------------
+EmotionChart.jsx — EMOTION DISTRIBUTION
+--------------------------------------------------------------------------------
+
+Pie or doughnut chart showing emotion distribution.
+
+Props: emotion_distribution object { joy: N, sadness: N, ... }
+Uses: Chart.js Doughnut via react-chartjs-2
+Colors: joy->mint, sadness->sky, anger->red, fear->amber, neutral->muted
+
+--------------------------------------------------------------------------------
+StressHeatmap.jsx — HOUR x DAY HEATMAP
+--------------------------------------------------------------------------------
+
+Grid heatmap showing stress levels by hour of day and day of week.
+
+Props: stress data from reports
+Visual: 7 rows (days) x 24 columns (hours), colored cells by intensity
+Color scale: low (mint) -> medium (amber) -> high (red)
+
+--------------------------------------------------------------------------------
+SelfCareMetrics.jsx — SELF-CARE SUMMARY
+--------------------------------------------------------------------------------
+
+Summary card with total stretches, eye rests, daily averages.
+Props: selfcare_summary from weekly report
+
+--------------------------------------------------------------------------------
+WeeklyInsight.jsx — AI INSIGHT CARD
+--------------------------------------------------------------------------------
+
+Card displaying AI-generated weekly insight text.
+Props: insights array of strings, recommendations array
+Visual: blockquote-style text with accent border
+
+================================================================================
+CALENDAR COMPONENTS — src/components/Calendar/
+================================================================================
+
+ConfidenceBreath.jsx — see Part 14 for details
+MeetingTimeline.jsx — chronological meeting list
+
+================================================================================
+CYCLE MODE COMPONENTS — src/components/CycleMode/
+(Details in Part 14)
+================================================================================
+
+CycleRing.jsx, CycleWeekStrip.jsx, EnergyForecast.jsx, EnergyIndicator.jsx,
+PeriodCalendarGrid.jsx, PeriodEntriesList.jsx, PeriodEntryModal.jsx,
+PeriodStats.jsx, PrivateCareTracker.jsx, SmartSwitch.jsx,
+MotherhoodShield.jsx, AppointmentSync.jsx
+
+================================================================================
+JOURNAL COMPONENTS — src/components/Journal/
+================================================================================
+
+JournalEntry.jsx — Text input with submit button for journal entries
+EntryHistory.jsx — Scrollable list of past journal entries with emotion badges
+AIResponse.jsx — Displays AI emotion analysis result with confidence bars
+EmotionBadge.jsx — Small colored badge showing emotion label
+
+================================================================================
+CHATBOT COMPONENT — src/components/ChatBot/
+(Full details in Part 13)
+================================================================================
+
+ChatBot.jsx — Floating chat widget (~833 lines)
+
+================================================================================
+NOTIFICATION COMPONENT — src/components/Notifications/
+================================================================================
+
+NotificationOverlay.jsx — Slide-in panel for in-app notifications
+  - Bell icon button to toggle
+  - Notification list with timestamps
+  - Read/unread state
+  - Dismiss individual or clear all
+
+================================================================================
+SETTINGS COMPONENT — src/components/Settings/
+================================================================================
+
+MealReminderSettings.jsx — Time picker UI for meal reminders
+  - Three time inputs (breakfast, lunch, dinner)
+  - Enable/disable toggle per meal
+  - Global enable toggle
+  - Save to localStorage and settings API

@@ -276,7 +276,7 @@ export default function Calendar() {
             <p className={`text-2xl font-serif font-bold ${stat.color}`}>
               {loading ? '—' : stat.value}
             </p>
-            <p className="text-xs text-slate-500 mt-1">{stat.label}</p>
+            <p className="text-xs text-helix-muted mt-1">{stat.label}</p>
           </div>
         ))}
       </div>
@@ -292,7 +292,7 @@ export default function Calendar() {
           <div className="glass-card p-5">
             <div className="flex items-center gap-2 mb-3">
               <HiOutlineBell className="w-4 h-4 text-amber-600" />
-              <h3 className="text-sm font-medium text-slate-800">Pre-Meeting Reminders</h3>
+              <h3 className="text-sm font-medium text-helix-text">Pre-Meeting Reminders</h3>
             </div>
             <div className="space-y-2">
               {[
@@ -301,11 +301,11 @@ export default function Calendar() {
                 { label: 'Stretch suggestion after back-to-back', enabled: false },
               ].map((item, i) => (
                 <div key={i} className="flex items-center justify-between py-2">
-                  <span className="text-sm text-slate-500">{item.label}</span>
+                  <span className="text-sm text-helix-muted">{item.label}</span>
                   <div className={`w-9 h-5 rounded-full p-0.5 transition-colors cursor-pointer ${
-                    item.enabled ? 'bg-violet-600' : 'bg-slate-200'
+                    item.enabled ? 'bg-helix-accent' : 'bg-helix-border/30'
                   }`}>
-                    <div className={`w-4 h-4 rounded-full bg-white transition-transform ${
+                    <div className={`w-4 h-4 rounded-full bg-helix-surface transition-transform ${
                       item.enabled ? 'translate-x-4' : 'translate-x-0'
                     }`} />
                   </div>

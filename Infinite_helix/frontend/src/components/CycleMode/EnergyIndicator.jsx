@@ -41,7 +41,7 @@ export default function EnergyIndicator({ cycleDay }) {
 
   return (
     <div className="bento-card p-6">
-      <h3 className="text-sm font-medium text-slate-500 mb-4">How your energy may feel</h3>
+      <h3 className="text-sm font-medium text-helix-muted mb-4">How your energy may feel</h3>
 
       <div className="flex items-center justify-center gap-1.5 mb-4">
         {Array.from({ length: segments }).map((_, i) => {
@@ -61,13 +61,13 @@ export default function EnergyIndicator({ cycleDay }) {
       </div>
 
       <div className="text-center mb-4">
-        <p className="text-lg font-serif font-semibold text-slate-800">{config.label}</p>
+        <p className="text-lg font-serif font-semibold text-helix-text">{config.label}</p>
         <p className="text-2xl font-bold" style={{ color: config.color }}>{config.level}%</p>
       </div>
 
-      <div className="bg-slate-100 rounded-xl p-4 border border-slate-100">
-        <p className="text-xs text-violet-600 font-medium mb-1">Tips for you</p>
-        <p className="text-sm text-slate-800 leading-relaxed">{config.suggestion}</p>
+      <div className="bg-helix-border/30 rounded-xl p-4 border border-helix-border/30">
+        <p className="text-xs text-helix-accent font-medium mb-1">Tips for you</p>
+        <p className="text-sm text-helix-text leading-relaxed">{config.suggestion}</p>
       </div>
     </div>
   );

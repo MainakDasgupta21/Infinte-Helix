@@ -1,0 +1,188 @@
+================================================================================
+ONE-SHOT PROMPT — PART 3: BACKEND SETUP
+================================================================================
+
+Create a Python Flask backend under Infinite_helix/backend/ with the following
+structure and configuration.
+
+--------------------------------------------------------------------------------
+FILE: backend/requirements.txt
+--------------------------------------------------------------------------------
+
+Create a requirements.txt with these dependencies:
+
+    flask>=3.0.0
+    flask-cors>=4.0.0
+    transformers>=4.36.0
+    torch>=2.1.0
+    google-genai>=1.0.0
+    groq>=1.0.0
+    psutil>=5.9.0
+    pynput>=1.7.6
+    plyer>=2.1.0
+    firebase-admin>=6.2.0
+    google-api-python-client>=2.108.0
+    google-auth-httplib2>=0.1.1
+    google-auth-oauthlib>=1.1.0
+    requests>=2.31.0
+    python-dotenv>=1.0.0
+    apscheduler>=3.10.4
+
+--------------------------------------------------------------------------------
+FILE: backend/config/settings.py
+--------------------------------------------------------------------------------
+
+Create a Config class that loads all configuration from environment variables
+using python-dotenv. The class must contain:
+
+    class Config:
+        FLASK_ENV            — default 'development'
+        FLASK_PORT           — default 5000 (int)
+        FLASK_DEBUG          — default True (bool from string)
+        SECRET_KEY           — default 'helix-dev-secret-key-change-in-production'
+
+        DEMO_MODE            — default True (bool from string 'true')
+
+        FIREBASE_CREDENTIALS_PATH — default './config/firebase-credentials.json'
+
+        GOOGLE_CLIENT_ID     — default ''
+        GOOGLE_CLIENT_SECRET — default ''
+        GOOGLE_REDIRECT_URI  — default 'http://localhost:5000/api/calendar/google/callback'
+
+        MS_CLIENT_ID         — default ''
+        MS_CLIENT_SECRET     — default ''
+        MS_TENANT_ID         — default 'common'
+        MS_REDIRECT_URI      — default 'http://localhost:5000/api/calendar/callback'
+
+        GEMINI_API_KEY       — default ''
+        GROQ_API_KEY         — default ''
+
+        EMOTION_MODEL        — default 'j-hartmann/emotion-english-distilroberta-base'
+        SENTIMENT_MODEL      — default 'cardiffnlp/twitter-roberta-base-sentiment'
+        MODEL_CACHE_DIR      — default './model_cache'
+
+        TRACKER_INTERVAL_SECONDS   — default 30 (int)
+        NUDGE_COOLDOWN_MINUTES     — default 30 (int)
+        IDLE_THRESHOLD_SECONDS     — default 60 (int)
+        FATIGUE_THRESHOLD_MINUTES  — default 120 (int)
+
+        DESKTOP_NOTIFICATIONS — default True (bool from string)
+
+Import load_dotenv from python-dotenv and call it at module top before the
+Config class definition.
+
+--------------------------------------------------------------------------------
+FILE: backend/app/__init__.py — FLASK APP FACTORY
+--------------------------------------------------------------------------------
+
+Create a Flask app factory function create_app() that:
+
+1. Creates Flask(__name__)
+2. Loads config from 'config.settings.Config'
+3. Configures CORS with:
+   - resources: {r"/api/*": {"origins": "*", "supports_credentials": True}}
+4. Adds @app.after_request handler to set CORS headers:
+   - Access-Control-Allow-Origin: *
+   - Access-Control-Allow-Headers: Content-Type, Authorization
+   - Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
+
+5. Imports and registers 17 blueprints:
+   Blueprint name         URL prefix
+   ─────────────         ──────────
+   auth_bp                /api/auth
+   emotion_bp             /api/emotion
+   sentiment_bp           /api/sentiment
+   journal_bp             /api/journal
+   dashboard_bp           /api/dashboard
+   reports_bp             /api/reports
+   tracker_bp             /api/tracker
+   nudge_bp               /api/nudge
+   calendar_bp            /api/calendar
+   cycle_bp               /api/cycle
+   hydration_bp           /api/hydration
+   selfcare_bp            /api/selfcare
+   privatecare_bp         /api/privatecare
+   todo_bp                /api/todos
+   user_bp                /api/user
+   chatbot_bp             /api/chat
+   stress_bp              /api/stress
+
+6. Registers a GET /api/health endpoint returning:
+   {"status": "ok", "service": "Infinite Helix API", "demo_mode": <bool>}
+
+7. Calls init_firebase() from firebase_service
+8. Calls _init_ai_models(app)
+9. Returns app
+
+Also define a module-level variable: activity_monitor = None
+(Set by run.py when the tracker starts)
+
+--------------------------------------------------------------------------------
+AI MODEL INITIALIZATION: _init_ai_models(app)
+--------------------------------------------------------------------------------
+
+Create a function _init_ai_models(app) that:
+
+IF DEMO_MODE is True:
+  - Log: "Running in DEMO mode — using mock AI models"
+  - Set app.emotion_detector = _DemoEmotionDetector()
+  - Set app.sentiment_analyzer = _DemoSentimentAnalyzer()
+
+IF DEMO_MODE is False:
+  - Try importing EmotionDetector and SentimentAnalyzer from app.ai
+  - Initialize them with model name and cache dir from config
+  - On exception, fall back to demo classes with warning log
+
+Create two demo classes in the same file:
+
+_DemoEmotionDetector:
+  - Has _PROFILES dict mapping mood keys (stress, happy, angry, neutral, fear)
+    to pre-built result dicts with emotion, confidence, and all_emotions array
+  - Has _KEYWORDS dict mapping mood keys to keyword lists:
+    stress: [stress, overwhelm, tired, exhaust, burnout, deadline, pressure, ...]
+    happy: [happy, great, wonderful, excited, love, amazing, good, ...]
+    angry: [angry, frustrated, annoyed, furious, unfair, hate, ...]
+    fear: [scared, anxious, worried, nervous, afraid, panic, ...]
+  - analyze(text) method: lowercase text, check keywords, return matching
+    profile. Default to 'neutral' if no match.
+
+_DemoSentimentAnalyzer:
+  - Has _REFRAMES list: 7 supportive reframing messages
+  - Has _NEGATIVE keywords: [stress, sad, angry, hate, terrible, ...]
+  - Has _POSITIVE keywords: [happy, great, love, excited, ...]
+  - analyze(text) method: check negative keywords (return sentiment='negative'
+    with a rotating reframe), check positive keywords (return 'positive'),
+    default to 'neutral'. Include all_sentiments array with scores.
+
+--------------------------------------------------------------------------------
+FILE: backend/run.py — ENTRY POINT
+--------------------------------------------------------------------------------
+
+Create the main entry point that:
+
+1. Loads .env via python-dotenv
+2. Inserts the backend directory into sys.path
+3. Imports create_app from app and Config from config.settings
+4. Defines start_background_tracker(flask_app):
+   - Imports ActivityMonitor from app.tracker.activity_monitor
+   - Creates monitor with interval from Config.TRACKER_INTERVAL_SECONDS
+   - Stores it in app_module.activity_monitor (the global from __init__.py)
+   - Starts it in a daemon thread
+   - Logs success or warning on failure
+5. main() function:
+   - Creates app via create_app()
+   - Calls start_background_tracker(app)
+   - Runs app on host='0.0.0.0', port from config, debug from config,
+     use_reloader=False (important: avoid double-starting the tracker)
+6. if __name__ == '__main__': main()
+
+--------------------------------------------------------------------------------
+CORS AND REQUEST HANDLING NOTES
+--------------------------------------------------------------------------------
+
+- All API responses are JSON
+- The after_request handler ensures CORS headers are always present
+- Flask-CORS is configured at the app level AND per-request for reliability
+- OPTIONS preflight requests are handled automatically by Flask-CORS
+- The backend runs on port 5000 by default
+- Frontend connects to http://localhost:5000/api

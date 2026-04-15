@@ -1,0 +1,382 @@
+================================================================================
+ONE-SHOT PROMPT — PART 14: CYCLE MODE & PREGNANCY TRACKING
+================================================================================
+
+Build a comprehensive, privacy-first menstrual cycle and pregnancy tracking
+system. ALL cycle and pregnancy data is stored exclusively in localStorage
+and NEVER sent to any server.
+
+================================================================================
+PRIVACY MODEL
+================================================================================
+
+localStorage keys used:
+  - helix_period_entries: JSON array of period entries
+  - helix_cycle_daily_logs: JSON object { "YYYY-MM-DD": dailyLog }
+  - helix_period_duration: number (3-7)
+  - helix_pregnancy_data: JSON { dueDateIso, nextAppointment, ... }
+  - helix_pregnancy_setup_done: "true" flag
+  - helix_task_mode: "cycle" | "pregnancy"
+
+Privacy badge displayed on the page:
+  Shield icon + "Only saved on your device"
+
+================================================================================
+CYCLE MODEL (28-Day)
+================================================================================
+
+The app uses a simplified 28-day cycle model with 4 phases:
+
+  PHASE 1: MENSTRUAL (Days 1-5)
+    Name: "Period days"
+    Energy: Low
+    Description: "Rest when you can. Shorter tasks and warmth help more
+                  than pushing through."
+    Color: rose-600
+    Nudge adjustment: rest-focused, gentler reminders
+
+  PHASE 2: FOLLICULAR (Days 6-13)
+    Name: "Energy rising"
+    Energy: Rising
+    Description: "Your energy is picking up this week. Good time for
+                  focused work and meetings."
+    Color: emerald-600
+    Nudge adjustment: encourage focused work
+
+  PHASE 3: OVULATORY (Days 14-16)
+    Name: "Peak energy"
+    Energy: Peak
+    Description: "Confidence and focus are at their highest. Tackle
+                  challenging projects and speak up."
+    Color: amber-600
+    Nudge adjustment: encourage challenging tasks
+
+  PHASE 4: LUTEAL (Days 17-28)
+    Name: "Winding down"
+    Energy: Declining
+    Description: "Finish open tasks and tie up loose ends. Gentle routines
+                  feel better than new starts."
+    Color: helix-accent
+    Nudge adjustment: wrap-up tasks, gentle reminders
+
+Cycle day calculation:
+  cycleDayForDate(cycleStartIso, date):
+    1. Parse cycleStartIso as Date
+    2. Calculate days difference from start to target date
+    3. If negative: return null (before cycle start)
+    4. Return (diff % 28) + 1
+
+================================================================================
+PAGE: CycleMode.jsx — MAIN CYCLE/PREGNANCY PAGE
+================================================================================
+
+This page has two modes with an animated 3D flip transition between them.
+
+--------------------------------------------------------------------------------
+CYCLE MODE (default)
+--------------------------------------------------------------------------------
+
+Uses: usePeriodTracker(), usePregnancyMode(), usePageContext()
+
+HEADER:
+  - Title: "My Cycle"
+  - Subtitle: "Everything based on your last period date"
+  - SmartSwitch component (cycle <-> pregnancy toggle)
+  - "Change start date" button
+
+SECTION: PRIVACY BADGE
+  - Shield icon + "Only saved on your device"
+  - Inline flex, emerald-colored
+
+SECTION: TOP ROW (2-column grid)
+  - CycleRing component (left)
+  - EnergyForecast component (right)
+  - If no entries: empty state with flower emoji and instruction to log
+
+SECTION: THIS WEEK STRIP
+  - 7-column grid showing -3 to +3 days from today
+  - Each day shows: weekday name, date number, cycle day number
+  - Today highlighted with rose accent border and ring
+  - Cycle days labeled "Day X"
+
+SECTION: MOOD + FLOW ROW (2-column grid)
+  Left card — "How do you feel today?":
+    Mood buttons: Great (happy emoji), Calm, Tired, Low
+    Selected state: rose-500/15 background with rose-500/30 border
+
+  Right card — "Flow Today":
+    Flow buttons: None, Light, Medium, Heavy
+    Only enabled during period days (1-5)
+    Disabled state: muted text, cursor-not-allowed
+
+SECTION: SYMPTOMS + DURATION ROW (2-column grid)
+  Left card — "Any symptoms today?":
+    Symptom toggle buttons (pill-shaped):
+    Cramps, Bloating, Headache, Very tired,
+    Mood swings, Can't focus, Food cravings, Feeling anxious
+    Selected: rose accent with bullet dot prefix
+
+  Right card — "My period usually lasts":
+    Duration buttons: 3 days, 4 days, 5 days, 6 days, 7+ days
+    Saved to localStorage helix_period_duration
+
+SECTION: SAVE BUTTON
+  Full-width button: "Save today" (gradient violet-to-indigo)
+  After save: "Saved for today" (emerald success state, 2s)
+  Saves to helix_cycle_daily_logs[todayKey]
+
+SECTION: PATTERN INSIGHT
+  Card with accent-colored highlight box
+  getPatternInsight(entries, cycleDay, dailyLogs):
+    - Check if user logged symptoms on this cycle day before
+    - If yes: "You logged {symptom} on day {N} before. Try drinking
+      more water today — it helped last time."
+    - If no personal data: generic phase-based insight
+    - Returns { title: "FROM LAST MONTH" or "PATTERN INSIGHT", text }
+
+SECTION: BREATHING + PRIVATE CARE (2-column grid)
+  - ConfidenceBreath component (left)
+  - PrivateCareTracker component (right)
+
+SECTION: BOTTOM LINK
+  - "Change my period start date" text link
+
+MODAL: PeriodEntryModal
+  - Opened by "Change start date" button
+  - Mode: 'add' or 'edit'
+  - Date picker for period start and end dates
+  - Save/Delete buttons
+
+--------------------------------------------------------------------------------
+PREGNANCY MODE
+--------------------------------------------------------------------------------
+
+Triggered by SmartSwitch toggle. AnimatePresence with 3D flip transition:
+  variants: { enter: rotateY(90), center: rotateY(0), exit: rotateY(-90) }
+  perspective: 1200, transformStyle: preserve-3d
+
+If pregnancy data not set up (no dueDateIso):
+  Show PregnancySetup component:
+    - Amber/warm themed card
+    - Baby emoji + "Welcome to Motherhood Shield"
+    - Due date input (date picker)
+    - "Start" button (saves dueDateIso via updatePregnancyData)
+
+If pregnancy data exists:
+  Show MotherhoodShield component + ConfidenceBreath (pregnancyMode)
+
+Header changes:
+  - Title: "Motherhood Shield"
+  - Subtitle: "Nurturing you through every trimester"
+  - Amber color scheme
+
+================================================================================
+CYCLE COMPONENTS — src/components/CycleMode/
+================================================================================
+
+--------------------------------------------------------------------------------
+CycleRing.jsx — SVG CYCLE DONUT CHART
+--------------------------------------------------------------------------------
+
+An interactive SVG donut showing the current position in the 28-day cycle.
+
+Props: cycleDay (1-28), onPhaseClick (callback)
+
+Visual:
+  - SVG viewBox, circular donut with 4 colored arc segments
+  - Phase segments:
+    * Menstrual (days 1-5): rose/red arc
+    * Follicular (days 6-13): emerald/green arc
+    * Ovulatory (days 14-16): amber/gold arc
+    * Luteal (days 17-28): blue/accent arc
+  - Current day marker: bright dot on the ring
+  - Center text: "Day {cycleDay}" with phase name below
+  - Clickable segments: onPhaseClick({ name, days, color, label })
+
+SVG math:
+  - Radius, circumference for stroke-dasharray
+  - Arc start/end angles for each phase
+  - Rotation offset so day 1 starts at top
+
+--------------------------------------------------------------------------------
+EnergyForecast.jsx — 7-DAY ENERGY LOOKAHEAD
+--------------------------------------------------------------------------------
+
+Props: cycleDay (1-28)
+
+Visual:
+  - 7 columns for today + next 6 days
+  - Each column: day name, energy bar (height based on phase), energy label
+  - Energy levels by phase:
+    * Menstrual: Low (short bar, red/rose)
+    * Follicular: Rising (medium-tall bar, green)
+    * Ovulatory: Peak (tallest bar, amber/gold)
+    * Luteal: Declining (medium bar, blue)
+  - Today's column highlighted
+  - Wrapped in a bento-card
+
+--------------------------------------------------------------------------------
+EnergyIndicator.jsx — ENERGY LEVEL BADGE
+--------------------------------------------------------------------------------
+
+Small badge showing current energy level.
+Props: cycleDay
+Visual: colored dot + "Low/Rising/Peak/Declining" text
+
+--------------------------------------------------------------------------------
+CycleWeekStrip.jsx — WEEKLY CYCLE STRIP
+--------------------------------------------------------------------------------
+
+Horizontal strip showing 7 days with cycle day numbers.
+Similar to the inline version in CycleMode.jsx but reusable.
+
+--------------------------------------------------------------------------------
+PeriodEntryModal.jsx — ADD/EDIT PERIOD ENTRY
+--------------------------------------------------------------------------------
+
+Modal dialog for logging period dates.
+
+Props: open, mode ('add'|'edit'), initialEntry, onClose, onSave, onDelete
+
+Visual:
+  - Overlay backdrop with blur
+  - Centered card with form
+  - "Log Period" or "Edit Period" title
+  - Start date picker (required)
+  - End date picker (optional, defaults to start + duration)
+  - Save button (gradient)
+  - Delete button (if edit mode, red/destructive)
+  - Close (X) button
+
+Validation: start date required, end date >= start date
+
+--------------------------------------------------------------------------------
+PeriodCalendarGrid.jsx — CALENDAR GRID VIEW
+--------------------------------------------------------------------------------
+
+Monthly calendar grid highlighting period days and cycle phases.
+
+Props: entries, cycleDay, lastPeriodStartIso
+
+Visual:
+  - 7-column grid (Sun-Sat)
+  - Days colored by cycle phase
+  - Period days: rose/red background
+  - Today: ring/border highlight
+
+--------------------------------------------------------------------------------
+PeriodEntriesList.jsx — PERIOD ENTRY HISTORY
+--------------------------------------------------------------------------------
+
+List of past period entries.
+Props: entries, onEdit, onDelete
+Visual: card per entry showing date range, duration, edit/delete buttons
+
+--------------------------------------------------------------------------------
+PeriodStats.jsx — CYCLE STATISTICS
+--------------------------------------------------------------------------------
+
+Summary statistics from logged entries.
+Props: entries
+Visual: average cycle length, average period duration, total cycles logged
+
+--------------------------------------------------------------------------------
+PrivateCareTracker.jsx — PAD CHANGE / FRESHEN-UP LOG
+--------------------------------------------------------------------------------
+
+Private care logging for period days.
+
+Uses: privateCareAPI (log, getHistory)
+
+Visual:
+  - Quick-log buttons:
+    * "Pad change" button
+    * "Freshen up" button
+    * Optional note input
+  - Today's log list (time + type)
+  - Privacy reminder text
+  - Only prominent during period days (days 1-5)
+
+API calls:
+  - POST /privatecare/log { type: 'pad_change'|'freshen_up', note }
+  - GET /privatecare/history
+
+--------------------------------------------------------------------------------
+SmartSwitch.jsx — CYCLE <-> PREGNANCY TOGGLE
+--------------------------------------------------------------------------------
+
+Toggle switch component.
+
+Props: isPregnancy (boolean), onToggle (callback)
+
+Visual:
+  - Pill-shaped toggle with two labels:
+    * Left: "Cycle" (flower icon)
+    * Right: "Motherhood" (baby icon)
+  - Sliding indicator follows active mode
+  - Color changes: default accent (cycle) vs amber (pregnancy)
+  - Smooth transition animation
+
+--------------------------------------------------------------------------------
+MotherhoodShield.jsx — PREGNANCY DASHBOARD
+--------------------------------------------------------------------------------
+
+Pregnancy tracking dashboard card.
+
+Props: weeksPregnant, trimester, daysUntilDue, pregnancyData,
+       updatePregnancyData, daysUntilAppointment
+
+Visual:
+  - Warm amber/orange color scheme
+  - Baby emoji header
+  - Week counter: "Week {N} of 40"
+  - Trimester badge: "Trimester {1|2|3}"
+  - Days until due countdown
+  - Next appointment countdown (if set)
+  - Pregnancy tips by trimester
+  - "Update due date" option
+
+--------------------------------------------------------------------------------
+AppointmentSync.jsx — APPOINTMENT TRACKER
+--------------------------------------------------------------------------------
+
+Track upcoming medical appointments.
+
+Props: pregnancyData, updatePregnancyData
+
+Visual:
+  - Add appointment button
+  - Date picker for next appointment
+  - Countdown display
+  - Past appointments list
+
+================================================================================
+CONFIDENCE BREATH — src/components/Calendar/ConfidenceBreath.jsx
+================================================================================
+
+Guided breathing exercise widget used in both Calendar and CycleMode pages.
+
+Props: pregnancyMode (boolean, optional)
+
+Visual:
+  - Animated breathing circle (CSS breathe animation):
+    * Scale 1.0 -> 1.05 -> 1.0 over 14 seconds
+    * Gradient glow effect
+  - Phase text cycle:
+    * "Breathe in..." (4 seconds)
+    * "Hold..." (4 seconds)
+    * "Breathe out..." (6 seconds)
+  - Cycle counter: "{N} cycles complete"
+  - Start/Stop button
+  - Session timer
+
+Pregnancy mode differences:
+  - Title: "Deep Pelvic Breathing" instead of "Confidence Breath"
+  - Longer exhale (8 seconds instead of 6)
+  - Warmer color scheme (amber instead of accent)
+  - Adapted instructions for pregnancy
+
+Animation implementation:
+  - useEffect with setInterval for phase cycling
+  - State: currentPhase ('inhale'|'hold'|'exhale'), cycleCount, isActive
+  - CSS animation class toggled by isActive state

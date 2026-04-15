@@ -1,0 +1,327 @@
+================================================================================
+ONE-SHOT PROMPT — PART 10: FRONTEND PAGES
+================================================================================
+
+Create 8 page components under frontend/src/pages/. Each page uses the
+bento-grid card layout, Tailwind utility classes, and the helix-* color
+system. All pages call updatePageContext() to keep the chatbot aware.
+
+--------------------------------------------------------------------------------
+PAGE 1: AuthPage.jsx — LOGIN / REGISTER
+   Route: /auth (unauthenticated only)
+--------------------------------------------------------------------------------
+
+Create a split authentication page with two modes: Login and Register.
+
+Layout:
+  - Centered card on dark/themed background
+  - App logo/title "Infinite Helix" at top
+  - Tab toggle between "Sign In" and "Register"
+
+Sign In form:
+  - Email input (helix-input class)
+  - Password input
+  - "Sign In" button (helix-btn)
+  - "Sign in with Google" button (Google icon from react-icons)
+  - Error message display
+
+Register form:
+  - Display name input
+  - Email input
+  - Password input (min 6 chars)
+  - Confirm password input
+  - "Create Account" button
+  - Error message display
+
+State: mode ('login'|'register'), email, password, displayName, error, loading
+Handlers: call login(), signup(), loginWithGoogle() from useAuth()
+On success: React Router navigates to /dashboard automatically via auth state
+
+Styling:
+  - Gradient background or mesh gradient behind the card
+  - Glass-card effect on the form container
+  - Smooth transitions between login/register modes
+  - Input focus rings matching helix-accent color
+
+--------------------------------------------------------------------------------
+PAGE 2: Dashboard.jsx — MAIN WELLNESS DASHBOARD
+   Route: /dashboard
+--------------------------------------------------------------------------------
+
+This is the primary page users see after logging in.
+
+Data sources:
+  - useWellness() for todayMetrics, trackerStatus, dashboardLoading, nudges
+  - useAuth() for user (display name)
+  - usePageContext() for updatePageContext
+
+Layout (3-row bento grid, max-w-[1400px]):
+
+ROW 0: Hero Greeting Card (bento-card-lg)
+  - "Good morning/afternoon/evening, {firstName}"
+  - Status line based on wellness score:
+    >= 80: "You're having a strong day."
+    >= 60: "Steady progress today — keep it up"
+    < 60: "Let's make the rest of the day count"
+  - Three helix-badges: Focus (count), Breaks (count), Self Care (count)
+  - Decorative gradient radial glow in top-right corner
+
+ROW 1: 3-column grid (12-col, 4/4/4 on desktop)
+  - ProductivityScore: wellness score ring, streak, mood, breaks
+  - ScreenTimeChart: donut chart of screen time by category
+  - BreakBalance: break taken vs suggested visualization
+
+ROW 2: 2-column (8/4 on desktop)
+  - FocusTimeline: horizontal timeline of focus session blocks
+  - HydrationTracker: water glass counter, log button
+
+ROW 3: 3-column (4/4/4 on desktop)
+  - NudgeFeed: list of active wellness nudges with dismiss buttons
+  - SelfCareTracker: stretch and eye rest counters with log buttons
+  - TodayTasks: quick task list widget
+
+BOTTOM: Status Bar (bento-card, thin)
+  - Green dot + "AI Wellness Engine Active" when connected
+  - Red pulsing dot when disconnected
+  - Right side: Activity level, Screen time, Intensity labels
+
+Helper functions:
+  - getGreeting(): time-based greeting
+  - wellnessStatusLine(score): score-based status text
+  - typingActivityLabel(keystrokes): Low/Light/Moderate/High
+  - workIntensityLabel(intensity): Light/Moderate/High
+
+Skeleton: DashboardSkeleton with animated pulse placeholders while loading
+
+PageContext update: sends comprehensive dashboard data on every render
+(wellness_score, mood, streak, screen_time, breaks, hydration, self_care,
+focus sessions, typing activity, work intensity, tracker status, active nudges)
+
+--------------------------------------------------------------------------------
+PAGE 3: Todos.jsx — TASK MANAGEMENT
+   Route: /todos
+--------------------------------------------------------------------------------
+
+Full-featured task management page with multiple views.
+
+Data sources:
+  - todoAPI (create, getToday, getByDate, getUpcoming, getHistory, toggle, remove)
+  - useAuth() for user.uid
+  - usePageContext()
+
+State:
+  - tasks: array of todo objects
+  - view: 'today' | 'upcoming' | 'history'
+  - newTask: { text, remindAt, date, category }
+  - selectedDate: for date navigation
+  - loading, error
+
+Layout:
+
+HEADER:
+  - Title "My Tasks"
+  - View tabs: Today, Upcoming, History
+  - "Add Task" button
+
+ADD TASK FORM (expandable):
+  - Text input for task description
+  - Date picker (defaults to today)
+  - Time picker for reminder (optional)
+  - Category selector: Work, Personal, Health, Meeting
+    (each with distinct icon and color)
+  - Save button
+
+TASK LIST:
+  - Each task card shows:
+    * Checkbox to toggle completion (circle with checkmark animation)
+    * Task text (line-through when completed)
+    * Category badge (colored pill)
+    * Reminder time if set (clock icon)
+    * Date label
+    * Delete button (trash icon, with confirmation)
+  - Overdue tasks: highlighted with red border/text
+  - Completed tasks: muted text, checked checkbox
+
+DATE NAVIGATION (for history view):
+  - Calendar date picker
+  - Previous/Next day buttons
+  - Date display
+
+Empty state: Friendly illustration/text when no tasks exist
+
+Categories styling:
+  - work: blue/accent tones
+  - personal: pink tones
+  - health: mint/green tones
+  - meeting: amber/gold tones
+
+--------------------------------------------------------------------------------
+PAGE 4: Reports.jsx — ANALYTICS & REPORTS
+   Route: /reports
+--------------------------------------------------------------------------------
+
+Large page (~1378 lines) with 3 tab views.
+
+Tab options (tab state):
+  - "Body Language" (digital body language / stress analytics)
+  - "Daily" (daily wellness report)
+  - "Weekly" (weekly report card with charts)
+
+TAB: BODY LANGUAGE (DigitalBodyLanguageReport component, inline)
+  - Uses getStressLog() and getSessionData() from useStressDetector
+  - Displays:
+    * Stress event count for today
+    * Peak stress hours
+    * Resolution breakdown (resolved vs unresolved)
+    * Stress event timeline (time-ordered list)
+    * Typing pattern insights
+
+TAB: DAILY (DailyWellnessReport component, inline)
+  - Today's wellness metrics summary
+  - Mental load score (simulated from screen time context switches)
+  - Collapsible "Tomorrow's Strategy" section
+  - Copy/Download flows:
+    * Opens generateDailyPrintHTML() in new window
+    * Calls window.print()
+    * Two report variants: Private (full) and Manager (sanitized)
+
+TAB: WEEKLY
+  - Fetches data via reportsAPI.getWeekly()
+  - Displays chart components:
+    * WellnessScorecard — score trend line chart
+    * WorkHoursChart — daily work hours bar chart
+    * EmotionChart — emotion distribution (pie/donut)
+    * StressHeatmap — hour-of-day vs day-of-week grid
+    * SelfCareMetrics — stretch/eye-rest summary card
+    * WeeklyInsight — AI-generated text insight card
+  - Download button: generatePrintHTML(report, userName)
+    * Generates full HTML document with inline SVG charts
+    * Daily scores line chart (SVG polyline)
+    * Work hours bar chart (SVG rects)
+    * Emotion donut chart (SVG paths with arc math)
+    * Self-care gauges (SVG arcs)
+    * Stress heatmap table
+    * Insights and recommendations sections
+    * Cycle phase block (if active)
+    * Affirmation footer
+
+BREAK TRACKER SECTION (BreakTrackerSection component, inline)
+  - Integrated into Reports page
+  - Meal schedule display (from settings)
+  - Today's break log from getBreakLog()
+  - 7-day break summary
+  - Uses getScheduledBreaks() from useBreakReminder
+
+Cycle integration:
+  - getCycleData(): reads localStorage helix_period_entries
+  - Infers cycle day (28-day model), phase, energy level
+  - Displays phase badge with accent color
+  - Used in both daily and weekly report views
+
+Life mode:
+  - getLifeMode(): reads localStorage helix_task_mode
+  - Affects report labeling (work vs personal mode)
+
+--------------------------------------------------------------------------------
+PAGE 5: CycleMode.jsx — CYCLE / PREGNANCY TRACKING
+   Route: /cycle-mode
+   (Full details in Part 14)
+--------------------------------------------------------------------------------
+
+Two-mode page: Cycle tracking (default) and Pregnancy mode (toggle).
+
+Uses: usePeriodTracker, usePregnancyMode, usePageContext
+Components: PeriodEntryModal, PrivateCareTracker, CycleRing, EnergyForecast,
+            MotherhoodShield, SmartSwitch, ConfidenceBreath
+
+Key behaviors:
+  - All data stored in localStorage (never sent to server)
+  - AnimatePresence for 3D flip transition between modes
+  - Daily mood, flow, symptom logging
+  - Pattern insights from past cycle data
+  - Phase-aware UI descriptions
+
+--------------------------------------------------------------------------------
+PAGE 6: Calendar.jsx — MEETINGS & PRE-MEETING CALM
+   Route: /calendar
+--------------------------------------------------------------------------------
+
+Data sources:
+  - calendarAPI (getMeetings, getNext, getStatus, authorize, disconnect)
+  - usePageContext()
+
+Layout:
+
+CONNECTION STATUS:
+  - Shows Google and Microsoft calendar connection states
+  - "Connect" buttons for each provider
+  - "Disconnect" option for connected providers
+
+MEETING TIMELINE:
+  - Today's meetings in chronological order
+  - Each meeting card shows: title, time range, organizer, location
+  - Next upcoming meeting highlighted
+  - Color coding by time proximity:
+    * Upcoming soon: amber glow
+    * In progress: green glow
+    * Past: muted
+
+CONFIDENCE BREATH (ConfidenceBreath component):
+  - Guided breathing exercise widget
+  - Appears when a meeting is approaching
+  - Animated breathing circle (breathe animation)
+  - "Inhale... Hold... Exhale..." text cycle
+  - Timer countdown
+
+EMPTY STATE:
+  - When no calendars connected: invitation to connect
+  - When connected but no meetings: "Clear schedule" message
+
+PageContext update: meeting count, next meeting details, connection status
+
+--------------------------------------------------------------------------------
+PAGE 7: Settings.jsx — USER PREFERENCES
+   Route: /settings
+--------------------------------------------------------------------------------
+
+Data sources:
+  - settingsAPI (get, update)
+  - useTheme() for theme toggle
+  - useAuth() for user profile
+
+Layout (stacked bento cards):
+
+PROFILE SECTION:
+  - User avatar, display name, email
+  - Account type (Firebase / Demo)
+
+THEME TOGGLE:
+  - Dark/Light mode switch
+  - Visual preview of theme change
+  - Uses toggleTheme() from ThemeContext
+
+MEAL REMINDERS (MealReminderSettings component):
+  - Enable/disable toggle
+  - Breakfast time picker (default 08:00)
+  - Lunch time picker (default 13:00)
+  - Dinner time picker (default 19:00)
+  - Save to settings API and localStorage
+
+BREAK SETTINGS:
+  - Break interval slider/input (default 45 minutes)
+  - Enable/disable break reminders
+
+NOTIFICATION PREFERENCES:
+  - Desktop notifications toggle
+  - Browser notifications toggle
+  - Sound toggle
+
+DATA & PRIVACY:
+  - "All cycle data stays on your device" notice
+  - Clear local data button
+  - Export data option
+
+PAGE 8: Journal.jsx — LEGACY REDIRECT
+   Route: /journal -> Redirects to /reports
+   Simple component that renders <Navigate to="/reports" replace />
+   The journal functionality is now integrated into the Reports page.

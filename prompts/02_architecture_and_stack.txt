@@ -1,0 +1,291 @@
+================================================================================
+ONE-SHOT PROMPT — PART 2: ARCHITECTURE & TECH STACK
+================================================================================
+
+Build the project as a monorepo with the following structure. The root folder
+is named "Infinite_helix" and contains two main directories: backend (Python
+Flask REST API) and frontend (React 18 SPA).
+
+--------------------------------------------------------------------------------
+COMPLETE DIRECTORY TREE
+--------------------------------------------------------------------------------
+
+Infinite_helix/
+├── README.md
+├── SETUP.md
+├── TODO.md
+│
+├── backend/
+│   ├── run.py                          # Entry point: create_app + ActivityMonitor thread
+│   ├── setup_demo.py                   # One-command demo setup script
+│   ├── stress_agent.py                 # Standalone pynput stress detector
+│   ├── requirements.txt               # Python dependencies with version ranges
+│   ├── .env.example                    # All environment variable documentation
+│   │
+│   ├── config/
+│   │   └── settings.py                 # Config class loading from environment
+│   │
+│   ├── app/
+│   │   ├── __init__.py                 # Flask app factory, blueprint registration, AI init
+│   │   ├── middleware.py               # Request middleware
+│   │   │
+│   │   ├── routes/                     # 17 Flask Blueprints
+│   │   │   ├── auth_routes.py          # /api/auth — register, sync, profile
+│   │   │   ├── emotion_routes.py       # /api/emotion — POST /analyze
+│   │   │   ├── sentiment_routes.py     # /api/sentiment — POST /analyze
+│   │   │   ├── journal_routes.py       # /api/journal — CRUD journal entries
+│   │   │   ├── dashboard_routes.py     # /api/dashboard — today metrics, screen history
+│   │   │   ├── reports_routes.py       # /api/reports — weekly report
+│   │   │   ├── tracker_routes.py       # /api/tracker — start/stop/status
+│   │   │   ├── nudge_routes.py         # /api/nudge — generate, pending, dismiss
+│   │   │   ├── calendar_routes.py      # /api/calendar — meetings, OAuth flows
+│   │   │   ├── cycle_routes.py         # /api/cycle — phase suggestions
+│   │   │   ├── hydration_routes.py     # /api/hydration — log, today
+│   │   │   ├── selfcare_routes.py      # /api/selfcare — log, today
+│   │   │   ├── privatecare_routes.py   # /api/privatecare — log, history
+│   │   │   ├── todo_routes.py          # /api/todos — CRUD tasks
+│   │   │   ├── user_routes.py          # /api/user — settings, profile
+│   │   │   ├── chatbot_routes.py       # /api/chat — message, sessions, history
+│   │   │   └── stress_routes.py        # /api/stress — ingest, latest, log, resolve
+│   │   │
+│   │   ├── services/                   # Business logic layer
+│   │   │   ├── firebase_service.py     # Firestore CRUD + SQLite fallback
+│   │   │   ├── local_store.py          # SQLite JSON document store
+│   │   │   ├── calendar_service.py     # Calendar provider orchestration
+│   │   │   ├── calendar_provider.py    # Provider abstraction base
+│   │   │   ├── google_calendar.py      # Google Calendar OAuth + API
+│   │   │   ├── microsoft_calendar.py   # Microsoft Graph calendar
+│   │   │   ├── chatbot_service.py      # Groq LLM chatbot + sessions + memory
+│   │   │   ├── wellness_report_service.py  # Weekly report aggregation
+│   │   │   └── settings_service.py     # User settings resolution
+│   │   │
+│   │   ├── ai/                         # AI/ML modules
+│   │   │   ├── emotion_detector.py     # HuggingFace emotion pipeline
+│   │   │   ├── sentiment_analyzer.py   # HuggingFace sentiment pipeline
+│   │   │   ├── nudge_engine.py         # Context-aware nudge generation
+│   │   │   └── wellness_advisor.py     # Wellness advice engine
+│   │   │
+│   │   ├── tracker/                    # System monitoring
+│   │   │   ├── activity_monitor.py     # Keyboard/mouse tracking via pynput
+│   │   │   └── screen_tracker.py       # Active window tracking via psutil
+│   │   │
+│   │   ├── notifications/
+│   │   │   └── notification_manager.py # Desktop toasts via plyer
+│   │   │
+│   │   └── models/                     # Schema documentation
+│   │       ├── user.py                 # User document shape
+│   │       ├── mood_log.py             # Mood log document shape
+│   │       └── work_session.py         # Work session document shape
+│   │
+│   └── data/                           # SQLite DB (gitignored, auto-created)
+│       └── local.db
+│
+├── frontend/
+│   ├── package.json
+│   ├── package-lock.json
+│   ├── tailwind.config.js
+│   ├── postcss.config.js
+│   ├── .env.example
+│   │
+│   ├── public/
+│   │   └── index.html                  # HTML shell with Plus Jakarta Sans font
+│   │
+│   └── src/
+│       ├── index.js                    # ReactDOM.createRoot entry
+│       ├── index.css                   # Tailwind directives + theme CSS variables
+│       ├── App.jsx                     # Router, auth gate, layout, error boundary
+│       │
+│       ├── pages/
+│       │   ├── AuthPage.jsx            # Login / Register page
+│       │   ├── Dashboard.jsx           # Main wellness dashboard
+│       │   ├── Todos.jsx               # Task management page
+│       │   ├── Reports.jsx             # Analytics + reports (3 tabs)
+│       │   ├── CycleMode.jsx           # Cycle/pregnancy tracking page
+│       │   ├── Calendar.jsx            # Meeting timeline + calm exercises
+│       │   ├── Settings.jsx            # User preferences
+│       │   └── Journal.jsx             # Legacy — redirects to Reports
+│       │
+│       ├── components/
+│       │   ├── Common/
+│       │   │   ├── Sidebar.jsx                # Navigation sidebar
+│       │   │   ├── BreakReminderToast.jsx     # Break reminder overlay
+│       │   │   └── StressInterventionToast.jsx # Stress calming overlay
+│       │   │
+│       │   ├── Dashboard/
+│       │   │   ├── ProductivityScore.jsx      # Wellness score ring
+│       │   │   ├── ScreenTimeChart.jsx        # Screen time donut
+│       │   │   ├── BreakBalance.jsx           # Break tracker card
+│       │   │   ├── HydrationTracker.jsx       # Water intake card
+│       │   │   ├── FocusTimeline.jsx          # Focus session timeline
+│       │   │   ├── NudgeFeed.jsx              # Active nudges card
+│       │   │   ├── SelfCareTracker.jsx        # Stretch/eye rest card
+│       │   │   └── TodayTasks.jsx             # Quick task widget
+│       │   │
+│       │   ├── Reports/
+│       │   │   ├── WellnessScorecard.jsx      # Score trend chart
+│       │   │   ├── WorkHoursChart.jsx         # Daily work hours bar chart
+│       │   │   ├── EmotionChart.jsx           # Emotion distribution chart
+│       │   │   ├── StressHeatmap.jsx          # Hour x Day heatmap grid
+│       │   │   ├── SelfCareMetrics.jsx        # Self-care summary card
+│       │   │   └── WeeklyInsight.jsx          # AI insight card
+│       │   │
+│       │   ├── Calendar/
+│       │   │   ├── ConfidenceBreath.jsx       # Guided breathing component
+│       │   │   └── MeetingTimeline.jsx        # Meeting list
+│       │   │
+│       │   ├── CycleMode/
+│       │   │   ├── CycleRing.jsx              # SVG cycle donut
+│       │   │   ├── CycleWeekStrip.jsx         # 7-day cycle strip
+│       │   │   ├── EnergyForecast.jsx         # Energy lookahead
+│       │   │   ├── EnergyIndicator.jsx        # Energy level badge
+│       │   │   ├── PeriodCalendarGrid.jsx     # Calendar grid view
+│       │   │   ├── PeriodEntriesList.jsx      # Period entry history
+│       │   │   ├── PeriodEntryModal.jsx       # Add/edit period modal
+│       │   │   ├── PeriodStats.jsx            # Cycle statistics
+│       │   │   ├── PrivateCareTracker.jsx     # Pad change / freshen-up log
+│       │   │   ├── SmartSwitch.jsx            # Cycle <-> Pregnancy toggle
+│       │   │   ├── MotherhoodShield.jsx       # Pregnancy dashboard
+│       │   │   └── AppointmentSync.jsx        # Appointment tracker
+│       │   │
+│       │   ├── Journal/
+│       │   │   ├── JournalEntry.jsx           # Entry input form
+│       │   │   ├── EntryHistory.jsx           # Entry list
+│       │   │   ├── AIResponse.jsx             # AI analysis display
+│       │   │   └── EmotionBadge.jsx           # Emotion label badge
+│       │   │
+│       │   ├── ChatBot/
+│       │   │   └── ChatBot.jsx                # Floating chatbot widget
+│       │   │
+│       │   ├── Notifications/
+│       │   │   └── NotificationOverlay.jsx    # In-app notification panel
+│       │   │
+│       │   └── Settings/
+│       │       └── MealReminderSettings.jsx   # Meal time configuration
+│       │
+│       ├── context/
+│       │   ├── AuthContext.jsx                # Firebase auth state
+│       │   ├── WellnessContext.jsx            # Dashboard data + polling
+│       │   ├── PageContext.jsx                # Current page context for chatbot
+│       │   └── ThemeContext.jsx               # Dark/light theme toggle
+│       │
+│       ├── hooks/
+│       │   ├── useBreakReminder.js            # Break interval timer
+│       │   ├── useEmotionAnalysis.js          # Emotion API hook
+│       │   ├── usePeriodTracker.js            # Period entry management
+│       │   ├── usePregnancyMode.js            # Pregnancy mode state
+│       │   ├── useStressDetector.js           # Stress polling hook
+│       │   └── useWellnessPolling.js          # Dashboard data polling
+│       │
+│       ├── services/
+│       │   ├── api.js                         # Axios client + all API functions
+│       │   ├── firebase.js                    # Firebase app initialization
+│       │   ├── notifications.js               # Web Notifications API
+│       │   ├── mealReminders.js               # Meal reminder scheduler
+│       │   ├── todoReminder.js                # Todo reminder scheduler
+│       │   ├── privateCareReminder.js         # Private care reminder
+│       │   └── eyeRestReminder.js             # Eye rest reminder
+│       │
+│       └── utils/
+│           └── periodMath.js                  # Date utilities for cycle math
+│
+├── docs/                                      # Product documentation (HTML/MD)
+└── prototype/                                 # Static HTML prototype
+
+--------------------------------------------------------------------------------
+TECH STACK (Exact Versions)
+--------------------------------------------------------------------------------
+
+BACKEND (Python):
+  - flask >= 3.0.0
+  - flask-cors >= 4.0.0
+  - transformers >= 4.36.0
+  - torch >= 2.1.0
+  - google-genai >= 1.0.0
+  - groq >= 1.0.0
+  - psutil >= 5.9.0
+  - pynput >= 1.7.6
+  - plyer >= 2.1.0
+  - firebase-admin >= 6.2.0
+  - google-api-python-client >= 2.108.0
+  - google-auth-httplib2 >= 0.1.1
+  - google-auth-oauthlib >= 1.1.0
+  - requests >= 2.31.0
+  - python-dotenv >= 1.0.0
+  - apscheduler >= 3.10.4
+
+FRONTEND (Node.js / React):
+  Dependencies:
+    - react: ^18.2.0
+    - react-dom: ^18.2.0
+    - react-scripts: 5.0.1
+    - react-router-dom: ^6.20.0
+    - axios: ^1.6.0
+    - chart.js: ^4.4.0
+    - react-chartjs-2: ^5.2.0
+    - firebase: ^10.7.0
+    - framer-motion: ^12.38.0
+    - react-hot-toast: ^2.4.1
+    - react-icons: ^4.12.0
+  DevDependencies:
+    - tailwindcss: ^3.4.0
+    - postcss: ^8.4.32
+    - autoprefixer: ^10.4.16
+
+EXTERNAL SERVICES:
+  - Firebase Authentication (email/password + Google OAuth)
+  - Firebase Firestore (primary database)
+  - Groq API (LLM chatbot — llama-3.3-70b-versatile)
+  - Google Calendar API v3 (OAuth)
+  - Microsoft Graph API (calendar OAuth)
+
+--------------------------------------------------------------------------------
+DATA FLOW ARCHITECTURE
+--------------------------------------------------------------------------------
+
+The system follows a standard SPA-to-REST architecture:
+
+1. FRONTEND (React SPA on port 3000)
+   └─→ Axios HTTP client with Firebase ID token in Authorization header
+       └─→ BACKEND (Flask REST API on port 5000)
+           ├─→ Firebase Firestore (primary persistence)
+           │   └─→ SQLite LocalStore fallback (when Firestore unavailable)
+           ├─→ HuggingFace Transformers (emotion/sentiment inference)
+           │   └─→ Demo mock classifiers fallback
+           ├─→ Groq API (chatbot LLM completions)
+           │   └─→ Template-based responses fallback
+           ├─→ Google Calendar API (OAuth + meeting fetch)
+           ├─→ Microsoft Graph API (OAuth + meeting fetch)
+           ├─→ pynput (keyboard/mouse monitoring in background thread)
+           ├─→ psutil (screen/process tracking)
+           └─→ plyer (desktop notification toasts)
+
+2. STANDALONE STRESS AGENT (optional)
+   stress_agent.py (pynput listener)
+   └─→ POST /api/stress/ingest every 10 seconds
+       └─→ Frontend useStressDetector hook polls /stress/latest
+
+3. CLIENT-SIDE ONLY (localStorage)
+   - Period/cycle entries: helix_period_entries
+   - Daily cycle logs: helix_cycle_daily_logs
+   - Period duration: helix_period_duration
+   - Pregnancy data: helix_pregnancy_data
+   - Task mode: helix_task_mode
+   - Pregnancy setup flag: helix_pregnancy_setup_done
+   - Theme preference: helix_theme
+   - Meal reminder settings: helix_meal_reminders
+
+4. POLLING INTERVALS
+   - WellnessContext: polls /dashboard/today and /tracker/status periodically
+   - useStressDetector: polls /stress/latest every few seconds
+   - useBreakReminder: timer-based interval checks
+
+--------------------------------------------------------------------------------
+COMMUNICATION PROTOCOL
+--------------------------------------------------------------------------------
+
+- All API endpoints are under /api/* prefix
+- CORS allows all origins ("*") with credentials support
+- Authentication: Firebase ID token as Bearer token in Authorization header
+- Content-Type: application/json for all requests
+- Backend returns JSON responses with consistent error shapes
+- Demo mode: accepts any Bearer token, generates local user IDs

@@ -87,11 +87,17 @@ export const calendarAPI = {
 };
 
 export const chatAPI = {
-  sendMessage: (message, page_context) =>
-    api.post('/chat/message', { message, page_context }),
+  sendMessage: (message, page_context, session_id) =>
+    api.post('/chat/message', { message, page_context, session_id }),
   getHistory: (limit) => api.get('/chat/history', { params: { limit } }),
-  clearHistory: () => api.delete('/chat/history'),
+  clearHistory: (session_id) =>
+    api.delete('/chat/history', { data: { session_id } }),
   getQuickReplies: () => api.get('/chat/quick-replies'),
+  getSessions: () => api.get('/chat/sessions'),
+  createSession: (title) => api.post('/chat/sessions', { title }),
+  deleteSession: (id) => api.delete(`/chat/sessions/${id}`),
+  getSessionMessages: (id, limit) =>
+    api.get(`/chat/sessions/${id}/messages`, { params: { limit } }),
 };
 
 export const cycleAPI = {

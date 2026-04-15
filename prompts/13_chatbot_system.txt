@@ -1,0 +1,408 @@
+================================================================================
+ONE-SHOT PROMPT — PART 13: CHATBOT SYSTEM
+================================================================================
+
+Build a comprehensive AI chatbot system with two main parts: the backend
+chatbot service (chatbot_service.py, ~1700 lines) and the frontend ChatBot
+component (ChatBot.jsx, ~833 lines). The chatbot is named "Helix" and
+serves as a wellness companion.
+
+================================================================================
+BACKEND: chatbot_service.py — AI CHATBOT ENGINE
+================================================================================
+
+--------------------------------------------------------------------------------
+SYSTEM PROMPT
+--------------------------------------------------------------------------------
+
+Define a large SYSTEM_PROMPT string (markdown formatted) that establishes
+the Helix persona:
+
+    You are Helix, a warm and empathetic AI wellness companion built into
+    the Infinite Helix app. You help women employees manage their wellness,
+    productivity, and emotional health during the workday.
+
+    PERSONA RULES:
+    - Warm, supportive, professional tone
+    - Use the user's name when known
+    - Never be preachy or condescending
+    - Short responses (2-4 sentences) unless the user asks for detail
+    - Acknowledge emotions before offering advice
+    - Reference the user's actual data when available
+    - Never diagnose medical conditions
+    - Never replace professional help
+
+    SAFETY & CRISIS:
+    - If user mentions self-harm, suicidal thoughts, or severe distress:
+      * Acknowledge their pain with empathy
+      * Provide India crisis helpline numbers:
+        - iCall: 9152987821
+        - Vandrevala Foundation: 1860-2662-345
+        - AASRA: 91-22-27546669
+      * Encourage reaching out to a trusted person
+      * Never attempt to counsel on crisis situations
+
+    PAGE AWARENESS:
+    - You know which page the user is on
+    - Reference their dashboard metrics, reports, cycle data, etc.
+    - Tailor suggestions to the current context
+
+    BOUNDARIES:
+    - Only discuss wellness, productivity, work-life balance, emotional health
+    - Politely redirect off-topic conversations
+    - Never share personal opinions on politics, religion, etc.
+
+    MEMORY:
+    - Remember the user's name across messages
+    - Track emotional patterns (improving, stable, declining)
+    - Reference past conversations when relevant
+
+--------------------------------------------------------------------------------
+INTENT CLASSIFICATION
+--------------------------------------------------------------------------------
+
+Define INTENT_PATTERNS as a dict mapping intent names to regex patterns:
+
+    distress:        self.harm|suicid|kill myself|end it all|...
+    wellness_check:  how am i doing|my wellness|my score|how's my day|...
+    greeting:        ^(hi|hello|hey|good morning|good afternoon|...)
+    farewell:        ^(bye|goodbye|see you|take care|...)
+    hydration:       water|hydrat|thirsty|drink|dehydrat|...
+    emotion:         feel|mood|emotion|stressed|anxious|sad|happy|...
+    stress:          stress|overwhelm|pressure|burnout|tension|...
+    todo:            task|todo|remind|deadline|schedule|plan|...
+    cycle:           period|cycle|menstr|cramp|phase|pms|...
+    nutrition:       eat|food|meal|hungry|snack|diet|nutrition|...
+    productivity:    productiv|focus|concentrat|distract|efficient|...
+    sleep:           sleep|tired|insomnia|rest|nap|fatigue|...
+    exercise:        exercise|workout|walk|movement|stretch|yoga|...
+    break:           break|pause|rest|relax|recharge|...
+    meeting:         meeting|calendar|schedule|call|conference|...
+    mental_health:   mental health|therapy|counsel|anxiety|depress|...
+    workplace:       work|office|colleague|manager|team|...
+    report:          report|analytics|weekly|summary|data|stats|...
+    help:            help|what can you|how do i|guide|...
+    thanks:          thank|thanks|appreciate|grateful|...
+
+    Classify by checking each pattern against user message (case-insensitive).
+    "distress" always takes priority over other intents.
+
+--------------------------------------------------------------------------------
+QUICK REPLY MAP
+--------------------------------------------------------------------------------
+
+Define QUICK_REPLY_MAP mapping intents to suggested quick reply buttons:
+
+    greeting: ["How's my wellness?", "Any tips for today?", "Log water"]
+    wellness_check: ["Show me tips", "Log a stretch", "How's my hydration?"]
+    hydration: ["Log water now", "Set reminder", "How much today?"]
+    stress: ["Guide me through breathing", "Take a break", "Talk to me"]
+    emotion: ["Tell me more", "Log in journal", "Breathing exercise"]
+    todo: ["Show my tasks", "Add a task", "What's overdue?"]
+    cycle: ["Energy tips", "What phase am I in?", "Log symptoms"]
+    ...and so on for each intent
+
+    Also define page-specific quick replies:
+    dashboard: ["Explain my score", "What should I focus on?", "Log water"]
+    reports: ["Summarize my week", "Any patterns?", "How's my trend?"]
+    cycle-mode: ["Energy tips for today", "Phase info", "Log mood"]
+    todos: ["What's my priority?", "Add a wellness task", "Upcoming deadlines"]
+    calendar: ["Prepare me for next meeting", "Breathing exercise", "Meeting tips"]
+    settings: ["What can I customize?", "Reset reminders", "Help"]
+
+--------------------------------------------------------------------------------
+FALLBACK TEMPLATES
+--------------------------------------------------------------------------------
+
+Define FALLBACK_TEMPLATES mapping intents to template response strings.
+These are used when the Groq API is unavailable:
+
+    greeting: "Hi there! I'm Helix, your wellness companion. How can I help
+              you today? You can ask me about your wellness, log activities,
+              or just chat about how you're feeling."
+
+    wellness_check: "Based on your current data, here's a quick check-in:
+                    {dynamic_data_insertion}. Would you like specific tips?"
+
+    hydration: "Staying hydrated is key! {hydration_data}. Want me to
+              log a glass of water for you?"
+
+    stress: "I hear you. Stress can feel overwhelming. Let's try a quick
+            breathing exercise: Breathe in for 4 counts... hold for 4...
+            out for 6. How does that feel?"
+
+    distress: "I'm really sorry you're going through this. Please know
+             you're not alone. Here are some helplines you can reach out to:
+             iCall: 9152987821, Vandrevala Foundation: 1860-2662-345,
+             AASRA: 91-22-27546669. Please talk to someone you trust."
+
+    ...templates for all 20 intents
+
+--------------------------------------------------------------------------------
+GROQ CLIENT
+--------------------------------------------------------------------------------
+
+Create a GroqClient class for LLM API calls:
+
+    class GroqClient:
+        GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions'
+
+        chat(conversation_history, context_prefix=''):
+            - Check GROQ_API_KEY from environment
+            - If no key: return None (fall back to templates)
+            - Build messages array:
+              * System message: SYSTEM_PROMPT + context_prefix
+              * Conversation history messages
+            - POST to GROQ_URL with:
+              model: 'llama-3.3-70b-versatile'
+              messages: messages
+              temperature: 0.7
+              max_tokens: 500
+              verify=False (for corporate proxy compatibility)
+            - Extract and return response text
+            - On error: log and return None
+
+--------------------------------------------------------------------------------
+CHATBOT SERVICE CLASS
+--------------------------------------------------------------------------------
+
+Create the main ChatbotService class:
+
+    class ChatbotService:
+        __init__():
+            - Initialize GroqClient
+            - Get LocalStore reference for persistence
+            - Initialize empty conversation memory structures
+
+        CORE METHOD — process_message(message, page_context, session_id, app_context):
+            1. Classify intent from message
+            2. Get or create session
+            3. Save user message to history
+            4. Extract and remember user facts (name, preferences)
+            5. Track emotional state
+            6. Generate response:
+               a. Try AI response via Groq (if key available)
+               b. Fall back to template response
+            7. Save assistant response to history
+            8. Generate quick replies for context
+            9. Return { reply, ai_powered, session_id, quick_replies }
+
+        AI RESPONSE GENERATION — _generate_ai_response(message, intent, context):
+            1. Build rich context string from:
+               - page_context (current page name and page-specific data)
+               - app_context (hydration, activity, wellness metrics)
+               - User memory (name, remembered facts)
+               - Emotional trajectory summary
+               - Other pages' data summary
+            2. Format page-specific data:
+               - Dashboard: wellness score, mood, hydration, screen time, breaks
+               - Reports: report tab, weekly data, stress events
+               - Cycle Mode: cycle day, phase, symptoms, energy level
+               - Calendar: meetings, next meeting
+               - Todos: task counts, overdue items
+               - Settings: current preferences
+            3. Build conversation window:
+               - Last 12 messages verbatim
+               - Older messages summarized
+            4. Call GroqClient.chat(conversation_history, context_prefix)
+            5. Post-process: prepend factual data if relevant
+            6. Generate page-aware quick replies
+            7. Return response text
+
+        TEMPLATE FALLBACK — _generate_template_response(message, intent, context):
+            - Select template from FALLBACK_TEMPLATES[intent]
+            - Inject dynamic data (hydration count, wellness score, etc.)
+            - Handle special intents:
+              * wellness_check: build data-driven response
+              * hydration: include today's count
+              * todo: include task summary
+              * cycle: include phase info if available
+            - Try page-aware template first, then generic
+
+        SESSION MANAGEMENT:
+            create_session(title=None):
+                - Generate session ID (uuid)
+                - Store in LocalStore collection 'chat_sessions'
+                - Return session object
+
+            get_sessions():
+                - Read all from 'chat_sessions'
+                - Sort by created_at descending
+
+            delete_session(session_id):
+                - Delete session and its messages
+                - Clean up from LocalStore
+
+            get_session_messages(session_id, limit=50):
+                - Read from 'chat_messages_{session_id}'
+                - Sort by timestamp, limit
+
+            _get_or_create_session(session_id):
+                - If session_id provided and exists: use it
+                - If not: create new session
+
+        MEMORY:
+            _extract_and_remember(message, user_context):
+                - Regex for "my name is X", "I'm X", "call me X"
+                - Regex for personal facts (job role, team, preferences)
+                - Store in 'chat_user_memory' collection
+                - Persist across sessions
+
+            _format_user_memory_for_ai():
+                - Read stored memories
+                - Format as context string for Groq:
+                  "User facts: Name is {name}. Works as {role}. ..."
+
+        EMOTIONAL TRAJECTORY:
+            _track_emotion(message, intent):
+                - Detect emotional valence from message
+                - Append to 'chat_emotional_history'
+                - Track trend: improving, stable, declining
+
+            _build_emotional_summary():
+                - Read recent emotional history
+                - Compute trend direction
+                - Format as: "Emotional state: {current}. Trend: {direction}."
+
+        PAGE DESCRIPTIONS (constant dict):
+            dashboard: "The main wellness dashboard showing..."
+            reports: "Analytics page with weekly reports..."
+            cycle-mode: "Menstrual cycle and pregnancy tracking..."
+            calendar: "Meeting schedule and pre-meeting calm..."
+            todos: "Task management with categories..."
+            settings: "User preferences and configuration..."
+
+    Module singleton:
+        chatbot_service = ChatbotService()
+
+================================================================================
+FRONTEND: ChatBot.jsx (~833 lines) — FLOATING CHAT WIDGET
+================================================================================
+
+Create a floating chatbot widget that appears in the bottom-right corner
+of every authenticated page.
+
+--------------------------------------------------------------------------------
+VISUAL STATES
+--------------------------------------------------------------------------------
+
+COLLAPSED (default):
+  - Floating circular button (w-14 h-14)
+  - Bottom-right corner (fixed position)
+  - Chat bubble icon
+  - Pulse animation when there's an unread message
+  - Badge showing unread count
+
+EXPANDED:
+  - Slide-up panel (w-96, max-h-[600px])
+  - Fixed bottom-right corner
+  - Smooth Framer Motion transition
+
+--------------------------------------------------------------------------------
+LAYOUT (expanded)
+--------------------------------------------------------------------------------
+
+HEADER:
+  - "Helix" title with AI sparkle icon
+  - Session selector dropdown
+  - "New Chat" button
+  - Minimize (collapse) button
+  - Clear history button
+
+MESSAGE AREA:
+  - Scrollable message list
+  - User messages: right-aligned, accent-colored bubble
+  - Assistant messages: left-aligned, surface-colored bubble
+  - Typing indicator: three animated dots when waiting for response
+  - Auto-scroll to bottom on new messages
+  - Message timestamps
+
+INPUT AREA:
+  - Text input with placeholder "Ask Helix anything..."
+  - Send button (arrow icon)
+  - Quick reply chips above input:
+    * Contextual suggestions based on current page and last message
+    * Clicking a chip sends that text as a message
+
+WELCOME STATE (no messages yet):
+  - "Hi! I'm Helix" greeting
+  - Brief description
+  - Starter quick replies: "How's my wellness?", "Tips for today",
+    "Help me relax"
+
+--------------------------------------------------------------------------------
+STATE MANAGEMENT
+--------------------------------------------------------------------------------
+
+STATE:
+  - isOpen: boolean (collapsed/expanded)
+  - messages: array of { role, content, timestamp }
+  - inputText: string
+  - loading: boolean (waiting for API response)
+  - sessions: array of session objects
+  - activeSessionId: string
+  - quickReplies: array of strings
+  - unreadCount: number
+
+EFFECTS:
+  - On mount: load sessions via chatAPI.getSessions()
+  - On session change: load messages via chatAPI.getSessionMessages()
+  - On page change (via usePageContext): update quick replies
+  - Auto-scroll effect when messages change
+
+--------------------------------------------------------------------------------
+MESSAGE FLOW
+--------------------------------------------------------------------------------
+
+1. User types message and hits Send (or clicks quick reply)
+2. Add user message to local messages array immediately
+3. Set loading = true, show typing indicator
+4. Call chatAPI.sendMessage(message, pageContext, activeSessionId)
+5. On response:
+   - Add assistant reply to messages
+   - Update quickReplies from response
+   - Update activeSessionId if new session created
+   - Set loading = false
+6. On error:
+   - Show error toast
+   - Add error message to chat: "Sorry, I couldn't process that."
+   - Set loading = false
+
+--------------------------------------------------------------------------------
+SESSION MANAGEMENT UI
+--------------------------------------------------------------------------------
+
+Session dropdown:
+  - Lists all sessions with titles and dates
+  - Active session highlighted
+  - Click to switch session (loads that session's messages)
+
+New Chat:
+  - Creates new session via chatAPI.createSession()
+  - Clears messages
+  - Shows welcome state
+
+Delete Session:
+  - Confirmation dialog
+  - Calls chatAPI.deleteSession(id)
+  - Switches to most recent remaining session
+
+Clear History:
+  - Confirmation dialog
+  - Calls chatAPI.clearHistory(sessionId)
+  - Clears local messages
+
+--------------------------------------------------------------------------------
+STYLING
+--------------------------------------------------------------------------------
+
+  - Glass-card effect on expanded panel
+  - Shadow: 0 8px 32px rgba(0,0,0,0.3)
+  - Rounded corners: rounded-2xl on panel, rounded-full on collapsed button
+  - z-50 to float above all content
+  - Dark overlay doesn't cover the rest of the app (not a modal)
+  - Responsive: full-width on mobile (< sm breakpoint)
+  - Smooth transitions with Framer Motion
+  - Message bubbles with tail/arrow effect via CSS
+  - Quick reply chips: helix-badge style, clickable, hover effect
+  - Typing indicator: three dots with sequential bounce animation

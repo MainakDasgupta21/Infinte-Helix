@@ -53,15 +53,15 @@ class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="h-screen w-full flex items-center justify-center bg-slate-50 p-8">
-          <div className="text-center max-w-md bg-white rounded-2xl p-8 border border-slate-200 shadow-xl">
+        <div className="h-screen w-full flex items-center justify-center bg-helix-bg p-8">
+          <div className="text-center max-w-md bento-card p-8">
             <div className="text-4xl mb-4">
               <span role="img" aria-label="warning">{'\u26A0\uFE0F'}</span>
             </div>
-            <h1 className="text-xl font-serif font-semibold text-slate-900 mb-2">
+            <h1 className="text-xl font-serif font-semibold text-helix-text mb-2">
               Something went wrong
             </h1>
-            <p className="text-sm text-slate-500 mb-6 leading-relaxed">
+            <p className="text-sm text-helix-muted mb-6 leading-relaxed">
               The app ran into an unexpected error. Don't worry {'\u2014'} your data is safe.
             </p>
             <button
@@ -69,12 +69,12 @@ class ErrorBoundary extends React.Component {
                 this.setState({ hasError: false, error: null });
                 window.location.href = '/dashboard';
               }}
-              className="px-6 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold transition-all shadow-md shadow-violet-600/20"
+              className="px-6 py-2.5 rounded-xl bg-helix-accent hover:brightness-110 text-white text-sm font-semibold transition-all shadow-md"
             >
               Back to Dashboard
             </button>
             {this.state.error && (
-              <p className="text-xs text-slate-400 mt-4 font-mono break-all bg-slate-50 p-2 rounded-lg border border-slate-200">
+              <p className="text-xs text-helix-muted mt-4 font-mono break-all bg-helix-surface p-2 rounded-lg border border-helix-border">
                 {this.state.error.message}
               </p>
             )}
@@ -138,16 +138,16 @@ function NotFound() {
   return (
     <div className="max-w-7xl mx-auto flex items-center justify-center min-h-[60vh] animate-slide-up">
       <div className="text-center bento-card p-8 max-w-md mx-auto">
-        <div className="text-7xl font-serif font-bold text-violet-600 mb-4">404</div>
-        <h1 className="text-xl font-serif font-semibold text-slate-900 mb-2">
+        <div className="text-7xl font-serif font-bold text-helix-accent mb-4">404</div>
+        <h1 className="text-xl font-serif font-semibold text-helix-text mb-2">
           Page not found
         </h1>
-        <p className="text-sm text-slate-500 mb-6">
+        <p className="text-sm text-helix-muted mb-6">
           The page you're looking for doesn't exist or has been moved.
         </p>
         <Link
           to="/dashboard"
-          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold transition-all shadow-md shadow-violet-600/20"
+          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-helix-accent hover:brightness-110 text-white text-sm font-semibold transition-all shadow-md"
         >
           Back to Dashboard
         </Link>
@@ -163,10 +163,10 @@ function AppRoutes() {
 
   if (loading) {
     return (
-      <div className="h-screen w-full flex items-center justify-center bg-slate-50">
+      <div className="h-screen w-full flex items-center justify-center bg-helix-bg">
         <div className="flex flex-col items-center gap-4 bento-card p-8">
-          <div className="w-10 h-10 border-2 border-violet-600 border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-slate-500 animate-pulse font-medium">Loading your wellness space...</p>
+          <div className="w-10 h-10 border-2 border-helix-accent border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-helix-muted animate-pulse font-medium">Loading your wellness space...</p>
         </div>
       </div>
     );
@@ -184,9 +184,9 @@ function AppRoutes() {
   return (
     <WellnessProvider>
       <PageContextProvider>
-        <div className="flex h-screen text-slate-800 font-body">
+        <div className="flex h-screen text-helix-text font-body">
           <Sidebar />
-          <main className="flex-1 overflow-y-auto px-6 py-6 max-lg:pt-16 transition-all duration-300 bg-[#f1f0f7]" id="main-content">
+          <main className="flex-1 overflow-y-auto px-6 py-6 max-lg:pt-16 transition-all duration-300 bg-helix-bg bg-mesh" id="main-content">
             <ScrollToTop />
             <Routes>
               <Route path="/" element={<Dashboard />} />

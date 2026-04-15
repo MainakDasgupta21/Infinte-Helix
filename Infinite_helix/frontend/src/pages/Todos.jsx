@@ -48,19 +48,19 @@ function groupByDate(todos) {
 }
 
 const OFFICE_COLORS = [
-  { border: 'border-l-violet-400', bg: 'bg-violet-50/60', dot: 'bg-violet-400' },
-  { border: 'border-l-blue-400', bg: 'bg-blue-50/60', dot: 'bg-blue-400' },
-  { border: 'border-l-indigo-400', bg: 'bg-indigo-50/60', dot: 'bg-indigo-400' },
-  { border: 'border-l-sky-400', bg: 'bg-sky-50/60', dot: 'bg-sky-400' },
-  { border: 'border-l-purple-400', bg: 'bg-purple-50/60', dot: 'bg-purple-400' },
+  { border: 'border-l-violet-400', bg: 'bg-helix-accent/10', dot: 'bg-violet-400' },
+  { border: 'border-l-blue-400', bg: 'bg-blue-500/10', dot: 'bg-blue-400' },
+  { border: 'border-l-indigo-400', bg: 'bg-indigo-500/10', dot: 'bg-indigo-400' },
+  { border: 'border-l-sky-400', bg: 'bg-sky-500/10', dot: 'bg-sky-400' },
+  { border: 'border-l-purple-400', bg: 'bg-purple-500/10', dot: 'bg-purple-400' },
 ];
 
 const LIFE_COLORS = [
-  { border: 'border-l-amber-400', bg: 'bg-amber-50/60', dot: 'bg-amber-400' },
-  { border: 'border-l-orange-400', bg: 'bg-orange-50/60', dot: 'bg-orange-400' },
-  { border: 'border-l-emerald-400', bg: 'bg-emerald-50/60', dot: 'bg-emerald-400' },
-  { border: 'border-l-teal-400', bg: 'bg-teal-50/60', dot: 'bg-teal-400' },
-  { border: 'border-l-rose-400', bg: 'bg-rose-50/60', dot: 'bg-rose-400' },
+  { border: 'border-l-amber-400', bg: 'bg-amber-500/10', dot: 'bg-amber-400' },
+  { border: 'border-l-orange-400', bg: 'bg-orange-500/10', dot: 'bg-orange-400' },
+  { border: 'border-l-emerald-400', bg: 'bg-emerald-500/10', dot: 'bg-emerald-400' },
+  { border: 'border-l-teal-400', bg: 'bg-teal-500/10', dot: 'bg-teal-400' },
+  { border: 'border-l-rose-400', bg: 'bg-rose-500/10', dot: 'bg-rose-400' },
 ];
 
 // ─── Mode Toggle ────────────────────────────────────────────────────────────
@@ -68,19 +68,19 @@ function ModeToggle({ mode, onToggle }) {
   const isLife = mode === 'life';
   return (
     <div className="flex items-center justify-center">
-      <div className="relative flex items-center bg-white rounded-xl p-1 shadow-sm border border-slate-200">
+      <div className="relative flex items-center bg-helix-surface rounded-xl p-1 shadow-sm border border-helix-border/50">
         <div
           className={`absolute top-1 h-[calc(100%-8px)] w-[calc(50%-4px)] rounded-lg transition-all duration-400 ease-out ${
             isLife
-              ? 'translate-x-[calc(100%+4px)] bg-gradient-to-r from-amber-500 to-orange-500 shadow-md shadow-amber-500/30'
-              : 'translate-x-0 bg-gradient-to-r from-violet-600 to-indigo-600 shadow-md shadow-violet-600/30'
+              ? 'translate-x-[calc(100%+4px)] bg-gradient-to-r from-amber-500 to-orange-500 shadow-md'
+              : 'translate-x-0 bg-gradient-to-r from-violet-600 to-indigo-600 shadow-md'
           }`}
         />
 
         <button
           onClick={() => onToggle('work')}
           className={`relative z-10 flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-colors duration-300 ${
-            !isLife ? 'text-white' : 'text-slate-500 hover:text-slate-700'
+            !isLife ? 'text-white' : 'text-helix-muted hover:text-helix-text'
           }`}
         >
           <HiOutlineOfficeBuilding className="w-4 h-4" />
@@ -90,7 +90,7 @@ function ModeToggle({ mode, onToggle }) {
         <button
           onClick={() => onToggle('life')}
           className={`relative z-10 flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-bold transition-colors duration-300 ${
-            isLife ? 'text-white' : 'text-slate-500 hover:text-slate-700'
+            isLife ? 'text-white' : 'text-helix-muted hover:text-helix-text'
           }`}
         >
           <HiOutlineHome className="w-4 h-4" />
@@ -107,9 +107,9 @@ function TransitionCard({ workTaskCount }) {
   const greeting = hour < 17 ? 'Taking a breather from work' : 'Work is done for today';
 
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-50 via-orange-50 to-rose-50 border border-amber-200">
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500/10 via-orange-500/10 to-rose-500/10 border border-amber-500/20">
       <div className="relative p-5 flex items-start gap-4">
-        <div className="p-2.5 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 shadow-md shadow-amber-500/25 shrink-0">
+        <div className="p-2.5 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 shadow-md shrink-0">
           <HiOutlineHeart className="w-5 h-5 text-white" />
         </div>
         <div>
@@ -119,7 +119,7 @@ function TransitionCard({ workTaskCount }) {
             the office. Take a breath — here is your personal list for tonight.
           </p>
           <div className="flex items-center gap-2 mt-2.5">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white text-xs font-semibold text-amber-700 border border-amber-200">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-helix-surface text-xs font-semibold text-amber-700 border border-amber-500/20">
               <HiOutlineSparkles className="w-3.5 h-3.5" />
               You deserve this transition
             </span>
@@ -305,16 +305,16 @@ export default function Todos() {
   const accent = isLife ? {
     gradient: 'from-amber-500 to-orange-500',
     gradientSoft: 'from-amber-100 via-orange-50 to-rose-50',
-    ring: 'focus:border-amber-400 focus:ring-2 focus:ring-amber-100',
-    badge: 'bg-amber-100 border-amber-300 text-amber-700',
-    badgeDone: 'bg-emerald-100 border-emerald-300 text-emerald-700',
-    btn: 'from-amber-500 to-orange-500 shadow-amber-500/25',
-    btnHover: 'hover:shadow-lg hover:shadow-amber-500/30',
-    check: 'hover:border-emerald-500 hover:bg-emerald-50',
+    ring: 'focus:border-amber-400 focus:ring-2 focus:ring-amber-500/20',
+    badge: 'bg-amber-500/15 border-amber-500/30 text-amber-700',
+    badgeDone: 'bg-emerald-500/15 border-emerald-500/20 text-emerald-700',
+    btn: 'from-amber-500 to-orange-500',
+    btnHover: 'hover:shadow-lg',
+    check: 'hover:border-emerald-500 hover:bg-emerald-500/10',
     checkIcon: 'group-hover:text-emerald-500',
-    tag: 'bg-amber-100 text-amber-800 border-amber-300',
+    tag: 'bg-amber-500/15 text-amber-800 border-amber-500/30',
     tagIcon: 'text-amber-600',
-    dateBadge: 'bg-amber-100 text-amber-700 border-amber-300',
+    dateBadge: 'bg-amber-500/15 text-amber-700 border-amber-500/30',
     separator: 'from-amber-300',
     heroOrb1: 'from-amber-200/40',
     heroOrb2: 'from-orange-200/30',
@@ -322,16 +322,16 @@ export default function Todos() {
   } : {
     gradient: 'from-violet-600 to-indigo-600',
     gradientSoft: 'from-violet-100 via-indigo-50 to-blue-50',
-    ring: 'focus:border-violet-400 focus:ring-2 focus:ring-violet-100',
-    badge: 'bg-violet-100 border-violet-300 text-violet-700',
-    badgeDone: 'bg-emerald-100 border-emerald-300 text-emerald-700',
-    btn: 'from-violet-600 to-indigo-600 shadow-violet-600/25',
-    btnHover: 'hover:shadow-lg hover:shadow-violet-600/30',
-    check: 'hover:border-violet-500 hover:bg-violet-50',
-    checkIcon: 'group-hover:text-violet-500',
-    tag: 'bg-violet-100 text-violet-800 border-violet-300',
-    tagIcon: 'text-violet-600',
-    dateBadge: 'bg-violet-100 text-violet-700 border-violet-300',
+    ring: 'focus:border-helix-accent/50 focus:ring-2 focus:ring-helix-accent/10',
+    badge: 'bg-helix-accent/15 border-helix-accent/30 text-helix-accent',
+    badgeDone: 'bg-emerald-500/15 border-emerald-500/20 text-emerald-700',
+    btn: 'from-violet-600 to-indigo-600',
+    btnHover: 'hover:shadow-lg',
+    check: 'hover:border-helix-accent hover:bg-helix-accent/10',
+    checkIcon: 'group-hover:text-helix-accent',
+    tag: 'bg-helix-accent/15 text-helix-text border-helix-accent/30',
+    tagIcon: 'text-helix-accent',
+    dateBadge: 'bg-helix-accent/15 text-helix-accent border-helix-accent/30',
     separator: 'from-violet-300',
     heroOrb1: 'from-violet-200/40',
     heroOrb2: 'from-indigo-200/30',
@@ -348,10 +348,10 @@ export default function Todos() {
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto space-y-6 animate-pulse">
-        <div className="h-14 rounded-[2rem] bg-slate-100/60" />
-        <div className="h-36 rounded-[2rem] bg-slate-100/40" />
-        <div className="h-40 rounded-[2rem] bg-slate-100/40" />
-        <div className="h-64 rounded-[2rem] bg-slate-100/40" />
+        <div className="h-14 rounded-[2rem] bg-helix-border/30" />
+        <div className="h-36 rounded-[2rem] bg-helix-border/30" />
+        <div className="h-40 rounded-[2rem] bg-helix-border/30" />
+        <div className="h-64 rounded-[2rem] bg-helix-border/30" />
       </div>
     );
   }
@@ -366,7 +366,7 @@ export default function Todos() {
       {isLife && <TransitionCard workTaskCount={workTaskCount} />}
 
       {/* ── Hero Header ── */}
-      <div className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${accent.gradientSoft} border border-slate-200`}>
+      <div className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${accent.gradientSoft} border border-helix-border/50`}>
         <div className="relative p-5 md:p-6">
           <div className="flex items-start justify-between flex-wrap gap-4">
             <div className="flex items-center gap-3">
@@ -377,10 +377,10 @@ export default function Todos() {
                 }
               </div>
               <div>
-                <h1 className="text-xl font-serif font-bold text-slate-900">
+                <h1 className="text-xl font-serif font-bold text-helix-text">
                   {isLife ? 'The Second Shift' : 'Office Tasks'}
                 </h1>
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-helix-muted">
                   {isLife
                     ? 'Your personal & home mental load'
                     : 'Focused work — tackle what matters'
@@ -406,12 +406,12 @@ export default function Todos() {
           {(currentPending + currentDone) > 0 && (
             <div className="mt-4">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs font-semibold text-slate-500">
+                <span className="text-xs font-semibold text-helix-muted">
                   {isLife ? 'Evening progress' : "Today's progress"}
                 </span>
                 <span className="text-xs font-bold text-emerald-600">{progressPct}%</span>
               </div>
-              <div className="w-full h-2 bg-white rounded-full overflow-hidden border border-slate-200/60">
+              <div className="w-full h-2 bg-helix-surface rounded-full overflow-hidden border border-helix-border/50">
                 <div
                   className={`h-full rounded-full bg-gradient-to-r ${accent.progressTrack} transition-all duration-700 ease-out`}
                   style={{ width: `${progressPct}%` }}
@@ -439,33 +439,33 @@ export default function Todos() {
             onChange={e => setText(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={isLife ? 'Groceries, call mom, laundry...' : 'Finish report, review PRs, send update...'}
-            className={`w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800
-                      placeholder:text-slate-400 focus:outline-none focus:bg-white ${accent.ring} transition-all`}
+            className={`w-full bg-helix-surface/50 border border-helix-border/50 rounded-xl px-4 py-3 text-sm text-helix-text
+                      placeholder:text-helix-muted focus:outline-none focus:bg-helix-surface ${accent.ring} transition-all`}
           />
 
           <div className="flex items-center gap-2.5 flex-wrap">
-            <label className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-50 border border-slate-200
+            <label className="flex items-center gap-2 px-3 py-2 rounded-lg bg-helix-surface/50 border border-helix-border/50
                             hover:border-blue-400 transition-all cursor-pointer group">
-              <HiOutlineCalendar className="w-4 h-4 text-slate-500 group-hover:text-blue-500" />
+              <HiOutlineCalendar className="w-4 h-4 text-helix-muted group-hover:text-blue-500" />
               <input
                 type="date"
                 value={date}
                 min={today}
                 onChange={e => setDate(e.target.value)}
-                className="bg-transparent text-xs text-slate-700 font-medium focus:outline-none cursor-pointer"
+                className="bg-transparent text-xs text-helix-text font-medium focus:outline-none cursor-pointer"
               />
             </label>
 
-            <label className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-50 border border-slate-200
+            <label className="flex items-center gap-2 px-3 py-2 rounded-lg bg-helix-surface/50 border border-helix-border/50
                             hover:border-amber-400 transition-all cursor-pointer group">
-              <HiOutlineBell className="w-4 h-4 text-slate-500 group-hover:text-amber-500" />
+              <HiOutlineBell className="w-4 h-4 text-helix-muted group-hover:text-amber-500" />
               <input
                 type="time"
                 value={remindAt}
                 onChange={e => setRemindAt(e.target.value)}
-                className="bg-transparent text-xs text-slate-700 font-medium focus:outline-none cursor-pointer"
+                className="bg-transparent text-xs text-helix-text font-medium focus:outline-none cursor-pointer"
               />
-              <span className="text-[10px] text-slate-500 font-semibold">Remind</span>
+              <span className="text-[10px] text-helix-muted font-semibold">Remind</span>
             </label>
 
             <div className="relative" ref={dropRef}>
@@ -481,11 +481,11 @@ export default function Todos() {
               </button>
 
               {showCategoryDrop && (
-                <div className="absolute top-full mt-1.5 left-0 z-20 bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden min-w-[160px]">
+                <div className="absolute top-full mt-1.5 left-0 z-20 bg-helix-surface rounded-xl shadow-lg border border-helix-border/50 overflow-hidden min-w-[160px]">
                   <button
                     onClick={() => { setTaskCategory('work'); setShowCategoryDrop(false); }}
                     className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold transition-colors ${
-                      taskCategory === 'work' ? 'bg-violet-50 text-violet-700' : 'text-slate-600 hover:bg-slate-50'
+                      taskCategory === 'work' ? 'bg-helix-accent/10 text-helix-accent' : 'text-helix-text hover:bg-helix-card/60'
                     }`}
                   >
                     <HiOutlineOfficeBuilding className="w-4 h-4" />
@@ -495,7 +495,7 @@ export default function Todos() {
                   <button
                     onClick={() => { setTaskCategory('life'); setShowCategoryDrop(false); }}
                     className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold transition-colors ${
-                      taskCategory === 'life' ? 'bg-amber-50 text-amber-700' : 'text-slate-600 hover:bg-slate-50'
+                      taskCategory === 'life' ? 'bg-amber-500/10 text-amber-700' : 'text-helix-text hover:bg-helix-card/60'
                     }`}
                   >
                     <HiOutlineHome className="w-4 h-4" />
@@ -534,13 +534,13 @@ export default function Todos() {
 
         {grouped.length === 0 ? (
           <div className="text-center py-10">
-            <div className={`w-16 h-16 mx-auto mb-3 rounded-2xl bg-gradient-to-br ${accent.gradientSoft} border border-slate-200 flex items-center justify-center`}>
+            <div className={`w-16 h-16 mx-auto mb-3 rounded-2xl bg-gradient-to-br ${accent.gradientSoft} border border-helix-border/50 flex items-center justify-center`}>
               <span className="text-3xl">{isLife ? '\u{1F3E1}' : '\u{1F3AF}'}</span>
             </div>
-            <p className="text-sm font-bold text-slate-700">
+            <p className="text-sm font-bold text-helix-text">
               {isLife ? 'No personal tasks yet' : 'No office tasks'}
             </p>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-helix-muted mt-1">
               {isLife ? 'Add something from your home mental load above' : 'Add a task above to get started'}
             </p>
           </div>
@@ -550,12 +550,12 @@ export default function Todos() {
               <div key={dateKey}>
                 <div className="flex items-center gap-3 mb-2.5">
                   <span className={`text-xs font-bold px-3 py-1 rounded-lg border ${
-                    dateKey === today ? accent.dateBadge : 'bg-slate-100 text-slate-600 border-slate-200'
+                    dateKey === today ? accent.dateBadge : 'bg-helix-border/30 text-helix-text border-helix-border/50'
                   }`}>
                     {formatDate(dateKey)}
                   </span>
-                  <div className={`flex-1 h-px bg-slate-200`} />
-                  <span className="text-[11px] font-semibold text-slate-500 tabular-nums">
+                  <div className={`flex-1 h-px bg-helix-border/30`} />
+                  <span className="text-[11px] font-semibold text-helix-muted tabular-nums">
                     {todos.length} task{todos.length !== 1 ? 's' : ''}
                   </span>
                 </div>
@@ -568,12 +568,12 @@ export default function Todos() {
                         key={todo.id}
                         className={`flex items-start gap-3 rounded-xl px-4 py-3
                                   border-l-[3px] ${color.border}
-                                  bg-white border border-slate-200
-                                  group hover:bg-slate-50 hover:border-slate-300 transition-all duration-200`}
+                                  bg-helix-surface border border-helix-border/50
+                                  group hover:bg-helix-card/60 hover:border-helix-border transition-all duration-200`}
                       >
                         <button
                           onClick={() => handleToggle(todo.id)}
-                          className={`mt-0.5 w-5 h-5 rounded-full border-2 border-slate-300
+                          className={`mt-0.5 w-5 h-5 rounded-full border-2 border-helix-border
                                     ${accent.check}
                                     flex items-center justify-center shrink-0 transition-all duration-200`}
                           title="Mark complete"
@@ -582,16 +582,16 @@ export default function Todos() {
                         </button>
 
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm text-slate-800 font-semibold leading-snug">{todo.text}</p>
+                          <p className="text-sm text-helix-text font-semibold leading-snug">{todo.text}</p>
                           <div className="flex items-center gap-2.5 mt-1.5">
                             {todo.remind_at && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 border border-amber-200">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/20">
                                 <HiOutlineBell className="w-3 h-3 text-amber-600" />
                                 <span className="text-[11px] font-semibold text-amber-700">{todo.remind_at}</span>
                               </span>
                             )}
                             {todo.date !== today && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 border border-blue-200">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-500/10 border border-blue-500/20">
                                 <HiOutlineCalendar className="w-3 h-3 text-blue-500" />
                                 <span className="text-[11px] font-semibold text-blue-600">{formatDate(todo.date)}</span>
                               </span>
@@ -601,8 +601,8 @@ export default function Todos() {
 
                         <button
                           onClick={() => handleDelete(todo.id)}
-                          className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-slate-400
-                                    hover:text-rose-500 hover:bg-rose-50 transition-all"
+                          className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-helix-muted
+                                    hover:text-rose-500 hover:bg-rose-500/10 transition-all"
                           title="Delete task"
                         >
                           <HiOutlineTrash className="w-4 h-4" />
@@ -621,35 +621,35 @@ export default function Todos() {
       <div className="bento-card !p-0 overflow-hidden">
         <button
           onClick={() => setShowHistory(prev => !prev)}
-          className="w-full px-5 py-3.5 flex items-center justify-between hover:bg-slate-50 transition-colors"
+          className="w-full px-5 py-3.5 flex items-center justify-between hover:bg-helix-card/60 transition-colors"
         >
           <div className="flex items-center gap-2">
             <div className="w-5 h-5 rounded-md bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center">
               <HiOutlineCheck className="w-3 h-3 text-white" />
             </div>
-            <span className="text-sm font-bold text-slate-700">
+            <span className="text-sm font-bold text-helix-text">
               Completed {isLife ? 'Personal' : 'Office'} Tasks
             </span>
             {currentDone > 0 && (
-              <span className="text-[11px] font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-300">
+              <span className="text-[11px] font-bold bg-emerald-500/15 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-500/20">
                 {currentDone}
               </span>
             )}
           </div>
           {showHistory
-            ? <HiOutlineChevronUp className="w-4 h-4 text-slate-500" />
-            : <HiOutlineChevronDown className="w-4 h-4 text-slate-500" />
+            ? <HiOutlineChevronUp className="w-4 h-4 text-helix-muted" />
+            : <HiOutlineChevronDown className="w-4 h-4 text-helix-muted" />
           }
         </button>
 
         {showHistory && (
-          <div className="px-5 pb-4 border-t border-slate-100">
+          <div className="px-5 pb-4 border-t border-helix-border/30">
             {filteredHistory.length === 0 ? (
               <div className="text-center py-8">
-                <div className="w-12 h-12 mx-auto mb-2 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center">
+                <div className="w-12 h-12 mx-auto mb-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
                   <span className="text-xl">{'\u{2705}'}</span>
                 </div>
-                <p className="text-xs font-semibold text-slate-500">No completed tasks yet</p>
+                <p className="text-xs font-semibold text-helix-muted">No completed tasks yet</p>
               </div>
             ) : (
               <div className="space-y-1.5 max-h-80 overflow-y-auto pr-1 mt-3">
@@ -657,8 +657,8 @@ export default function Todos() {
                   <div
                     key={todo.id}
                     className="flex items-center gap-3 rounded-lg px-3.5 py-2.5
-                              bg-emerald-50 border border-emerald-200/60 group
-                              hover:bg-emerald-100/60 transition-all"
+                              bg-emerald-500/10 border border-emerald-500/20 group
+                              hover:bg-emerald-500/15 transition-all"
                   >
                     <button
                       onClick={() => handleUntoggle(todo.id)}
@@ -670,14 +670,14 @@ export default function Todos() {
                     </button>
 
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-slate-500 line-through truncate">{todo.text}</p>
-                      <span className="text-[10px] text-slate-400 font-medium">{formatDate(todo.date)}</span>
+                      <p className="text-sm text-helix-muted line-through truncate">{todo.text}</p>
+                      <span className="text-[10px] text-helix-muted font-medium">{formatDate(todo.date)}</span>
                     </div>
 
                     <button
                       onClick={() => handleDelete(todo.id)}
-                      className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-slate-400
-                                hover:text-rose-500 hover:bg-rose-50 transition-all"
+                      className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg text-helix-muted
+                                hover:text-rose-500 hover:bg-rose-500/10 transition-all"
                       title="Delete"
                     >
                       <HiOutlineTrash className="w-3.5 h-3.5" />

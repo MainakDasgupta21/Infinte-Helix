@@ -1,0 +1,307 @@
+================================================================================
+ONE-SHOT PROMPT — PART 8: FRONTEND SETUP — CRA + TAILWIND + THEME SYSTEM
+================================================================================
+
+Create the frontend under Infinite_helix/frontend/ using Create React App
+with Tailwind CSS. The design is dark-first with light mode support, using
+CSS custom properties for theming and a bento-grid card layout.
+
+--------------------------------------------------------------------------------
+FILE: frontend/package.json
+--------------------------------------------------------------------------------
+
+Initialize with:
+    name: "infinite-helix-frontend"
+    version: "1.0.0"
+    private: true
+
+    scripts:
+        dev: "react-scripts start"
+        build: "react-scripts build"
+        test: "react-scripts test"
+
+    dependencies:
+        react: ^18.2.0
+        react-dom: ^18.2.0
+        react-scripts: 5.0.1
+        react-router-dom: ^6.20.0
+        axios: ^1.6.0
+        chart.js: ^4.4.0
+        react-chartjs-2: ^5.2.0
+        firebase: ^10.7.0
+        framer-motion: ^12.38.0
+        react-hot-toast: ^2.4.1
+        react-icons: ^4.12.0
+
+    devDependencies:
+        tailwindcss: ^3.4.0
+        postcss: ^8.4.32
+        autoprefixer: ^10.4.16
+
+--------------------------------------------------------------------------------
+FILE: frontend/tailwind.config.js
+--------------------------------------------------------------------------------
+
+Configure Tailwind with a custom theme system using CSS custom properties.
+The key design decision: colors are defined as RGB triplets in CSS variables
+and consumed via a helper function that enables Tailwind's alpha modifier.
+
+    // Helper function for CSS variable colors with alpha support
+    function helixColor(varName) {
+      return `rgb(var(--helix-${varName}) / <alpha-value>)`;
+    }
+
+    module.exports = {
+      content: ["./src/**/*.{js,jsx,ts,tsx}"],
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            helix: {
+              bg:           helixColor('bg'),
+              surface:      helixColor('surface'),
+              card:         helixColor('card'),
+              accent:       helixColor('accent'),
+              'accent-dim': helixColor('accent-dim'),
+              pink:         helixColor('pink'),
+              'pink-dim':   helixColor('pink-dim'),
+              sky:          helixColor('sky'),
+              mint:         helixColor('mint'),
+              amber:        helixColor('amber'),
+              red:          helixColor('red'),
+              text:         helixColor('text'),
+              muted:        helixColor('muted'),
+              border:       helixColor('border'),
+              'border-light': helixColor('border-light'),
+              // Additional semantic colors:
+              lavender: { 50-900 scale },
+              blush: { 50-900 scale },
+              sage: { 50-900 scale },
+              rose: { 50-900 scale },
+              gold: '#d4a843',
+              sunrise: { 50-900 scale },
+            }
+          },
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'system-ui', '-apple-system', 'sans-serif'],
+            serif: ['"Plus Jakarta Sans"', 'system-ui', '-apple-system', 'sans-serif'],
+            display: ['"Plus Jakarta Sans"', 'system-ui', '-apple-system', 'sans-serif'],
+            body: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+          },
+          animation: {
+            'float': 'float 3s ease-in-out infinite',
+            'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
+            'blush-pulse': 'blush-pulse 2s ease-in-out infinite',
+            'slide-up': 'slide-up 0.5s ease-out',
+            'breathe': 'breathe 4s ease-in-out infinite',
+            'spin-slow': 'spin 8s linear infinite',
+            'fade-in': 'fade-in 0.2s ease-out',
+          },
+          backgroundImage: {
+            'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+            'mesh': (complex mesh gradient string),
+            'lavender-gradient': (lavender gradient string),
+            'blush-gradient': (blush gradient string),
+            'sunrise-gradient': (sunrise gradient string),
+            'sunrise-mesh': (sunrise mesh gradient string),
+          }
+        },
+      },
+      plugins: [],
+    }
+
+--------------------------------------------------------------------------------
+FILE: frontend/postcss.config.js
+--------------------------------------------------------------------------------
+
+    module.exports = {
+      plugins: {
+        tailwindcss: {},
+        autoprefixer: {},
+      },
+    }
+
+--------------------------------------------------------------------------------
+FILE: frontend/src/index.css — THEME VARIABLES & GLOBAL STYLES
+--------------------------------------------------------------------------------
+
+This file is the design system foundation. It defines all CSS custom properties
+and global component classes.
+
+SECTION 1: TAILWIND DIRECTIVES
+    @tailwind base;
+    @tailwind components;
+    @tailwind utilities;
+
+SECTION 2: DARK THEME (default) — :root
+    Define RGB triplets (NOT hex, NOT rgb() — just the numbers) for Tailwind
+    alpha support:
+
+    :root {
+      --helix-bg:           3 3 4;
+      --helix-surface:      10 10 13;
+      --helix-card:         18 18 24;
+      --helix-accent:       107 140 255;
+      --helix-accent-dim:   85 118 230;
+      --helix-pink:         201 123 154;
+      --helix-pink-dim:     168 95 127;
+      --helix-sky:          94 176 216;
+      --helix-mint:         61 184 154;
+      --helix-amber:        212 168 75;
+      --helix-red:          224 112 112;
+      --helix-text:         240 240 243;
+      --helix-muted:        143 143 154;
+      --helix-border:       38 38 47;
+      --helix-border-light: 54 54 63;
+      --helix-card-shadow:  0 2px 8px rgba(0,0,0,0.35), 0 1px 3px rgba(0,0,0,0.25);
+    }
+
+SECTION 3: LIGHT THEME — :root.light-mode
+    :root.light-mode {
+      --helix-bg:           245 245 250;
+      --helix-surface:      255 255 255;
+      --helix-card:         255 255 255;
+      --helix-accent:       75 108 225;
+      --helix-accent-dim:   62 92 205;
+      --helix-pink:         185 90 130;
+      --helix-pink-dim:     160 72 112;
+      --helix-sky:          42 148 200;
+      --helix-mint:         32 158 130;
+      --helix-amber:        180 140 25;
+      --helix-red:          205 68 68;
+      --helix-text:         28 28 42;
+      --helix-muted:        105 105 125;
+      --helix-border:       218 218 228;
+      --helix-border-light: 232 232 240;
+      --helix-card-shadow:  0 2px 12px rgba(0,0,0,0.06), 0 1px 4px rgba(0,0,0,0.04);
+    }
+
+SECTION 4: BASE STYLES (@layer base)
+    html:
+      - -webkit-font-smoothing: antialiased
+      - -moz-osx-font-smoothing: grayscale
+      - text-rendering: optimizeLegibility
+
+    body:
+      - font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif
+      - color: rgb(var(--helix-text))
+      - background-color: rgb(var(--helix-bg))
+      - min-height: 100vh
+      - letter-spacing: -0.011em
+      - font-feature-settings: 'cv11', 'ss01'
+      - transition: background-color 0.3s, color 0.3s
+
+    Global transitions on all elements:
+      *, *::before, *::after {
+        transition-property: color, background-color, border-color, box-shadow, opacity;
+        transition-duration: 0.25s;
+        transition-timing-function: ease;
+      }
+
+    Custom scrollbar styling:
+      - scrollbar-width: thin
+      - scrollbar-color using theme variables
+      - WebKit scrollbar: 5px width, themed track and thumb
+
+SECTION 5: COMPONENT CLASSES (@layer components)
+
+    .bento-card:
+      - rounded-2xl, p-5, border
+      - background: rgb(var(--helix-card))
+      - border-color: rgb(var(--helix-border) / 0.5)
+      - box-shadow: var(--helix-card-shadow)
+
+    .bento-card-lg:
+      - Same as bento-card but p-6
+
+    Light mode overrides for bento cards:
+      - Lighter, more subtle shadow
+
+    .glass-card:
+      - backdrop-blur-xl, border, rounded-[20px]
+      - Semi-transparent background
+
+    .bento-label:
+      - text-xs, font-bold, uppercase, tracking-wider
+      - color: rgb(var(--helix-muted))
+
+    .helix-badge:
+      - inline-flex, items-center, gap-1.5
+      - px-3, py-1, rounded-full, text-xs, font-bold
+      - Default: bg-helix-surface/60, border-helix-border/50
+
+    .helix-badge-accent, .helix-badge-pink, .helix-badge-mint, .helix-badge-sky:
+      - Colored variants with 15% opacity backgrounds and 30% borders
+
+    .helix-btn:
+      - px-4, py-2, rounded-xl, font-semibold
+      - bg-helix-accent, text-white
+      - hover: opacity-90 with shadow
+
+    .helix-input:
+      - bg-helix-surface, border-helix-border/50, rounded-xl
+      - Focus: border-helix-accent, ring-2 ring-helix-accent/20
+
+SECTION 6: KEYFRAME ANIMATIONS (@keyframes)
+
+    @keyframes float:
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+
+    @keyframes pulse-glow:
+      0%, 100% { box-shadow: 0 0 5px rgba(107,140,255,0.3); }
+      50% { box-shadow: 0 0 20px rgba(107,140,255,0.6); }
+
+    @keyframes slide-up:
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+
+    @keyframes breathe:
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+
+    @keyframes fade-in:
+      from { opacity: 0; }
+      to { opacity: 1; }
+
+    @keyframes blush-pulse:
+      0%, 100% { box-shadow: 0 0 8px rgba(201,123,154,0.3); }
+      50% { box-shadow: 0 0 24px rgba(201,123,154,0.5); }
+
+SECTION 7: PREGNANCY MODE STYLES
+    .pregnancy-mode:
+      - Warm amber/orange tinted color overrides
+      - Softer shadows and borders
+
+SECTION 8: UTILITY CLASSES
+    - .scrollbar-hide (hide scrollbar but keep scroll functionality)
+    - Chart.js canvas height constraints
+    - Print media queries for report generation
+
+--------------------------------------------------------------------------------
+FILE: frontend/public/index.html
+--------------------------------------------------------------------------------
+
+Create the HTML shell with:
+    - <title>Infinite Helix</title>
+    - Google Fonts preconnect and Plus Jakarta Sans import:
+      <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    - <meta name="viewport" content="width=device-width, initial-scale=1">
+    - <meta name="theme-color" content="#030304"> (dark theme default)
+    - <div id="root"></div>
+
+--------------------------------------------------------------------------------
+DESIGN SYSTEM SUMMARY
+--------------------------------------------------------------------------------
+
+The visual system uses:
+1. CSS custom properties as RGB triplets for Tailwind alpha modifier support
+2. Two theme palettes (dark default, light via .light-mode class on <html>)
+3. "Plus Jakarta Sans" as the single typeface (all weights 300-800)
+4. Bento-grid card layout with consistent border radius (rounded-2xl = 16px)
+5. Subtle shadows that change between dark and light mode
+6. Glass morphism effects (backdrop-blur) on overlay components
+7. Smooth transitions (0.25s ease) on all color/background properties
+8. Custom scrollbars matching the theme
+9. Framer Motion for page transitions and component animations
+10. Chart.js for data visualization with theme-aware colors

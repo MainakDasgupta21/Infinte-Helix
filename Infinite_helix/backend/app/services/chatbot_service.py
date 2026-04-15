@@ -3,6 +3,7 @@ import time
 import random
 import re
 import logging
+import uuid
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
@@ -439,12 +440,78 @@ class ChatbotService:
         from app.services.local_store import get_local_store
         return get_local_store()
 
-    def _get_conversations(self, user_id):
+    # ── Session management ─────────────────────────────────────────
+
+    def _sessions_collection(self, user_id):
+        return f'chat_sessions_{user_id}'
+
+    def _messages_collection(self, session_id):
+        return f'chat_messages_{session_id}'
+
+    def create_session(self, user_id, title=None):
+        session_id = uuid.uuid4().hex[:12]
+        now = time.time()
+        session = {
+            'id': session_id,
+            'title': title or 'New conversation',
+            'created_at': now,
+            'updated_at': now,
+            'message_count': 0,
+            'preview': '',
+        }
+        self._store().upsert(self._sessions_collection(user_id), session_id, session)
+        return session
+
+    def get_sessions(self, user_id):
+        sessions = self._store().get_all(self._sessions_collection(user_id))
+        sessions.sort(key=lambda s: s.get('updated_at', 0), reverse=True)
+        return sessions
+
+    def delete_session(self, user_id, session_id):
+        self._store().delete(self._sessions_collection(user_id), session_id)
+        self._store().delete(self._messages_collection(session_id), 'messages')
+
+    def get_session_messages(self, session_id, limit=200):
+        data = self._store().get_by_id(self._messages_collection(session_id), 'messages')
+        messages = data.get('messages', []) if data else []
+        return messages[-limit:]
+
+    def _update_session_meta(self, user_id, session_id, message, role):
+        session = self._store().get_by_id(self._sessions_collection(user_id), session_id)
+        if not session:
+            return
+        session['updated_at'] = time.time()
+        session['message_count'] = session.get('message_count', 0) + 1
+        if role == 'user' and session.get('title', '').strip() in ('New conversation', ''):
+            session['title'] = message[:50].strip() + ('...' if len(message) > 50 else '')
+        if role == 'assistant':
+            session['preview'] = message[:80].strip()
+        self._store().upsert(self._sessions_collection(user_id), session_id, session)
+
+    def _get_or_create_session(self, user_id, session_id=None):
+        if session_id:
+            existing = self._store().get_by_id(self._sessions_collection(user_id), session_id)
+            if existing:
+                return session_id
+        sessions = self.get_sessions(user_id)
+        if sessions:
+            return sessions[0]['id']
+        new_session = self.create_session(user_id)
+        return new_session['id']
+
+    # ── Conversation storage (session-aware) ───────────────────────
+
+    def _get_conversations(self, user_id, session_id=None):
+        if session_id:
+            return self.get_session_messages(session_id)
         data = self._store().get_by_id('chat_conversations', user_id)
         return data.get('messages', []) if data else []
 
-    def _set_conversations(self, user_id, messages):
-        self._store().upsert('chat_conversations', user_id, {'messages': messages})
+    def _set_conversations(self, user_id, messages, session_id=None):
+        if session_id:
+            self._store().upsert(self._messages_collection(session_id), 'messages', {'messages': messages})
+        else:
+            self._store().upsert('chat_conversations', user_id, {'messages': messages})
 
     def _get_user_context(self, user_id):
         return self._store().get_by_id('chat_user_context', user_id) or {}
@@ -617,17 +684,19 @@ class ChatbotService:
 
         return "\n".join(parts) if parts else ""
 
-    def process_message(self, user_id, message, app_context=None):
+    def process_message(self, user_id, message, app_context=None, session_id=None):
         if not message or not message.strip():
             return self._build_response(
                 "I'm right here — take your time. Whenever you're ready, just type or say what's on your mind.",
                 quick_replies=['I need support', 'How are you?', 'What can you do?']
             )
 
+        session_id = self._get_or_create_session(user_id, session_id)
+
         message_clean = message.strip()
         intent = self._classify_intent(message_clean)
 
-        self._save_to_history(user_id, 'user', message_clean)
+        self._save_to_history(user_id, 'user', message_clean, session_id=session_id)
         self._update_context(user_id, intent, message_clean)
         user_memory = self._extract_and_remember(user_id, message_clean)
         emotional_history = self._track_emotion(user_id, message_clean, intent)
@@ -636,23 +705,27 @@ class ChatbotService:
             response = self._generate_ai_response(
                 user_id, intent, message_clean, app_context or {},
                 user_memory, emotional_history,
+                session_id=session_id,
             )
         else:
             response = self._generate_template_response(user_id, intent, message_clean, app_context or {})
 
-        self._save_to_history(user_id, 'assistant', response['message'])
+        self._save_to_history(user_id, 'assistant', response['message'], session_id=session_id)
         response['ai_powered'] = self._ai.available
+        response['session_id'] = session_id
 
         return response
 
-    def get_history(self, user_id, limit=50):
-        return self._get_conversations(user_id)[-limit:]
+    def get_history(self, user_id, limit=50, session_id=None):
+        return self._get_conversations(user_id, session_id=session_id)[-limit:]
 
-    def clear_history(self, user_id):
-        self._store().delete('chat_conversations', user_id)
+    def clear_history(self, user_id, session_id=None):
+        if session_id:
+            self.delete_session(user_id, session_id)
+        else:
+            self._store().delete('chat_conversations', user_id)
         self._store().delete('chat_user_context', user_id)
         self._store().delete('chat_emotional_history', user_id)
-        # User memory is intentionally preserved across clears
 
     def get_contextual_quick_replies(self, user_id, app_context=None):
         hour = datetime.now().hour
@@ -717,7 +790,8 @@ class ChatbotService:
     }
 
     def _generate_ai_response(self, user_id, intent, message, app_context,
-                               user_memory=None, emotional_history=None):
+                               user_memory=None, emotional_history=None,
+                               session_id=None):
         context_parts = []
         page_ctx = app_context.get('page_context', {})
         current_page = page_ctx.get('current_page', '')
@@ -818,7 +892,7 @@ class ChatbotService:
         logger.debug("AI context prefix (%d chars, %d sections): %s",
                       len(context_prefix), len(context_parts), context_prefix[:300])
 
-        history = self._get_conversations(user_id)
+        history = self._get_conversations(user_id, session_id=session_id)
         recent, summary = self._window_history(history)
 
         if summary:
@@ -1553,8 +1627,8 @@ class ChatbotService:
             resp['metadata'] = metadata
         return resp
 
-    def _save_to_history(self, user_id, role, message):
-        history = self._get_conversations(user_id)
+    def _save_to_history(self, user_id, role, message, session_id=None):
+        history = self._get_conversations(user_id, session_id=session_id)
         history.append({
             'role': role,
             'message': message,
@@ -1562,7 +1636,9 @@ class ChatbotService:
         })
         if len(history) > 200:
             history = history[-100:]
-        self._set_conversations(user_id, history)
+        self._set_conversations(user_id, history, session_id=session_id)
+        if session_id:
+            self._update_session_meta(user_id, session_id, message, role)
 
     def _update_context(self, user_id, intent, message):
         ctx = self._get_user_context(user_id)

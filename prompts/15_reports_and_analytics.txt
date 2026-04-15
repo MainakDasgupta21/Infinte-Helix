@@ -1,0 +1,356 @@
+================================================================================
+ONE-SHOT PROMPT — PART 15: REPORTS & ANALYTICS SYSTEM
+================================================================================
+
+Build a comprehensive analytics and reporting system with three report views,
+chart components, and printable/downloadable HTML report generation with
+inline SVG charts.
+
+================================================================================
+REPORTS PAGE STRUCTURE (Reports.jsx, ~1378 lines)
+================================================================================
+
+The Reports page is the largest page in the application. It contains three
+tab views plus several inline component definitions.
+
+TAB STATE: 'body-language' | 'daily' | 'weekly'
+
+Header:
+  - Title: "Reports & Analytics"
+  - Three tab buttons with active/inactive styling
+  - Active tab: accent-colored underline + filled background
+
+Data sources:
+  - reportsAPI.getWeekly() for weekly data
+  - useStressDetector module exports: getStressLog(), getSessionData()
+  - useBreakReminder module exports: getBreakLog(), getScheduledBreaks()
+  - useAuth() for user display name
+  - usePageContext() for chatbot awareness
+  - useWellness() for live dashboard metrics
+  - localStorage for cycle data and life mode
+
+================================================================================
+TAB 1: DIGITAL BODY LANGUAGE REPORT
+================================================================================
+
+Component: DigitalBodyLanguageReport (defined inline in Reports.jsx)
+
+Purpose: Analyze typing patterns and stress events to reveal digital
+         body language insights.
+
+Data: getStressLog() returns array of:
+  { timestamp, typing_speed, delete_ratio, burst_count, is_stressed, level,
+    resolved, resolved_at }
+
+getSessionData() returns:
+  { total_events, resolved_count, unresolved_count, peak_hours,
+    avg_typing_speed, avg_delete_ratio, session_start }
+
+Layout:
+
+METRICS ROW (3-4 cards):
+  - Total stress events today (count)
+  - Resolution rate (resolved / total as percentage)
+  - Average typing speed (keystrokes/min)
+  - Average delete ratio (percentage)
+
+PEAK HOURS SECTION:
+  - List of hours with highest stress event counts
+  - Formatted as "2:00 PM - 3:00 PM: 5 events"
+
+RESOLUTION BREAKDOWN:
+  - Visual bar showing resolved vs unresolved
+  - Green section (resolved) vs red section (unresolved)
+  - Counts labeled
+
+STRESS EVENT TIMELINE:
+  - Chronological list of stress events
+  - Each event shows:
+    * Time (formatted 12-hour)
+    * Stress level badge (low/medium/high with colors)
+    * Typing speed at that moment
+    * Delete ratio
+    * Resolution status (checkmark if resolved, pending if not)
+
+EMPTY STATE:
+  - "No stress events detected today"
+  - Positive message: "Your digital body language shows a calm day"
+
+================================================================================
+TAB 2: DAILY WELLNESS REPORT
+================================================================================
+
+Component: DailyWellnessReport (defined inline in Reports.jsx)
+
+Purpose: Summarize today's wellness metrics with actionable insights
+         and a downloadable/printable report.
+
+Data: todayMetrics from useWellness()
+
+Layout:
+
+WELLNESS SUMMARY CARD:
+  - Today's wellness score (large number with color)
+  - Compared to yesterday (up/down arrow)
+  - Score interpretation text
+
+METRICS GRID (2x3):
+  - Screen time: total hours and top app
+  - Hydration: ml consumed vs goal
+  - Breaks: taken vs suggested
+  - Self-care: stretch + eye rest counts
+  - Focus sessions: count and total duration
+  - Mood: current detected mood
+
+MENTAL LOAD SECTION:
+  - Mental load score (simulated from screen time context switches)
+  - Calculated from screen time breakdown diversity
+  - Visual meter (low/moderate/high)
+  - "Context switches" count (number of app category changes)
+
+COLLAPSIBLE: "Tomorrow's Strategy"
+  - Based on today's patterns, suggest tomorrow's approach
+  - If high stress: "Start with breathing exercise"
+  - If low hydration: "Set water reminders early"
+  - If missed breaks: "Schedule break blocks"
+
+DOWNLOAD/PRINT SECTION:
+  Two buttons:
+    "Private Report" — full data including cycle info
+    "Manager Report" — sanitized, no cycle/emotional details
+
+  Both open generateDailyPrintHTML() in a new window and call print():
+    - Generates complete HTML document with inline styles
+    - Includes all metrics, formatted for print
+    - Manager version excludes: cycle data, emotional details,
+      private care logs, detailed mood information
+
+BREAK TRACKER SECTION (BreakTrackerSection component, inline):
+
+  Meal Schedule Display:
+    - Read meal settings from localStorage 'helix_meal_reminders'
+    - Show configured meal times (breakfast, lunch, dinner)
+    - If not configured: show defaults
+
+  Today's Break Log:
+    - From getBreakLog(): array of { timestamp, duration, type }
+    - Chronological list with time, duration, and type
+    - formatTime12h helper for 12-hour time display
+
+  7-Day Break Summary:
+    - Aggregate break data for the past week
+    - Average breaks per day
+    - Total break time
+    - Consistency score
+
+  Scheduled Breaks:
+    - From getScheduledBreaks(): array of scheduled break times
+    - Includes meal times if enabled
+
+================================================================================
+TAB 3: WEEKLY REPORT CARD
+================================================================================
+
+Fetches: reportsAPI.getWeekly() -> report object
+
+Report object shape:
+  {
+    period: { start, end },
+    summary: { avg_score, avg_work_hours, total_entries },
+    daily_scores: [ { date, score }, ... ],
+    emotion_distribution: { joy: N, sadness: N, anger: N, ... },
+    work_hours: [ { date, hours }, ... ],
+    selfcare_summary: { total_stretches, total_eye_rests, daily: [...] },
+    hydration_summary: { avg_ml, total_ml, daily: [...] },
+    insights: [ string, ... ],
+    recommendations: [ string, ... ],
+    generated_at
+  }
+
+Layout (renders child components):
+
+WellnessScorecard component:
+  - Props: daily_scores
+  - Chart.js Line chart showing score trend over 7 days
+  - Configuration:
+    * Smooth line (tension: 0.4)
+    * Gradient fill under line (accent color fading to transparent)
+    * Point dots at each data point
+    * Y-axis: 0-100
+    * X-axis: day labels (Mon, Tue, ...)
+  - Summary text: "Average: {avg_score}/100"
+
+WorkHoursChart component:
+  - Props: work_hours
+  - Chart.js Bar chart showing daily work hours
+  - Configuration:
+    * Bars colored by intensity:
+      > 10h: red, > 8h: amber, <= 8h: accent
+    * 8-hour reference line (dashed)
+    * Y-axis: hours
+  - Summary: "Average: {avg_work_hours}h/day"
+
+EmotionChart component:
+  - Props: emotion_distribution
+  - Chart.js Doughnut chart
+  - Configuration:
+    * One segment per emotion
+    * Colors: joy=mint, sadness=sky, anger=red, fear=amber,
+      surprise=pink, disgust=muted, neutral=border-light
+    * Center text: dominant emotion name
+    * Legend below chart
+
+StressHeatmap component:
+  - Props: stress data (from report or live)
+  - Grid layout: 7 rows (Mon-Sun) x 24 columns (hours)
+  - Cell color by stress intensity:
+    * 0 events: transparent/border color
+    * 1-2: mint (low)
+    * 3-4: amber (medium)
+    * 5+: red (high)
+  - Row labels: day names
+  - Column labels: hour numbers (0, 6, 12, 18)
+  - Hover tooltip: "{N} stress events"
+
+SelfCareMetrics component:
+  - Props: selfcare_summary
+  - Two metric cards: Stretches and Eye Rests
+  - Each shows: total count, daily average, best day
+  - Mini bar chart showing daily counts
+
+WeeklyInsight component:
+  - Props: insights, recommendations
+  - Insights: blockquote-style cards with AI-generated text
+  - Recommendations: numbered list with actionable items
+  - Accent left border on each item
+
+DOWNLOAD BUTTON:
+  "Download Report" button that calls generatePrintHTML(report, userName)
+
+================================================================================
+PRINTABLE HTML REPORT GENERATION
+================================================================================
+
+Function: generatePrintHTML(report, userName)
+  Located inline in Reports.jsx (~300 lines)
+
+Generates a complete standalone HTML document with:
+
+1. HTML STRUCTURE:
+   - <!DOCTYPE html> with full <html>, <head>, <body>
+   - Inline CSS styles (no external dependencies)
+   - Print-optimized layout
+   - A4 page size consideration
+
+2. HEADER:
+   - "Infinite Helix" logo/text
+   - "Weekly Wellness Report"
+   - Date range: "{start} - {end}"
+   - User name
+   - Generated timestamp
+
+3. SUMMARY SECTION:
+   - Average wellness score (large number)
+   - Average work hours
+   - Total journal entries
+   - Activity streak
+
+4. DAILY SCORES CHART (SVG):
+   - SVG viewBox with polyline for score trend
+   - X-axis: date labels
+   - Y-axis: 0-100 score scale
+   - Dot markers at each data point
+   - Score values labeled above dots
+
+5. WORK HOURS CHART (SVG):
+   - SVG with rect bars for each day
+   - Bar height proportional to hours
+   - 8-hour reference line (dashed)
+   - Hours labeled above bars
+   - Day labels below
+
+6. EMOTION DISTRIBUTION (SVG Donut):
+   - SVG with path elements for each emotion arc
+   - Arc math: calculate start/end angles from distribution
+   - Color fill per emotion
+   - Legend below with colored dots + labels + counts
+
+7. SELF-CARE GAUGES (SVG Arcs):
+   - Semi-circular gauge for stretches
+   - Semi-circular gauge for eye rests
+   - Fill arc proportional to count vs goal
+   - Count in center
+
+8. STRESS HEATMAP (HTML Table):
+   - 7 rows x time-slot columns
+   - Cell background-color by intensity
+   - Color scale: white -> yellow -> orange -> red
+
+9. INSIGHTS SECTION:
+   - Bulleted list of insight texts
+   - Styled blockquotes
+
+10. RECOMMENDATIONS SECTION:
+    - Numbered list of actionable recommendations
+    - Each with a relevant emoji prefix
+
+11. CYCLE PHASE BLOCK (conditional):
+    - Only included if cycle tracking is active
+    - Current phase name and description
+    - Energy level
+    - Cycle day
+
+12. AFFIRMATION FOOTER:
+    - Motivational quote
+    - "Generated by Infinite Helix"
+    - Privacy note: "This report contains personal wellness data"
+
+The generated HTML is opened in a new window via:
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(html);
+  printWindow.document.close();
+  printWindow.print();
+
+================================================================================
+CYCLE INTEGRATION IN REPORTS
+================================================================================
+
+Function: getCycleData()
+  - Reads helix_period_entries from localStorage
+  - Sorts entries by startDate descending
+  - Gets most recent entry
+  - Calculates cycle day from start date
+  - Determines current phase (28-day model)
+  - Returns:
+    {
+      cycleDay, phaseName, phaseDescription,
+      energy (Low/Rising/Peak/Declining),
+      accent (color class),
+      hasData: boolean
+    }
+
+Phase badge styles (PHASE_BADGE_STYLES):
+  Menstrual: rose/red badge
+  Follicular: emerald/green badge
+  Ovulatory: amber/gold badge
+  Luteal: blue/accent badge
+
+Phase accent gradients (PHASE_ACCENT_GRADIENT):
+  Background gradient strings for each phase, used in report headers.
+
+Function: getLifeMode()
+  - Returns localStorage 'helix_task_mode' or 'work'
+  - Affects report labeling (personal mode shows different framing)
+
+================================================================================
+MEETING DECLINE TEMPLATE
+================================================================================
+
+Static template (MEETING_DECLINE_TEMPLATE) included in Reports.jsx:
+  A pre-written email template for politely declining meetings when
+  wellness score is low or during difficult cycle phases.
+  
+  Content: Professional email explaining need to reschedule, referencing
+  workload and wellness without disclosing private details.
+  
+  Displayed in the Daily report tab with a "Copy" button.

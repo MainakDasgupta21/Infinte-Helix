@@ -77,11 +77,11 @@ export default function CycleRing({ cycleDay, onPhaseClick }) {
           </defs>
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-3xl font-serif font-bold text-slate-800">Day {cycleDay}</span>
+          <span className="text-3xl font-serif font-bold text-helix-text">Day {cycleDay}</span>
           <span className="text-xs font-semibold mt-1" style={{ color: currentPhase.color }}>
             {currentPhase.name}
           </span>
-          <span className="text-[10px] text-slate-500 mt-0.5">{currentPhase.label}</span>
+          <span className="text-[10px] text-helix-muted mt-0.5">{currentPhase.label}</span>
         </div>
       </div>
 
@@ -93,7 +93,7 @@ export default function CycleRing({ cycleDay, onPhaseClick }) {
             className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
               currentPhase.name === p.name
                 ? 'border-current shadow-sm'
-                : 'border-slate-200 text-slate-500 hover:text-slate-800'
+                : 'border-helix-border/50 text-helix-muted hover:text-helix-text'
             }`}
             style={currentPhase.name === p.name ? { color: p.color, borderColor: p.color, backgroundColor: `${p.color}15` } : undefined}
           >

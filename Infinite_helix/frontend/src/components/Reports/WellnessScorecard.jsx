@@ -26,8 +26,8 @@ export default function WellnessScorecard({ score, summary, dailyScores }) {
       value: `${summary.total_focus_hours}h`,
       sub: `${summary.avg_daily_focus}h/day avg`,
       icon: HiOutlineLightningBolt,
-      color: 'text-violet-600',
-      bg: 'bg-violet-50',
+      color: 'text-helix-accent',
+      bg: 'bg-helix-accent/10',
     },
     {
       label: 'Breaks / Day',
@@ -35,7 +35,7 @@ export default function WellnessScorecard({ score, summary, dailyScores }) {
       sub: `Every ${summary.avg_break_interval_min} min`,
       icon: HiOutlineClock,
       color: 'text-emerald-600',
-      bg: 'bg-emerald-50',
+      bg: 'bg-emerald-500/10',
     },
     {
       label: 'Hydration',
@@ -43,7 +43,7 @@ export default function WellnessScorecard({ score, summary, dailyScores }) {
       sub: `of ${summary.hydration_goal_ml} ml goal`,
       icon: HiOutlineHeart,
       color: 'text-blue-600',
-      bg: 'bg-blue-50',
+      bg: 'bg-blue-500/10',
     },
     {
       label: 'Mood Trend',
@@ -51,7 +51,7 @@ export default function WellnessScorecard({ score, summary, dailyScores }) {
       sub: `Top: ${summary.top_emotion}`,
       icon: HiOutlineTrendingUp,
       color: 'text-rose-500',
-      bg: 'bg-rose-50',
+      bg: 'bg-rose-500/10',
     },
     {
       label: 'Journal',
@@ -59,7 +59,7 @@ export default function WellnessScorecard({ score, summary, dailyScores }) {
       sub: 'entries this week',
       icon: HiOutlinePencilAlt,
       color: 'text-amber-600',
-      bg: 'bg-amber-50',
+      bg: 'bg-amber-500/10',
     },
     {
       label: 'Streak',
@@ -67,7 +67,7 @@ export default function WellnessScorecard({ score, summary, dailyScores }) {
       sub: 'days active',
       icon: HiOutlineFire,
       color: 'text-red-600',
-      bg: 'bg-red-50',
+      bg: 'bg-red-500/10',
     },
   ];
 
@@ -97,7 +97,7 @@ export default function WellnessScorecard({ score, summary, dailyScores }) {
                 transform="rotate(-90 60 60)"
                 className="transition-all duration-1000"
               />
-              <text x="60" y="55" textAnchor="middle" dominantBaseline="middle" className="text-3xl font-bold" fill="#e8e4f0" fontSize="32" fontWeight="700" fontFamily="'Playfair Display', serif">
+              <text x="60" y="55" textAnchor="middle" dominantBaseline="middle" className="text-3xl font-bold" fill="#e8e4f0" fontSize="32" fontWeight="700" fontFamily="'Plus Jakarta Sans', sans-serif">
                 {score.current}
               </text>
               <text x="60" y="78" textAnchor="middle" fill="#9490a8" fontSize="11" fontFamily="'DM Sans', sans-serif">
@@ -107,15 +107,15 @@ export default function WellnessScorecard({ score, summary, dailyScores }) {
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-violet-100 text-violet-600">
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-helix-accent/15 text-helix-accent">
               {score.grade}
             </span>
-            <span className={`text-xs font-medium px-2 py-1 rounded-full ${changePositive ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
+            <span className={`text-xs font-medium px-2 py-1 rounded-full ${changePositive ? 'bg-emerald-500/15 text-emerald-600' : 'bg-red-500/15 text-red-600'}`}>
               {changePositive ? '\u2191' : '\u2193'} {Math.abs(score.change)} from last week
             </span>
           </div>
 
-          <p className="text-xs text-slate-500 text-center">Wellness Score</p>
+          <p className="text-xs text-helix-muted text-center">Wellness Score</p>
         </div>
 
         {/* Stats + Daily Scores */}
@@ -124,13 +124,13 @@ export default function WellnessScorecard({ score, summary, dailyScores }) {
             {stats.map((stat) => {
               const Icon = stat.icon;
               return (
-                <div key={stat.label} className={`${stat.bg} rounded-xl p-3.5 border border-slate-100`}>
+                <div key={stat.label} className={`${stat.bg} rounded-xl p-3.5 border border-helix-border/30`}>
                   <div className="flex items-center gap-2 mb-1.5">
                     <Icon className={`w-4 h-4 ${stat.color}`} />
-                    <span className="text-xs text-slate-500">{stat.label}</span>
+                    <span className="text-xs text-helix-muted">{stat.label}</span>
                   </div>
                   <p className={`text-lg font-serif font-bold ${stat.color} capitalize`}>{stat.value}</p>
-                  <p className="text-xs text-slate-500/70 mt-0.5">{stat.sub}</p>
+                  <p className="text-xs text-helix-muted/70 mt-0.5">{stat.sub}</p>
                 </div>
               );
             })}
@@ -138,12 +138,12 @@ export default function WellnessScorecard({ score, summary, dailyScores }) {
 
           {dailyScores && dailyScores.length > 0 && (
             <div>
-              <p className="text-xs text-slate-500 font-medium uppercase tracking-wider mb-2.5">Daily Wellness</p>
+              <p className="text-xs text-helix-muted font-medium uppercase tracking-wider mb-2.5">Daily Wellness</p>
               <div className="space-y-1.5">
                 {dailyScores.map((d) => (
                   <div key={d.day} className="flex items-center gap-3">
-                    <span className="text-xs text-slate-500 w-8 text-right">{d.day}</span>
-                    <div className="flex-1 h-5 bg-slate-100/60 rounded-full overflow-hidden">
+                    <span className="text-xs text-helix-muted w-8 text-right">{d.day}</span>
+                    <div className="flex-1 h-5 bg-helix-border/30 rounded-full overflow-hidden">
                       <div
                         className="h-full rounded-full bg-gradient-to-r from-violet-600/80 to-blue-600/70 transition-all duration-700 flex items-center justify-end pr-2"
                         style={{ width: `${d.score}%` }}
@@ -151,7 +151,7 @@ export default function WellnessScorecard({ score, summary, dailyScores }) {
                         <span className="text-[10px] font-medium text-white/90">{d.score}</span>
                       </div>
                     </div>
-                    <span className="text-xs text-slate-500 w-16 text-right capitalize truncate" title={d.mood}>
+                    <span className="text-xs text-helix-muted w-16 text-right capitalize truncate" title={d.mood}>
                       {moodLabel(d.mood)}
                     </span>
                   </div>

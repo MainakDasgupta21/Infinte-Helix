@@ -1,0 +1,332 @@
+================================================================================
+ONE-SHOT PROMPT — PART 16: ENVIRONMENT, DEMO MODE & DEPLOYMENT
+================================================================================
+
+Configure environment variables, demo mode behavior, setup scripts, and
+run instructions for the complete application.
+
+================================================================================
+BACKEND ENVIRONMENT — backend/.env.example
+================================================================================
+
+Create a .env.example file documenting all backend environment variables:
+
+    # ==============================================
+    # Infinite Helix Backend – Environment Variables
+    # Copy this file to .env and fill in your values
+    # ==============================================
+
+    # ── Flask Configuration ──
+    FLASK_ENV=development
+    FLASK_PORT=5000
+    FLASK_DEBUG=True
+    SECRET_KEY=helix-dev-secret-key-change-in-production
+
+    # ── Demo Mode ──
+    # Set to 'true' for zero-config demo (no Firebase, mock AI models)
+    # Set to 'false' for production (requires Firebase + HuggingFace models)
+    DEMO_MODE=true
+
+    # ── Firebase (required if DEMO_MODE=false) ──
+    FIREBASE_CREDENTIALS_PATH=./config/firebase-credentials.json
+
+    # ── Google Calendar OAuth (optional) ──
+    GOOGLE_CLIENT_ID=
+    GOOGLE_CLIENT_SECRET=
+    GOOGLE_REDIRECT_URI=http://localhost:5000/api/calendar/google/callback
+
+    # ── Microsoft Graph / Teams Calendar (optional) ──
+    MS_CLIENT_ID=
+    MS_CLIENT_SECRET=
+    MS_TENANT_ID=common
+    MS_REDIRECT_URI=http://localhost:5000/api/calendar/callback
+
+    # ── AI / LLM API Keys ──
+    GROQ_API_KEY=
+    GEMINI_API_KEY=
+
+    # ── AI Models (used when DEMO_MODE=false) ──
+    EMOTION_MODEL=j-hartmann/emotion-english-distilroberta-base
+    SENTIMENT_MODEL=cardiffnlp/twitter-roberta-base-sentiment
+    MODEL_CACHE_DIR=./model_cache
+
+    # ── Tracker Settings ──
+    TRACKER_INTERVAL_SECONDS=30
+    NUDGE_COOLDOWN_MINUTES=30
+    IDLE_THRESHOLD_SECONDS=60
+    FATIGUE_THRESHOLD_MINUTES=120
+
+    # ── Notifications ──
+    DESKTOP_NOTIFICATIONS=true
+
+================================================================================
+FRONTEND ENVIRONMENT — frontend/.env.example
+================================================================================
+
+Create a .env.example file:
+
+    # ==============================================
+    # Infinite Helix Frontend – Environment Variables
+    # Copy this file to .env and fill in your values
+    # ==============================================
+
+    # Backend API
+    REACT_APP_API_URL=http://localhost:5000/api
+
+    # Firebase Config (from Firebase Console -> Project Settings)
+    REACT_APP_FIREBASE_API_KEY=your-api-key
+    REACT_APP_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+    REACT_APP_FIREBASE_PROJECT_ID=your-project-id
+    REACT_APP_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
+    REACT_APP_FIREBASE_MESSAGING_SENDER_ID=your-sender-id
+    REACT_APP_FIREBASE_APP_ID=your-app-id
+
+================================================================================
+DEMO MODE BEHAVIOR
+================================================================================
+
+When DEMO_MODE=true (default), the app works with zero external configuration:
+
+BACKEND DEMO BEHAVIORS:
+  1. AI Models: Uses _DemoEmotionDetector and _DemoSentimentAnalyzer
+     - Keyword-based classification (no model downloads)
+     - Deterministic results for consistent demo experience
+     - Same API response shape as real models
+
+  2. Database: Falls back to SQLite LocalStore at backend/data/local.db
+     - Auto-created on first run
+     - Persists across server restarts
+     - Same CRUD operations as Firestore
+
+  3. Authentication: Accepts any Bearer token
+     - Generates user IDs like "local-{timestamp}"
+     - No Firebase Admin SDK required
+     - All features work without real Firebase project
+
+  4. Calendar: Returns mock meeting data
+     - Pre-generated sample meetings for demo
+     - OAuth flows show connection status without real providers
+
+  5. Chatbot: Falls back to template-based responses
+     - FALLBACK_TEMPLATES used when GROQ_API_KEY is not set
+     - Intent classification still works (regex-based)
+     - Quick replies still generated
+
+  6. Nudge Cooldown: Reduced to 5 minutes (vs 30 in production)
+     - More frequent nudges for demo visibility
+
+  7. Activity Tracker: Starts normally
+     - pynput may fail on some systems (handled gracefully)
+     - Screen tracker generates mock data if psutil features unavailable
+
+FRONTEND DEMO BEHAVIORS:
+  1. Firebase Auth: Detects missing config, creates mock user
+     - All routes accessible without real Firebase project
+     - Mock user: { uid: 'demo-user', displayName: 'Demo User' }
+
+  2. Demo Mode Banner: Subtle top banner showing "Demo Mode"
+     - Non-intrusive, dismissible
+     - Yellow/amber accent color
+
+  3. Offline Banner: Shown when backend is unreachable
+     - "You're offline" message
+     - Auto-hides when connection restored
+
+================================================================================
+SETUP SCRIPT — backend/setup_demo.py
+================================================================================
+
+Create a one-command setup script:
+
+    Purpose: Automate initial setup for new developers/demo
+
+    Steps:
+    1. Check Python version (>= 3.8 required)
+    2. Create virtual environment if not exists
+    3. Install dependencies from requirements.txt
+    4. Copy .env.example to .env if .env doesn't exist
+    5. Create data/ directory for SQLite
+    6. Print success message with run instructions
+
+    Usage: python setup_demo.py
+
+================================================================================
+.gitignore
+================================================================================
+
+Ensure the following are gitignored:
+
+    # Python
+    __pycache__/
+    *.pyc
+    venv/
+    .env
+
+    # Node
+    node_modules/
+
+    # Firebase
+    config/firebase-credentials.json
+    *.json (Firebase service account)
+
+    # Local data
+    backend/data/local.db
+    backend/data/local.db-wal
+    backend/data/local.db-shm
+
+    # AI models
+    model_cache/
+
+    # IDE
+    .vscode/
+    .idea/
+
+    # OS
+    .DS_Store
+    Thumbs.db
+
+================================================================================
+QUICK START INSTRUCTIONS
+================================================================================
+
+OPTION 1: DEMO MODE (Zero Config)
+
+    # Terminal 1: Backend
+    cd Infinite_helix/backend
+    python setup_demo.py          # Creates .env, installs deps
+    python run.py                 # Starts Flask on :5000
+
+    # Terminal 2: Frontend
+    cd Infinite_helix/frontend
+    npm install
+    npm run dev                   # Starts React on :3000
+
+    Open http://localhost:3000 — register with any email/password.
+
+OPTION 2: FULL MODE (Firebase + AI Models)
+
+    # 1. Set up Firebase
+    - Create Firebase project at console.firebase.google.com
+    - Enable Authentication (Email/Password + Google)
+    - Create Firestore database
+    - Download service account JSON to backend/config/firebase-credentials.json
+    - Copy web config to frontend/.env
+
+    # 2. Set up Groq (for AI chatbot)
+    - Get API key from console.groq.com
+    - Add GROQ_API_KEY to backend/.env
+
+    # 3. Set up Calendar (optional)
+    - Google: Create OAuth credentials in Google Cloud Console
+    - Microsoft: Register app in Azure AD
+
+    # 4. Configure backend
+    cd Infinite_helix/backend
+    cp .env.example .env
+    # Edit .env: set DEMO_MODE=false, add all credentials
+    pip install -r requirements.txt
+    python run.py
+
+    # 5. Configure frontend
+    cd Infinite_helix/frontend
+    cp .env.example .env
+    # Edit .env: add Firebase web config
+    npm install
+    npm run dev
+
+OPTION 3: STRESS AGENT (Optional, separate terminal)
+
+    cd Infinite_helix/backend
+    python stress_agent.py
+    # Monitors keyboard for stress patterns, posts to Flask API
+    # Requires pynput (may need accessibility permissions on macOS)
+
+================================================================================
+BUILD FOR PRODUCTION
+================================================================================
+
+    # Frontend build
+    cd Infinite_helix/frontend
+    npm run build
+    # Output: frontend/build/ (static files)
+
+    # Backend: serve with gunicorn (Linux/Mac)
+    cd Infinite_helix/backend
+    pip install gunicorn
+    gunicorn -w 4 -b 0.0.0.0:5000 "app:create_app()"
+
+    # Or with waitress (Windows)
+    pip install waitress
+    waitress-serve --port=5000 --call "app:create_app"
+
+    # Serve frontend static files via Flask or nginx/Apache
+    # Configure REACT_APP_API_URL to production API URL
+
+================================================================================
+PORT CONFIGURATION
+================================================================================
+
+  Backend: port 5000 (configurable via FLASK_PORT)
+  Frontend dev server: port 3000 (CRA default)
+  Frontend connects to: REACT_APP_API_URL (default http://localhost:5000/api)
+
+================================================================================
+PLATFORM NOTES
+================================================================================
+
+  Windows:
+    - pynput works out of the box
+    - psutil works out of the box
+    - plyer desktop notifications work via win10toast
+
+  macOS:
+    - pynput requires Accessibility permissions
+      (System Preferences -> Security -> Privacy -> Accessibility)
+    - plyer uses macOS notification center
+
+  Linux:
+    - pynput may need X11 (not Wayland)
+    - plyer may need libnotify
+    - Active window detection may need xdotool
+
+  Headless / CI:
+    - pynput will fail (no display) — handled gracefully
+    - Activity monitor logs warning and continues
+    - All other features work normally
+
+================================================================================
+SUMMARY: WHAT MAKES THIS PROJECT COMPLETE
+================================================================================
+
+When fully built, the project should have:
+
+  Backend:
+    - 1 entry point (run.py)
+    - 1 config module (settings.py)
+    - 1 app factory (__init__.py)
+    - 17 route blueprints
+    - 9 service modules
+    - 4 AI modules
+    - 2 tracker modules
+    - 1 notification module
+    - 3 model schema files
+    - 1 standalone stress agent
+
+  Frontend:
+    - 8 page components
+    - 20+ feature components
+    - 4 context providers
+    - 6 custom hooks
+    - 7 service modules
+    - 1 utility module
+    - 1 theme system (CSS + Tailwind)
+
+  The app should:
+    - Work immediately in demo mode with zero configuration
+    - Support full Firebase + AI model deployment
+    - Track work behavior without being invasive
+    - Provide supportive, women-centric wellness nudges
+    - Include optional, private cycle tracking
+    - Offer AI-powered emotional support via chatbot
+    - Generate comprehensive wellness reports
+    - Look beautiful with a dark-first bento-grid design

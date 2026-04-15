@@ -26,21 +26,21 @@ export default function SelfCareTracker() {
 
       <div className="space-y-4 flex-1">
         {/* Stretch Breaks */}
-        <div className="bg-slate-50/60 rounded-2xl p-5">
+        <div className="bg-helix-surface/50 rounded-2xl p-5">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-2xl bg-violet-50">
-                <HiOutlineRefresh className="w-4 h-4 text-violet-600" />
+              <div className="p-2 rounded-2xl bg-helix-accent/10">
+                <HiOutlineRefresh className="w-4 h-4 text-helix-accent" />
               </div>
               <div>
-                <p className="text-sm font-medium text-slate-700">Stretch Breaks</p>
-                <p className="text-[11px] text-slate-400">{stretchCount} / {stretchGoal} today</p>
+                <p className="text-sm font-medium text-helix-text">Stretch Breaks</p>
+                <p className="text-[11px] text-helix-muted">{stretchCount} / {stretchGoal} today</p>
               </div>
             </div>
-            <span className="text-lg font-serif font-bold text-violet-600">{stretchPct}%</span>
+            <span className="text-lg font-serif font-bold text-helix-accent">{stretchPct}%</span>
           </div>
           <div className="flex items-center gap-3 mb-3">
-            <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+            <div className="flex-1 h-2 bg-helix-border/30 rounded-full overflow-hidden">
               <div
                 className="h-full rounded-full bg-gradient-to-r from-violet-600 to-violet-600 transition-all duration-700"
                 style={{ width: `${stretchPct}%` }}
@@ -52,8 +52,8 @@ export default function SelfCareTracker() {
             disabled={stretchCount >= stretchGoal}
             className={`w-full py-2.5 rounded-2xl text-xs font-medium transition-all duration-200
               ${stretchCount >= stretchGoal
-                ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                : 'bg-violet-50 text-violet-600 hover:bg-violet-100 active:scale-[0.98]'}
+                ? 'bg-helix-border/30 text-helix-muted cursor-not-allowed'
+                : 'bg-helix-accent/10 text-helix-accent hover:bg-helix-accent/15 active:scale-[0.98]'}
               ${animating === 'stretch' ? 'scale-95 opacity-80' : ''}`}
           >
             {stretchCount >= stretchGoal ? 'Goal reached!' : 'Log Stretch Break'}
@@ -61,21 +61,21 @@ export default function SelfCareTracker() {
         </div>
 
         {/* Eye Rest */}
-        <div className="bg-slate-50/60 rounded-2xl p-5">
+        <div className="bg-helix-surface/50 rounded-2xl p-5">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-2xl bg-rose-50">
+              <div className="p-2 rounded-2xl bg-rose-500/10">
                 <HiOutlineEye className="w-4 h-4 text-rose-500" />
               </div>
               <div>
-                <p className="text-sm font-medium text-slate-700">Eye Rest (20-20-20)</p>
-                <p className="text-[11px] text-slate-400">{eyeRestCount} / {eyeGoal} today</p>
+                <p className="text-sm font-medium text-helix-text">Eye Rest (20-20-20)</p>
+                <p className="text-[11px] text-helix-muted">{eyeRestCount} / {eyeGoal} today</p>
               </div>
             </div>
             <span className="text-lg font-serif font-bold text-rose-500">{eyePct}%</span>
           </div>
           <div className="flex items-center gap-3 mb-3">
-            <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+            <div className="flex-1 h-2 bg-helix-border/30 rounded-full overflow-hidden">
               <div
                 className="h-full rounded-full bg-gradient-to-r from-rose-500 to-rose-400 transition-all duration-700"
                 style={{ width: `${eyePct}%` }}
@@ -87,8 +87,8 @@ export default function SelfCareTracker() {
             disabled={eyeRestCount >= eyeGoal}
             className={`w-full py-2.5 rounded-2xl text-xs font-medium transition-all duration-200
               ${eyeRestCount >= eyeGoal
-                ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                : 'bg-rose-50 text-rose-500 hover:bg-rose-100 active:scale-[0.98]'}
+                ? 'bg-helix-border/30 text-helix-muted cursor-not-allowed'
+                : 'bg-rose-500/10 text-rose-500 hover:bg-rose-500/15 active:scale-[0.98]'}
               ${animating === 'eye_rest' ? 'scale-95 opacity-80' : ''}`}
           >
             {eyeRestCount >= eyeGoal ? 'Goal reached!' : 'Log Eye Rest'}
@@ -96,7 +96,7 @@ export default function SelfCareTracker() {
         </div>
       </div>
 
-      <p className="text-[10px] text-slate-400/60 mt-4 text-center">
+      <p className="text-[10px] text-helix-muted/60 mt-4 text-center">
         Eye reminders fire every 20 min automatically
       </p>
     </div>

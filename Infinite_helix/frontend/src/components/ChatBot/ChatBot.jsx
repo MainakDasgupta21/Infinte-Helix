@@ -12,6 +12,9 @@ import {
   HiOutlineSparkles,
   HiOutlineStop,
   HiOutlineChevronDown,
+  HiOutlineClock,
+  HiOutlinePlus,
+  HiOutlineChevronLeft,
 } from 'react-icons/hi';
 
 const WELCOME_MSG = {
@@ -48,6 +51,89 @@ function formatTime(ts) {
   if (!ts) return '';
   const d = new Date(ts * 1000);
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function formatRelativeDate(ts) {
+  if (!ts) return '';
+  const d = new Date(ts * 1000);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const msgDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const diffDays = Math.round((today - msgDay) / 86400000);
+  if (diffDays === 0) return 'Today';
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays < 7) return d.toLocaleDateString([], { weekday: 'long' });
+  return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+}
+
+function SessionList({ sessions, activeId, onSelect, onDelete, onNewChat, onClose, loading }) {
+  return (
+    <div className="cb-history-panel flex flex-col h-full">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+        <h4 className="text-sm font-semibold text-white/90">Chat History</h4>
+        <button
+          onClick={onClose}
+          className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+          aria-label="Close history"
+        >
+          <HiOutlineChevronLeft className="w-4 h-4 text-white/50" />
+        </button>
+      </div>
+
+      <div className="px-3 py-2">
+        <button
+          onClick={onNewChat}
+          className="cb-new-chat-btn w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-all"
+        >
+          <HiOutlinePlus className="w-4 h-4" />
+          New Chat
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-2 pb-2 cb-scrollbar">
+        {loading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="w-5 h-5 border-2 border-white/20 border-t-[#e8a04a] rounded-full animate-spin" />
+          </div>
+        ) : sessions.length === 0 ? (
+          <p className="text-xs text-white/30 text-center py-8">No conversations yet</p>
+        ) : (
+          sessions.map((s) => (
+            <button
+              key={s.id}
+              onClick={() => onSelect(s.id)}
+              className={`cb-session-item w-full text-left px-3 py-2.5 rounded-xl mb-1 group transition-all ${
+                s.id === activeId ? 'cb-session-active' : ''
+              }`}
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="text-[13px] font-medium text-white/85 truncate leading-tight">
+                    {s.title || 'New conversation'}
+                  </p>
+                  <p className="text-[11px] text-white/40 mt-0.5 truncate">
+                    {s.preview || 'No messages yet'}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <span className="text-[10px] text-white/30 whitespace-nowrap">
+                    {formatRelativeDate(s.updated_at)}
+                  </span>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onDelete(s.id); }}
+                    className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-white/10 hover:text-red-300 text-white/30 transition-all"
+                    aria-label="Delete conversation"
+                  >
+                    <HiOutlineTrash className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            </button>
+          ))
+        )}
+      </div>
+    </div>
+  );
 }
 
 function MessageBubble({ msg, isUser, isLatest }) {
@@ -148,6 +234,12 @@ export default function ChatBot() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [aiPowered, setAiPowered] = useState(false);
   const [showScrollBtn, setShowScrollBtn] = useState(false);
+
+  const [activeSessionId, setActiveSessionId] = useState(null);
+  const [sessions, setSessions] = useState([]);
+  const [showHistory, setShowHistory] = useState(false);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
+  const sessionLoadedRef = useRef(false);
 
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
@@ -306,6 +398,97 @@ export default function ChatBot() {
     }
   }, []);
 
+  const loadSessions = useCallback(async () => {
+    setSessionsLoading(true);
+    try {
+      const res = await chatAPI.getSessions();
+      const list = res.data || [];
+      setSessions(list);
+      return list;
+    } catch {
+      return [];
+    } finally {
+      setSessionsLoading(false);
+    }
+  }, []);
+
+  const loadSessionMessages = useCallback(async (sessionId) => {
+    if (!sessionId) return;
+    try {
+      const res = await chatAPI.getSessionMessages(sessionId);
+      const msgs = res.data || [];
+      if (msgs.length > 0) {
+        setMessages(msgs);
+        const lastAssistant = [...msgs].reverse().find((m) => m.role === 'assistant');
+        setQuickReplies(lastAssistant?.quick_replies || []);
+      } else {
+        setMessages([WELCOME_MSG]);
+        setQuickReplies(WELCOME_MSG.quick_replies);
+      }
+    } catch {
+      setMessages([WELCOME_MSG]);
+      setQuickReplies(WELCOME_MSG.quick_replies);
+    }
+  }, []);
+
+  const switchSession = useCallback(async (sessionId) => {
+    setActiveSessionId(sessionId);
+    setShowHistory(false);
+    await loadSessionMessages(sessionId);
+  }, [loadSessionMessages]);
+
+  const startNewChat = useCallback(async () => {
+    try {
+      const res = await chatAPI.createSession();
+      const newSession = res.data;
+      setActiveSessionId(newSession.id);
+      setSessions((prev) => [newSession, ...prev]);
+      setMessages([WELCOME_MSG]);
+      setQuickReplies(WELCOME_MSG.quick_replies);
+      setShowHistory(false);
+    } catch { /* ignore */ }
+  }, []);
+
+  const deleteSessionHandler = useCallback(async (sessionId) => {
+    try {
+      await chatAPI.deleteSession(sessionId);
+      setSessions((prev) => {
+        const remaining = prev.filter((s) => s.id !== sessionId);
+        if (sessionId === activeSessionId) {
+          if (remaining.length > 0) {
+            setActiveSessionId(remaining[0].id);
+            loadSessionMessages(remaining[0].id);
+          } else {
+            startNewChat();
+          }
+        }
+        return remaining;
+      });
+    } catch { /* ignore */ }
+  }, [activeSessionId, loadSessionMessages, startNewChat]);
+
+  useEffect(() => {
+    if (isOpen && !sessionLoadedRef.current) {
+      sessionLoadedRef.current = true;
+      (async () => {
+        try {
+          const list = await loadSessions();
+          if (list.length > 0) {
+            setActiveSessionId(list[0].id);
+            await loadSessionMessages(list[0].id);
+          } else {
+            const res = await chatAPI.createSession();
+            const newSession = res.data;
+            setActiveSessionId(newSession.id);
+            setSessions([newSession]);
+          }
+        } catch {
+          sessionLoadedRef.current = false;
+        }
+      })();
+    }
+  }, [isOpen, loadSessions, loadSessionMessages]);
+
   const sendMessage = async (text) => {
     const msg = (text || input).trim();
     if (!msg || loading) return;
@@ -318,7 +501,7 @@ export default function ChatBot() {
 
     try {
       const pageContext = buildPageContext();
-      const res = await chatAPI.sendMessage(msg, pageContext);
+      const res = await chatAPI.sendMessage(msg, pageContext, activeSessionId);
       const botMsg = {
         role: 'assistant',
         message: res.data.message,
@@ -328,6 +511,26 @@ export default function ChatBot() {
       setMessages((prev) => [...prev, botMsg]);
       setQuickReplies(res.data.quick_replies || []);
       if (res.data.ai_powered !== undefined) setAiPowered(res.data.ai_powered);
+
+      if (res.data.session_id && res.data.session_id !== activeSessionId) {
+        setActiveSessionId(res.data.session_id);
+      }
+
+      setSessions((prev) => {
+        const sid = res.data.session_id || activeSessionId;
+        const idx = prev.findIndex((s) => s.id === sid);
+        if (idx === -1) return prev;
+        const updated = [...prev];
+        updated[idx] = {
+          ...updated[idx],
+          updated_at: res.data.timestamp,
+          preview: res.data.message.slice(0, 80),
+          title: updated[idx].title === 'New conversation' ? msg.slice(0, 50) : updated[idx].title,
+          message_count: (updated[idx].message_count || 0) + 2,
+        };
+        updated.sort((a, b) => (b.updated_at || 0) - (a.updated_at || 0));
+        return updated;
+      });
 
       if (!isOpen) {
         setUnreadCount((c) => c + 1);
@@ -367,7 +570,14 @@ export default function ChatBot() {
 
   const clearChat = async () => {
     try {
-      await chatAPI.clearHistory();
+      if (activeSessionId) {
+        await chatAPI.deleteSession(activeSessionId);
+        setSessions((prev) => prev.filter((s) => s.id !== activeSessionId));
+      }
+      const res = await chatAPI.createSession();
+      const newSession = res.data;
+      setActiveSessionId(newSession.id);
+      setSessions((prev) => [newSession, ...prev]);
     } catch {
       /* ignore */
     }
@@ -434,10 +644,11 @@ export default function ChatBot() {
       {isVisible && (
         <div
           className={`fixed z-[60] cb-window
-                     bottom-24 right-6 w-[420px] max-w-[calc(100vw-2rem)] h-[600px] max-h-[calc(100vh-8rem)]
+                     bottom-24 right-6 max-w-[calc(100vw-2rem)] h-[600px] max-h-[calc(100vh-8rem)]
                      max-sm:bottom-0 max-sm:right-0 max-sm:left-0 max-sm:top-0
                      max-sm:w-full max-sm:max-w-none max-sm:h-full max-sm:max-h-none max-sm:rounded-none
-                     rounded-2xl overflow-hidden flex flex-col
+                     rounded-2xl overflow-hidden flex flex-col transition-[width] duration-300
+                     ${showHistory ? 'w-[640px]' : 'w-[420px]'}
                      ${isOpen ? 'cb-window-open' : 'cb-window-close'}`}
           role="dialog"
           aria-label="Helix wellness companion chat"
@@ -460,7 +671,19 @@ export default function ChatBot() {
                   </span>
                 </div>
               </div>
-              <div className="flex items-center gap-0.5">
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setShowHistory((v) => !v)}
+                  className={`p-2 rounded-xl transition-colors group/hist ${
+                    showHistory ? 'bg-white/10' : 'hover:bg-white/10'
+                  }`}
+                  title="Chat history"
+                  aria-label="Toggle chat history"
+                >
+                  <HiOutlineClock className={`w-4 h-4 transition-colors ${
+                    showHistory ? 'text-[#e8a04a]' : 'text-white/50 group-hover/hist:text-white/80'
+                  }`} />
+                </button>
                 <button
                   onClick={clearChat}
                   className="p-2 rounded-xl hover:bg-white/10 transition-colors group/clear"
@@ -485,100 +708,121 @@ export default function ChatBot() {
             </svg>
           </div>
 
-          {/* ── Messages ── */}
-          <div
-            ref={messagesContainerRef}
-            onScroll={handleScroll}
-            className="flex-1 overflow-y-auto px-4 py-4 space-y-0.5 cb-body cb-scrollbar relative"
-          >
-            {messages.map((msg, i) => (
-              <MessageBubble
-                key={i}
-                msg={msg}
-                isUser={msg.role === 'user'}
-                isLatest={i === messages.length - 1}
-              />
-            ))}
-            {loading && <TypingIndicator />}
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* Scroll-to-bottom button */}
-          {showScrollBtn && (
-            <button
-              onClick={scrollToBottom}
-              className="absolute bottom-[140px] left-1/2 -translate-x-1/2 z-10
-                         w-8 h-8 rounded-full cb-scroll-btn
-                         flex items-center justify-center cb-msg-enter"
-              aria-label="Scroll to latest message"
-            >
-              <HiOutlineChevronDown className="w-4 h-4 text-[#e8a04a]" />
-            </button>
-          )}
-
-          {/* ── Quick Replies ── */}
-          {quickReplies.length > 0 && !loading && (
-            <div className="px-4 pb-2 shrink-0 cb-body">
-              <QuickReplies replies={quickReplies} onSelect={sendMessage} disabled={loading} />
-            </div>
-          )}
-
-          {/* ── Input Area ── */}
-          <div className="cb-input-area shrink-0">
-            <div className="px-4 pb-4 pt-3 max-sm:pb-6">
-              <div className="flex items-end gap-2 cb-input-box">
-                <textarea
-                  ref={inputRef}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value.slice(0, 2000))}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Share what's on your mind..."
-                  rows={1}
-                  className="flex-1 bg-transparent text-sm text-white/90 placeholder:text-white/25
-                            outline-none resize-none max-h-24 leading-relaxed"
-                  disabled={loading}
-                  style={{ minHeight: '24px' }}
-                  onInput={(e) => {
-                    e.target.style.height = '24px';
-                    e.target.style.height = Math.min(e.target.scrollHeight, 96) + 'px';
-                  }}
+          {/* ── History + Chat body wrapper ── */}
+          <div className="flex flex-1 overflow-hidden relative">
+            {/* ── History Sidebar ── */}
+            {showHistory && (
+              <div className="cb-history-sidebar shrink-0 border-r border-white/10">
+                <SessionList
+                  sessions={sessions}
+                  activeId={activeSessionId}
+                  onSelect={switchSession}
+                  onDelete={deleteSessionHandler}
+                  onNewChat={startNewChat}
+                  onClose={() => setShowHistory(false)}
+                  loading={sessionsLoading}
                 />
-                <div className="flex items-center gap-1 shrink-0 pb-0.5">
-                  {recognitionRef.current && (
-                    <button
-                      onClick={toggleVoice}
-                      className={`p-2 rounded-xl transition-all duration-200 ${
-                        isListening
-                          ? 'bg-[#e86040]/20 text-[#e86040] cb-listening-pulse'
-                          : 'hover:bg-white/10 text-white/40 hover:text-white/70'
-                      }`}
-                      title={isListening ? 'Stop listening' : 'Voice input'}
-                      aria-label={isListening ? 'Stop voice input' : 'Start voice input'}
-                    >
-                      {isListening ? (
-                        <HiOutlineStop className="w-4 h-4" />
-                      ) : (
-                        <HiOutlineMicrophone className="w-4 h-4" />
-                      )}
-                    </button>
-                  )}
-                  <button
-                    onClick={() => sendMessage()}
-                    disabled={!input.trim() || loading}
-                    className="cb-send-btn"
-                    aria-label="Send message"
-                  >
-                    <HiOutlinePaperAirplane className="w-4 h-4 rotate-90" />
-                  </button>
-                </div>
               </div>
-              {charCount > 1800 && (
-                <div className="text-right mt-1 pr-1">
-                  <span className={`text-[10px] ${charCount > 1950 ? 'text-red-400' : 'text-white/30'}`}>
-                    {charCount}/2000
-                  </span>
+            )}
+
+            {/* ── Chat content ── */}
+            <div className="flex flex-col flex-1 min-w-0 relative">
+              {/* ── Messages ── */}
+              <div
+                ref={messagesContainerRef}
+                onScroll={handleScroll}
+                className="flex-1 overflow-y-auto px-4 py-4 space-y-0.5 cb-body cb-scrollbar relative"
+              >
+                {messages.map((msg, i) => (
+                  <MessageBubble
+                    key={i}
+                    msg={msg}
+                    isUser={msg.role === 'user'}
+                    isLatest={i === messages.length - 1}
+                  />
+                ))}
+                {loading && <TypingIndicator />}
+                <div ref={messagesEndRef} />
+              </div>
+
+              {/* Scroll-to-bottom button */}
+              {showScrollBtn && (
+                <button
+                  onClick={scrollToBottom}
+                  className="absolute bottom-[140px] left-1/2 -translate-x-1/2 z-10
+                             w-8 h-8 rounded-full cb-scroll-btn
+                             flex items-center justify-center cb-msg-enter"
+                  aria-label="Scroll to latest message"
+                >
+                  <HiOutlineChevronDown className="w-4 h-4 text-[#e8a04a]" />
+                </button>
+              )}
+
+              {/* ── Quick Replies ── */}
+              {quickReplies.length > 0 && !loading && (
+                <div className="px-4 pb-2 shrink-0 cb-body">
+                  <QuickReplies replies={quickReplies} onSelect={sendMessage} disabled={loading} />
                 </div>
               )}
+
+              {/* ── Input Area ── */}
+              <div className="cb-input-area shrink-0">
+                <div className="px-4 pb-4 pt-3 max-sm:pb-6">
+                  <div className="flex items-end gap-2 cb-input-box">
+                    <textarea
+                      ref={inputRef}
+                      value={input}
+                      onChange={(e) => setInput(e.target.value.slice(0, 2000))}
+                      onKeyDown={handleKeyDown}
+                      placeholder="Share what's on your mind..."
+                      rows={1}
+                      className="flex-1 bg-transparent text-sm text-white/90 placeholder:text-white/25
+                                outline-none resize-none max-h-24 leading-relaxed"
+                      disabled={loading}
+                      style={{ minHeight: '24px' }}
+                      onInput={(e) => {
+                        e.target.style.height = '24px';
+                        e.target.style.height = Math.min(e.target.scrollHeight, 96) + 'px';
+                      }}
+                    />
+                    <div className="flex items-center gap-1 shrink-0 pb-0.5">
+                      {recognitionRef.current && (
+                        <button
+                          onClick={toggleVoice}
+                          className={`p-2 rounded-xl transition-all duration-200 ${
+                            isListening
+                              ? 'bg-[#e86040]/20 text-[#e86040] cb-listening-pulse'
+                              : 'hover:bg-white/10 text-white/40 hover:text-white/70'
+                          }`}
+                          title={isListening ? 'Stop listening' : 'Voice input'}
+                          aria-label={isListening ? 'Stop voice input' : 'Start voice input'}
+                        >
+                          {isListening ? (
+                            <HiOutlineStop className="w-4 h-4" />
+                          ) : (
+                            <HiOutlineMicrophone className="w-4 h-4" />
+                          )}
+                        </button>
+                      )}
+                      <button
+                        onClick={() => sendMessage()}
+                        disabled={!input.trim() || loading}
+                        className="cb-send-btn"
+                        aria-label="Send message"
+                      >
+                        <HiOutlinePaperAirplane className="w-4 h-4 rotate-90" />
+                      </button>
+                    </div>
+                  </div>
+                  {charCount > 1800 && (
+                    <div className="text-right mt-1 pr-1">
+                      <span className={`text-[10px] ${charCount > 1950 ? 'text-red-400' : 'text-white/30'}`}>
+                        {charCount}/2000
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -69,8 +69,8 @@ export default function ConfidenceBreath({ pregnancyMode = false }) {
 
   return (
     <div className="bento-card p-6 text-center">
-      <h3 className="text-sm font-medium text-slate-500 mb-2">{title}</h3>
-      <p className="text-xs text-slate-500 mb-6">{subtitle}</p>
+      <h3 className="text-sm font-medium text-helix-muted mb-2">{title}</h3>
+      <p className="text-xs text-helix-muted mb-6">{subtitle}</p>
 
       <div className="relative w-40 h-40 mx-auto mb-6">
         <div
@@ -90,11 +90,11 @@ export default function ConfidenceBreath({ pregnancyMode = false }) {
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           {active ? (
             <>
-              <span className="text-lg font-serif font-semibold text-slate-800">{phase.label}</span>
-              <span className="text-xs text-slate-500 mt-1">Cycle {cycles + 1}</span>
+              <span className="text-lg font-serif font-semibold text-helix-text">{phase.label}</span>
+              <span className="text-xs text-helix-muted mt-1">Cycle {cycles + 1}</span>
             </>
           ) : (
-            <span className="text-sm text-slate-500">Ready</span>
+            <span className="text-sm text-helix-muted">Ready</span>
           )}
         </div>
       </div>
@@ -104,14 +104,14 @@ export default function ConfidenceBreath({ pregnancyMode = false }) {
           onClick={() => setActive(!active)}
           className={`px-6 py-2.5 rounded-xl text-sm font-medium transition-all ${
             active
-              ? 'bg-red-50 text-red-600 hover:bg-red-100'
+              ? 'bg-red-500/10 text-red-600 hover:bg-red-500/20'
               : `bg-gradient-to-r ${accentGradient} text-white hover:opacity-90`
           }`}
         >
           {active ? 'Pause' : 'Start Breathing'}
         </button>
         {elapsed > 0 && (
-          <button onClick={reset} className="px-4 py-2.5 rounded-xl text-sm text-slate-500 bg-slate-100 hover:bg-slate-50">
+          <button onClick={reset} className="px-4 py-2.5 rounded-xl text-sm text-helix-muted bg-helix-border/30 hover:bg-helix-card/60">
             Reset
           </button>
         )}

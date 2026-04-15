@@ -1,0 +1,249 @@
+================================================================================
+ONE-SHOT PROMPT — PART 9: FRONTEND AUTH & CONTEXT PROVIDERS
+================================================================================
+
+Create the authentication system and 4 React context providers that manage
+global state across the application.
+
+--------------------------------------------------------------------------------
+FILE: frontend/src/services/firebase.js — FIREBASE INITIALIZATION
+--------------------------------------------------------------------------------
+
+Initialize Firebase using environment variables:
+
+    import { initializeApp } from 'firebase/app';
+    import { getAuth } from 'firebase/auth';
+
+    const firebaseConfig = {
+      apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+      authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+      projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+      storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+      messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+      appId: process.env.REACT_APP_FIREBASE_APP_ID,
+    };
+
+    const app = initializeApp(firebaseConfig);
+    export const auth = getAuth(app);
+    export default app;
+
+    Note: If Firebase config values are missing/undefined, Firebase will
+    still initialize but auth operations will fail gracefully, allowing
+    demo mode to work.
+
+--------------------------------------------------------------------------------
+FILE: frontend/src/context/AuthContext.jsx — AUTHENTICATION STATE
+--------------------------------------------------------------------------------
+
+Create an AuthContext with AuthProvider that manages:
+
+STATE:
+    - user: Firebase User object or null
+    - loading: boolean (true during initial auth check)
+    - isDemo: boolean (true when Firebase is not configured)
+
+INITIALIZATION (useEffect on mount):
+    1. Call onAuthStateChanged(auth, callback)
+    2. On auth state change:
+       - If user exists: set user, call authAPI.syncProfile(token)
+       - If no user: set user to null
+       - Set loading to false
+    3. If Firebase not configured: set isDemo = true, create mock user
+
+EXPOSED FUNCTIONS:
+    signup(email, password, displayName):
+        - createUserWithEmailAndPassword(auth, email, password)
+        - updateProfile with displayName
+        - Call authAPI.register(token, { email, display_name, uid })
+
+    login(email, password):
+        - signInWithEmailAndPassword(auth, email, password)
+
+    loginWithGoogle():
+        - signInWithPopup(auth, new GoogleAuthProvider())
+        - On first sign-in: call authAPI.register(token, profile)
+
+    logout():
+        - signOut(auth)
+
+    useAuth() hook:
+        - Returns { user, loading, isDemo, signup, login, loginWithGoogle, logout }
+
+DEMO MODE BEHAVIOR:
+    When Firebase is not configured (env vars missing):
+    - Create a mock user object: { uid: 'demo-user', displayName: 'Demo User',
+      email: 'demo@helix.app', getIdToken: () => 'demo-token' }
+    - All API calls use 'demo-token' as Bearer token
+    - Backend generates local-{timestamp} user IDs
+
+--------------------------------------------------------------------------------
+FILE: frontend/src/context/WellnessContext.jsx — DASHBOARD DATA & POLLING
+--------------------------------------------------------------------------------
+
+Create a WellnessContext with WellnessProvider that manages:
+
+STATE:
+    - todayMetrics: object (full dashboard data from /dashboard/today)
+      Default shape: { score: 0, mood: 'neutral', streakDays: 0,
+        screenTime: { total: 0, breakdown: {}, topApps: [] },
+        activity: { keystrokes: 0, mouse_clicks: 0, idle_seconds: 0, ... },
+        breaks: { taken: 0, suggested: 6, lastBreak: null },
+        hydration: { ml_today: 0, entries: 0, goal_ml: 2000 },
+        selfCare: { stretch: 0, eye_rest: 0 },
+        focusSessions: [] }
+    - trackerStatus: 'disconnected' | 'connected'
+    - dashboardLoading: boolean
+    - nudges: array of nudge objects
+
+POLLING BEHAVIOR:
+    - On mount: fetch /dashboard/today immediately
+    - Set interval to re-fetch every 30-60 seconds
+    - On success: update todayMetrics, set trackerStatus = 'connected'
+    - On failure: set trackerStatus = 'disconnected'
+    - Clean up interval on unmount
+
+EXPOSED FUNCTIONS:
+    refreshDashboard(): Manually trigger a fetch
+    logHydration(amount_ml): Call hydrationAPI.log(), then refresh
+    logSelfCare(action): Call selfCareAPI.log(), then refresh
+    dismissNudge(id): Call nudgeAPI.dismiss(), update nudges locally
+
+    useWellness() hook:
+        - Returns { todayMetrics, trackerStatus, dashboardLoading, nudges,
+                    refreshDashboard, logHydration, logSelfCare, dismissNudge }
+
+IMPORTANT: WellnessProvider wraps only authenticated routes (inside AppRoutes),
+not the entire app. It should not attempt API calls when unauthenticated.
+
+--------------------------------------------------------------------------------
+FILE: frontend/src/context/PageContext.jsx — CHATBOT PAGE AWARENESS
+--------------------------------------------------------------------------------
+
+Create a PageContext that tracks what page/data the user is currently viewing,
+so the chatbot can provide context-aware responses.
+
+STATE:
+    - currentPage: string (page name like 'dashboard', 'reports', etc.)
+    - pageData: object (page-specific data snapshot)
+
+EXPOSED FUNCTIONS:
+    updatePageContext(pageName, data):
+        - Set currentPage = pageName
+        - Set pageData = data (merged or replaced)
+        - This is called by each page component in a useEffect
+
+    getPageContext():
+        - Return { page: currentPage, data: pageData }
+
+    usePageContext() hook:
+        - Returns { currentPage, pageData, updatePageContext, getPageContext }
+
+HOW PAGES USE IT:
+    Each page calls updatePageContext in a useEffect whenever its data loads:
+
+    Dashboard: sends wellness_score, mood, streak, screen_time, breaks,
+               hydration, self_care, focus sessions, typing activity,
+               work intensity, tracker status, active nudges
+
+    Reports: sends report_tab (body-language | daily | weekly),
+             weekly report data when available
+
+    CycleMode: sends mode (cycle|pregnancy), cycle_day, phase_name,
+               today_mood, today_flow, symptoms, pattern_insight,
+               pregnancy info if applicable
+
+    Calendar: sends meeting count, next meeting, calendar connection status
+
+    Todos: sends task counts (total, completed, pending, overdue)
+
+    Settings: sends current settings snapshot
+
+--------------------------------------------------------------------------------
+FILE: frontend/src/context/ThemeContext.jsx — DARK/LIGHT THEME TOGGLE
+--------------------------------------------------------------------------------
+
+Create a ThemeContext that manages the app's visual theme:
+
+STATE:
+    - theme: 'dark' | 'light' (loaded from localStorage key 'helix_theme')
+
+INITIALIZATION:
+    - On mount: read localStorage 'helix_theme', default to 'dark'
+    - Apply class to document.documentElement:
+      * If 'light': add 'light-mode' class
+      * If 'dark': remove 'light-mode' class
+
+EXPOSED FUNCTIONS:
+    toggleTheme():
+        - Switch between 'dark' and 'light'
+        - Save to localStorage 'helix_theme'
+        - Update document.documentElement class
+
+    useTheme() hook:
+        - Returns { theme, toggleTheme, isDark: theme === 'dark' }
+
+Note: The CSS variables in index.css respond to the 'light-mode' class on
+:root (html element), so toggling the class is all that's needed to switch
+the entire app's colors.
+
+--------------------------------------------------------------------------------
+FILE: frontend/src/App.jsx — ROOT COMPONENT & ROUTING
+--------------------------------------------------------------------------------
+
+Create the main App component with this structure:
+
+    function App() {
+      return (
+        <ErrorBoundary>
+          <ThemeProvider>
+            <AuthProvider>
+              <BrowserRouter>
+                <ScrollToTop />
+                <AppRoutes />
+                <ThemedToaster />
+              </BrowserRouter>
+            </AuthProvider>
+          </ThemeProvider>
+        </ErrorBoundary>
+      );
+    }
+
+AppRoutes component:
+    - Get { user, loading } from useAuth()
+    - If loading: show loading spinner
+    - If not authenticated: render only /auth route, redirect everything to /auth
+    - If authenticated: wrap in WellnessProvider and PageProvider, then:
+
+    Layout:
+      <div className="flex min-h-screen bg-helix-bg">
+        <Sidebar />
+        <main className="flex-1 ml-16 lg:ml-56 p-6 pb-24">
+          <Routes>
+            <Route path="/" element={<Navigate to="/dashboard" />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/todos" element={<Todos />} />
+            <Route path="/reports" element={<Reports />} />
+            <Route path="/journal" element={<Navigate to="/reports" />} />
+            <Route path="/cycle-mode" element={<CycleMode />} />
+            <Route path="/calendar" element={<Calendar />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </main>
+        <NotificationOverlay />
+        <ChatBot />
+        <StressInterventionToast />
+        <BreakReminderToast />
+      </div>
+
+    Additional components in App.jsx:
+      - ScrollToTop: useEffect on location change to scroll to top
+      - ErrorBoundary: class component with componentDidCatch, fallback UI
+      - OfflineBanner: shown when navigator.onLine is false
+      - DemoModeBanner: subtle banner when in demo mode
+      - NotFound: 404 page with link back to dashboard
+      - ThemedToaster: react-hot-toast Toaster with theme-matching styles
+
+Note: The Sidebar is fixed-width (w-16 collapsed, lg:w-56 expanded).
+Main content has matching left margin. ChatBot floats bottom-right.
+Stress and Break toasts are full-screen overlays that appear on top.

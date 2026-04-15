@@ -81,10 +81,10 @@ function TodayView({ screenTime }) {
       <div className="relative h-40 flex items-center justify-center flex-1 min-h-[10rem]">
         <Doughnut data={data} options={options} />
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-          <span className="text-2xl font-serif font-bold text-slate-700">
+          <span className="text-2xl font-serif font-bold text-helix-text">
             {screenTime.total}h
           </span>
-          <span className="text-[11px] text-slate-400 text-center px-2 mt-1 max-w-[9rem] leading-snug">
+          <span className="text-[11px] text-helix-muted text-center px-2 mt-1 max-w-[9rem] leading-snug">
             {phrase}
           </span>
         </div>
@@ -97,10 +97,10 @@ function TodayView({ screenTime }) {
           return (
             <div key={label}>
               <div className="flex items-center justify-between text-xs mb-1.5">
-                <span className="text-slate-400">{label}</span>
-                <span className="font-medium text-slate-600">{v}h</span>
+                <span className="text-helix-muted">{label}</span>
+                <span className="font-medium text-helix-text">{v}h</span>
               </div>
-              <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden">
+              <div className="h-1.5 rounded-full bg-helix-border/30 overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-500"
                   style={{ width: `${pct}%`, backgroundColor: COLORS[i % COLORS.length] }}
@@ -117,7 +117,7 @@ function TodayView({ screenTime }) {
 function HistoryView({ history }) {
   if (!history.length) {
     return (
-      <div className="flex-1 flex items-center justify-center text-sm text-slate-400 py-8">
+      <div className="flex-1 flex items-center justify-center text-sm text-helix-muted py-8">
         No history data yet — check back tomorrow.
       </div>
     );
@@ -177,8 +177,8 @@ function HistoryView({ history }) {
       <div className="relative flex-1 min-h-[12rem]">
         <Bar data={data} options={options} />
       </div>
-      <div className="mt-3 flex items-center justify-between text-xs text-slate-400">
-        <span>Avg <span className="text-slate-600 font-medium">{avg}h</span>/day</span>
+      <div className="mt-3 flex items-center justify-between text-xs text-helix-muted">
+        <span>Avg <span className="text-helix-text font-medium">{avg}h</span>/day</span>
         <span>Last {history.length} days</span>
       </div>
     </>
@@ -199,7 +199,7 @@ export default function ScreenTimeChart({ screenTime }) {
         <h3 className="bento-label">{showHistory ? 'Screen History' : 'Screen Time'}</h3>
         <button
           onClick={() => setShowHistory((p) => !p)}
-          className="text-[11px] font-medium text-violet-600 hover:text-violet-600/80 transition-colors"
+          className="text-[11px] font-medium text-helix-accent hover:text-helix-accent/80 transition-colors"
         >
           {showHistory ? '← Today' : 'History →'}
         </button>

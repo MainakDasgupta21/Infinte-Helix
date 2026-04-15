@@ -1,0 +1,215 @@
+================================================================================
+ONE-SHOT PROMPT — PART 6: BACKEND SERVICES
+================================================================================
+
+Create the service layer under backend/app/services/. These modules contain
+the core business logic. firebase_service.py is covered in Part 4; this
+section covers the remaining services.
+
+--------------------------------------------------------------------------------
+FILE: backend/app/services/calendar_service.py — CALENDAR ORCHESTRATION
+--------------------------------------------------------------------------------
+
+Create a CalendarService class that orchestrates multiple calendar providers:
+
+    class CalendarService:
+        __init__():
+            - Maintain a dict of providers: { 'google': GoogleCalendar, 'microsoft': MicrosoftCalendar }
+
+        get_authorization_url(provider, user_id):
+            - Get the provider instance
+            - Generate OAuth authorization URL with state parameter
+            - Return the URL
+
+        handle_callback(provider, auth_code, user_id):
+            - Exchange auth code for tokens via the provider
+            - Store tokens via save_calendar_token(user_id, provider, token_data)
+
+        get_meetings(user_id, provider=None):
+            - If provider specified: fetch from that provider only
+            - If None: try all connected providers
+            - Return list of meeting objects: { title, start, end, organizer, location }
+
+        get_next_meeting(user_id):
+            - Get all meetings, sort by start time
+            - Return the next upcoming meeting or None
+
+        get_connection_status(user_id):
+            - Check stored tokens for each provider
+            - Return { google: bool, microsoft: bool }
+
+        disconnect(user_id, provider):
+            - Delete stored token via delete_calendar_token()
+
+        create_event(user_id, provider, event_data):
+            - Create event via the provider API
+
+--------------------------------------------------------------------------------
+FILE: backend/app/services/calendar_provider.py — PROVIDER ABSTRACTION
+--------------------------------------------------------------------------------
+
+Define a base class or protocol for calendar providers:
+
+    class CalendarProvider:
+        get_auth_url(state) -> str
+        exchange_code(code) -> dict (token data)
+        get_events(token_data, date=None) -> list of meeting dicts
+        refresh_token(token_data) -> dict (new token data)
+        create_event(token_data, event) -> dict
+
+--------------------------------------------------------------------------------
+FILE: backend/app/services/google_calendar.py — GOOGLE CALENDAR PROVIDER
+--------------------------------------------------------------------------------
+
+Implement Google Calendar provider:
+
+    class GoogleCalendar(CalendarProvider):
+        Uses:
+          - google-api-python-client
+          - google-auth-oauthlib
+          - google-auth-httplib2
+
+        get_auth_url(state):
+          - Build OAuth2 flow with Config.GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
+          - Scopes: ['https://www.googleapis.com/auth/calendar.readonly']
+          - Redirect URI: Config.GOOGLE_REDIRECT_URI
+          - Return authorization URL
+
+        exchange_code(code):
+          - Exchange authorization code for credentials
+          - Return { access_token, refresh_token, expires_at }
+
+        get_events(token_data, date=None):
+          - Build Google Calendar API service
+          - Fetch events for today (timeMin, timeMax)
+          - Return list of { title, start, end, organizer, location, provider: 'google' }
+
+        refresh_token(token_data):
+          - Refresh expired access token using refresh_token
+          - Return updated token data
+
+--------------------------------------------------------------------------------
+FILE: backend/app/services/microsoft_calendar.py — MICROSOFT GRAPH PROVIDER
+--------------------------------------------------------------------------------
+
+Implement Microsoft Graph calendar provider:
+
+    class MicrosoftCalendar(CalendarProvider):
+        Uses:
+          - requests library
+          - Microsoft Identity Platform OAuth 2.0
+
+        AUTHORITY: https://login.microsoftonline.com/{tenant_id}
+        TOKEN_URL: {AUTHORITY}/oauth2/v2.0/token
+        AUTH_URL: {AUTHORITY}/oauth2/v2.0/authorize
+        GRAPH_URL: https://graph.microsoft.com/v1.0
+
+        get_auth_url(state):
+          - Build authorization URL with:
+            client_id, redirect_uri, scope (Calendars.Read),
+            response_type=code, state
+
+        exchange_code(code):
+          - POST to TOKEN_URL with code, client_id, client_secret, redirect_uri
+          - Return { access_token, refresh_token, expires_at }
+
+        get_events(token_data, date=None):
+          - GET {GRAPH_URL}/me/calendarview with startdatetime/enddatetime
+          - Authorization: Bearer {access_token}
+          - Return list of { title, start, end, organizer, location, provider: 'microsoft' }
+
+        refresh_token(token_data):
+          - POST to TOKEN_URL with grant_type=refresh_token
+          - Return updated token data
+
+--------------------------------------------------------------------------------
+FILE: backend/app/services/wellness_report_service.py — WEEKLY REPORTS
+--------------------------------------------------------------------------------
+
+Create a service that generates weekly wellness reports:
+
+    generate_weekly_report(user_id):
+        1. Calculate date range: last 7 days
+        2. For each day in range, gather:
+           - Wellness score (from dashboard logic or stored)
+           - Work hours (from screen time logs)
+           - Mood logs (emotion distribution)
+           - Hydration logs (daily totals)
+           - Self-care logs (daily counts)
+           - Journal entries (for emotion analysis)
+        3. Compute aggregates:
+           - daily_scores: array of { date, score }
+           - avg_score: average wellness score
+           - emotion_distribution: { joy: N, sadness: N, ... }
+           - work_hours: array of { date, hours }
+           - avg_work_hours: average daily work hours
+           - selfcare_summary: { total_stretches, total_eye_rests, daily: [...] }
+           - hydration_summary: { avg_ml, total_ml, daily: [...] }
+        4. Generate insights (text summaries):
+           - Top emotion this week
+           - Best wellness day
+           - Hydration trend
+           - Self-care consistency
+        5. Generate recommendations based on patterns:
+           - If low hydration: suggest water reminders
+           - If high work hours: suggest breaks
+           - If negative emotions dominant: suggest journaling
+           - If low self-care: suggest stretch routines
+        6. Return complete report object:
+           { period: { start, end },
+             summary: { avg_score, avg_work_hours, total_entries },
+             daily_scores, emotion_distribution, work_hours,
+             selfcare_summary, hydration_summary,
+             insights: [...], recommendations: [...],
+             generated_at }
+
+--------------------------------------------------------------------------------
+FILE: backend/app/services/settings_service.py — USER SETTINGS
+--------------------------------------------------------------------------------
+
+Create a service for managing user settings:
+
+    get_user_settings(user_id):
+        - Try Firestore: get user document, return settings sub-object
+        - Fallback to LocalStore: get from 'user_settings' collection
+        - Return defaults if nothing found:
+          {
+            break_interval_minutes: 45,
+            hydration_reminder: true,
+            desktop_notifications: true,
+            meal_reminders: { enabled: false, breakfast: '08:00',
+                              lunch: '13:00', dinner: '19:00' },
+            theme: 'dark'
+          }
+
+    update_user_settings(user_id, settings_update):
+        - Merge settings_update into existing settings
+        - Save to Firestore 'users' document or LocalStore 'user_settings'
+        - Return merged settings
+
+--------------------------------------------------------------------------------
+FILE: backend/app/services/chatbot_service.py — AI CHATBOT (SUMMARY)
+--------------------------------------------------------------------------------
+
+This is the largest service (~1700 lines). See Part 13 for full chatbot
+system details. Key components:
+
+    SYSTEM_PROMPT: Large markdown prompt defining "Helix" persona
+    QUICK_REPLY_MAP: Intent -> suggested quick replies
+    INTENT_PATTERNS: 20 regex-based intent categories
+    FALLBACK_TEMPLATES: Template responses per intent
+
+    GroqClient:
+        - Uses Groq API (llama-3.3-70b-versatile model)
+        - chat(conversation_history, context_prefix) -> string
+
+    ChatbotService:
+        - Session management (create, list, delete, get messages)
+        - User memory extraction and persistence
+        - Emotional trajectory tracking
+        - process_message(message, page_context, session_id, app_context)
+        - Page-context-aware AI response generation
+        - Template fallback when Groq unavailable
+        - Quick reply generation based on intent and page
+
+    Module singleton: chatbot_service = ChatbotService()

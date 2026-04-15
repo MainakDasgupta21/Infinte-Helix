@@ -11,7 +11,7 @@ const QUICK_AMOUNTS = [
 function WaterWave({ progress }) {
   const clampedProgress = Math.min(100, Math.max(0, progress));
   return (
-    <div className="relative w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+    <div className="relative w-full h-2.5 bg-helix-border/30 rounded-full overflow-hidden">
       <div
         className="absolute inset-y-0 left-0 bg-gradient-to-r from-blue-600 to-cyan-400 rounded-full transition-all duration-700 ease-out"
         style={{ width: `${clampedProgress}%` }}
@@ -57,7 +57,7 @@ export default function HydrationTracker() {
 
       <div className="flex items-center justify-center gap-6 mb-5 flex-1 min-h-[7rem]">
         <div
-          className="relative flex flex-col items-center justify-end rounded-xl overflow-hidden bg-slate-50"
+          className="relative flex flex-col items-center justify-end rounded-xl overflow-hidden bg-helix-surface/50"
           style={{ width: 44, height: 112, border: '1px solid rgba(0,0,0,0.04)' }}
           aria-hidden
         >
@@ -65,11 +65,11 @@ export default function HydrationTracker() {
             className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-cyan-500/90 to-blue-600/85 transition-all duration-700 ease-out"
             style={{ height: `${fillPct}%` }}
           />
-          <div className="absolute inset-x-0 top-0 h-2 rounded-t-xl bg-white/80 z-10" />
+          <div className="absolute inset-x-0 top-0 h-2 rounded-t-xl bg-helix-surface/80 z-10" />
         </div>
         <div className="flex flex-col items-start justify-center">
           <span className="text-3xl font-serif font-bold text-blue-600 leading-none">{progress}%</span>
-          <span className="text-xs text-slate-400 mt-2 max-w-[11rem] leading-snug">
+          <span className="text-xs text-helix-muted mt-2 max-w-[11rem] leading-snug">
             {remainingMl > 0 ? `${remainingMl} ml remaining to goal` : 'Goal reached'}
           </span>
         </div>
@@ -87,17 +87,17 @@ export default function HydrationTracker() {
               min="50"
               max="2000"
               step="50"
-              className="w-full bg-slate-50 rounded-2xl px-4 py-2.5 pr-10 text-sm text-slate-700
-                         focus:outline-none focus:bg-white focus:shadow-[0_2px_12px_rgb(0,0,0,0.04)] transition-all
+              className="w-full bg-helix-surface/50 rounded-2xl px-4 py-2.5 pr-10 text-sm text-helix-text
+                         focus:outline-none focus:bg-helix-surface focus:shadow-[0_2px_12px_rgb(0,0,0,0.04)] transition-all
                          [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-slate-400">ml</span>
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-helix-muted">ml</span>
           </div>
           <button
             onClick={handleLog}
             disabled={goalReached || amountMl <= 0}
-            className="px-5 py-2.5 rounded-2xl bg-blue-50 text-blue-600 text-sm font-medium
-                       hover:bg-blue-100 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed
+            className="px-5 py-2.5 rounded-2xl bg-blue-500/10 text-blue-600 text-sm font-medium
+                       hover:bg-blue-500/15 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed
                        whitespace-nowrap"
           >
             {goalReached ? 'Done' : 'Log'}
@@ -113,8 +113,8 @@ export default function HydrationTracker() {
                 onClick={() => setAmountMl(ml)}
                 className={`flex-1 py-2 rounded-2xl text-xs font-medium transition-all duration-200
                   ${selected
-                    ? 'bg-blue-600 text-white shadow-[0_4px_16px_rgba(59,130,200,0.2)]'
-                    : 'bg-slate-50 text-slate-500 hover:text-slate-700 hover:bg-slate-100'
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'bg-helix-surface/50 text-helix-muted hover:text-helix-text hover:bg-helix-border/30'
                   }`}
               >
                 {label}

@@ -1,0 +1,271 @@
+================================================================================
+ONE-SHOT PROMPT — PART 4: DATABASE & MODELS
+================================================================================
+
+Implement a dual-storage persistence layer: Firebase Firestore as the primary
+database, with an automatic SQLite fallback when Firestore credentials are
+unavailable (demo/dev mode).
+
+--------------------------------------------------------------------------------
+STORAGE STRATEGY
+--------------------------------------------------------------------------------
+
+1. PRIMARY: Firebase Firestore (cloud)
+   - Used when firebase-admin can initialize with credentials JSON
+   - Collections are top-level Firestore collections
+   - Documents are JSON-like dicts
+
+2. FALLBACK: SQLite LocalStore (local)
+   - Used when Firebase credentials are missing or initialization fails
+   - Single SQLite database at backend/data/local.db (auto-created)
+   - Single table "documents" with columns:
+     (collection TEXT, doc_id TEXT, data TEXT, created_at TEXT)
+   - PRIMARY KEY is (collection, doc_id)
+   - "data" column stores JSON-serialized document dicts
+   - Thread-safe with threading.Lock and WAL journal mode
+
+3. DECISION LOGIC:
+   - firebase_service.py calls init_firebase() once
+   - If credentials found and Firestore client created: _db is set
+   - If not: _db remains None
+   - Every CRUD function calls get_db() to check _db
+   - If _db is not None: use Firestore
+   - If _db is None: use _local() which returns the SQLite LocalStore singleton
+   - On Firestore write failure: catch exception, fall back to LocalStore
+
+--------------------------------------------------------------------------------
+FILE: backend/app/services/local_store.py — SQLite Document Store
+--------------------------------------------------------------------------------
+
+Create a LocalStore class that provides a generic JSON document store backed
+by SQLite:
+
+    class LocalStore:
+        __init__(db_path=None):
+            - Default path: <backend>/data/local.db
+            - Create parent directory if missing
+            - Initialize threading.Lock
+            - Call _init_db()
+
+        _conn() context manager:
+            - sqlite3.connect with timeout=10
+            - PRAGMA journal_mode=WAL
+            - PRAGMA busy_timeout=5000
+            - Auto-commit and auto-close
+
+        _init_db():
+            - CREATE TABLE IF NOT EXISTS documents (
+                collection TEXT NOT NULL,
+                doc_id     TEXT NOT NULL,
+                data       TEXT NOT NULL,
+                created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                PRIMARY KEY (collection, doc_id)
+              )
+            - CREATE INDEX IF NOT EXISTS idx_coll ON documents(collection)
+
+        insert(collection, doc):
+            - Extract doc_id from doc['id'] or generate uuid.uuid4().hex[:12]
+            - Set doc['id'] = doc_id
+            - INSERT OR REPLACE with json.dumps(doc, default=str)
+
+        get_all(collection):
+            - SELECT data WHERE collection = ? ORDER BY created_at
+            - Return list of json.loads(row[0])
+
+        get_by_id(collection, doc_id):
+            - SELECT data WHERE collection = ? AND doc_id = ?
+            - Return json.loads or None
+
+        upsert(collection, doc_id, data):
+            - INSERT OR REPLACE with json.dumps(data, default=str)
+
+        delete(collection, doc_id):
+            - DELETE WHERE collection = ? AND doc_id = ?
+
+    Module singleton:
+        _instance = None
+        get_local_store() -> LocalStore:
+            Create singleton on first call, return thereafter.
+
+--------------------------------------------------------------------------------
+FIRESTORE COLLECTIONS & DOCUMENT SCHEMAS
+--------------------------------------------------------------------------------
+
+COLLECTION: users
+  Document ID: Firebase UID or "local-{timestamp}"
+  Fields:
+    - uid: string
+    - email: string
+    - display_name: string
+    - photo_url: string (optional)
+    - provider: string ('password' | 'google.com')
+    - settings: object (nested user preferences)
+    - created_at: ISO 8601 timestamp
+    - last_login: ISO 8601 timestamp
+
+COLLECTION: journal_entries
+  Document ID: auto-generated
+  Fields:
+    - user_id: string
+    - text: string (journal entry text)
+    - emotion: string (detected emotion label)
+    - confidence: float (0-1)
+    - sentiment: string ('positive' | 'negative' | 'neutral')
+    - reframe: string or null (supportive reframing text)
+    - all_emotions: array of {label: string, score: float}
+    - all_sentiments: array of {label: string, score: float}
+    - timestamp: ISO 8601 timestamp
+
+COLLECTION: mood_logs
+  Document ID: auto-generated
+  Fields:
+    - user_id: string
+    - emotion: string
+    - sentiment: string
+    - confidence: float
+    - source: string (default 'auto-detect')
+    - timestamp: ISO 8601 timestamp
+
+COLLECTION: hydration_logs
+  Document ID: auto-generated
+  Fields:
+    - user_id: string
+    - amount_ml: int (default 250)
+    - timestamp: ISO 8601 timestamp
+    - date: string (YYYY-MM-DD)
+
+COLLECTION: screen_time_logs
+  Document ID: "{user_id}_{date}" (upsert key)
+  Fields:
+    - id: string (same as doc ID)
+    - user_id: string
+    - date: string (YYYY-MM-DD)
+    - total_hours: float
+    - breakdown: object (app category -> hours)
+    - updated_at: ISO 8601 timestamp
+
+COLLECTION: selfcare_logs
+  Document ID: auto-generated
+  Fields:
+    - user_id: string
+    - action: string ('stretch' | 'eye_rest')
+    - timestamp: ISO 8601 timestamp
+    - date: string (YYYY-MM-DD)
+
+COLLECTION: privatecare_logs
+  Document ID: auto-generated
+  Fields:
+    - user_id: string
+    - type: string ('pad_change' | 'freshen_up' | etc.)
+    - note: string
+    - timestamp: ISO 8601 timestamp
+    - date: string (YYYY-MM-DD)
+    - time: string (HH:MM)
+
+COLLECTION: personal_todos
+  Document ID: uuid4()[:8]
+  Fields:
+    - id: string (same as doc ID)
+    - user_id: string
+    - text: string
+    - remind_at: string or null (HH:MM time)
+    - completed: boolean
+    - date: string (YYYY-MM-DD)
+    - category: string ('work' | 'personal' | 'health' | 'meeting')
+    - created_at: ISO 8601 timestamp
+    - timestamp: ISO 8601 timestamp
+
+COLLECTION: calendar_tokens
+  Document ID: "{user_id}_{provider}"
+  Fields:
+    - id: string (same as doc ID)
+    - user_id: string
+    - provider: string ('google' | 'microsoft')
+    - access_token: string
+    - refresh_token: string
+    - expires_at: number (epoch seconds)
+    - user_info: object or null
+    - updated_at: ISO 8601 timestamp
+
+COLLECTION (LocalStore only): user_settings
+  Document ID: user_id
+  Fields:
+    - user_id: string
+    - settings: object (user preference key-value pairs)
+    - updated_at: ISO 8601 timestamp
+
+COLLECTION (LocalStore only): chat_conversations
+  Used by chatbot_service.py for message history per session.
+  Document ID: "{session_id}_{message_index}"
+  Fields vary per message type (user/assistant).
+
+IN-MEMORY ONLY (not persisted):
+  - stress_routes.py maintains _latest_metrics dict and _stress_log list
+  - Lost on server restart
+
+--------------------------------------------------------------------------------
+FILE: backend/app/services/firebase_service.py — CORE DATA OPERATIONS
+--------------------------------------------------------------------------------
+
+Create firebase_service.py with these function groups. Each function checks
+get_db() and branches: if Firestore is available, use it; otherwise use
+_local() (LocalStore). On Firestore write failure, catch and fall back to
+LocalStore.
+
+INITIALIZATION:
+  init_firebase()  — Initialize Firebase Admin SDK, set _db, safe to call
+                     multiple times (_initialized guard)
+  get_db()         — Return _db (Firestore client or None)
+  _local()         — Return get_local_store() singleton
+
+JOURNAL:
+  save_journal_entry(user_id, entry) -> dict
+  get_journal_entries(user_id, limit=20) -> list
+  get_journal_entries_for_period(user_id, start_date, end_date) -> list
+
+HYDRATION:
+  log_hydration(user_id, amount_ml=None) -> dict   # default 250ml
+  get_hydration_today(user_id) -> {ml_today, entries}
+  get_hydration_for_period(user_id, start_date, end_date) -> list
+
+MOOD:
+  save_mood_log(user_id, mood_data) -> dict
+  get_mood_logs_for_period(user_id, start_date, end_date) -> list
+
+SCREEN TIME:
+  save_screen_time(user_id, data) -> dict   # upsert by user_id + date
+  get_screen_time_history(user_id, days=7) -> list
+
+SELF-CARE:
+  log_selfcare_action(user_id, action_type) -> dict
+  get_selfcare_today(user_id) -> {stretch: int, eye_rest: int}
+  get_selfcare_for_period(user_id, start_date, end_date) -> list
+
+PRIVATE CARE:
+  log_privatecare(user_id, care_type, note='') -> dict
+  get_privatecare_logs(user_id, days=90) -> list
+  get_privatecare_for_period(user_id, start_date, end_date) -> list
+
+ACTIVITY STREAK:
+  get_activity_streak(user_id) -> int
+    Count consecutive days with at least one journal or hydration entry,
+    looking back up to 60 days from today.
+
+TODOS:
+  save_todo(user_id, text, remind_at=None, date=None, category=None) -> dict
+  get_todos_today(user_id) -> list
+  get_todos_by_date(user_id, date) -> list
+  get_todos_upcoming(user_id) -> list   # incomplete, today+future
+  get_todo_history(user_id, days=30) -> list
+  toggle_todo(user_id, todo_id) -> dict or None
+  delete_todo(user_id, todo_id) -> None
+
+CALENDAR TOKENS:
+  save_calendar_token(user_id, provider, token_data) -> None
+  get_calendar_token(user_id, provider) -> dict or None
+  delete_calendar_token(user_id, provider) -> None
+
+For Firestore queries, use FieldFilter when available (newer SDK) with
+fallback to legacy .where('field', '==', value) syntax. Always sort results
+in Python after fetching since Firestore compound queries may not be possible
+without composite indexes.

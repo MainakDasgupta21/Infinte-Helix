@@ -45,26 +45,26 @@ export default function ProductivityScore({ score = 0, streakDays = 0, mood = 'n
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span className={`text-3xl font-serif font-bold ${scoreColor}`}>{Math.round(score)}</span>
-          <span className="text-[11px] text-slate-400 font-medium">/ 100</span>
+          <span className="text-[11px] text-helix-muted font-medium">/ 100</span>
         </div>
       </div>
 
-      <p className="text-xs text-slate-400 text-center mt-4 leading-relaxed px-2 min-h-[2.5rem] flex items-center justify-center">
+      <p className="text-xs text-helix-muted text-center mt-4 leading-relaxed px-2 min-h-[2.5rem] flex items-center justify-center">
         {contextLine}
       </p>
 
       <div className="mt-5 w-full pt-5 flex items-stretch justify-around gap-3"
            style={{ borderTop: '1px solid rgba(0,0,0,0.04)' }}>
-        <div className="flex-1 text-center rounded-2xl bg-slate-50/60 py-3.5 px-3 hover:bg-white/70 transition-all">
+        <div className="flex-1 text-center rounded-2xl bg-helix-surface/50 py-3.5 px-3 hover:bg-helix-surface/70 transition-all">
           <p className="bento-label mb-2">Mood</p>
-          <span className="text-base font-semibold text-slate-700 leading-none block font-serif">
+          <span className="text-base font-semibold text-helix-text leading-none block font-serif">
             {moodLabels[mood] || moodLabels.neutral}
           </span>
         </div>
-        <div className="flex-1 text-center rounded-2xl bg-slate-50/60 py-3.5 px-3 hover:bg-white/70 transition-all">
+        <div className="flex-1 text-center rounded-2xl bg-helix-surface/50 py-3.5 px-3 hover:bg-helix-surface/70 transition-all">
           <p className="bento-label mb-2">Streak</p>
-          <span className="text-xl font-serif font-semibold text-violet-600 leading-none block">{streakDays}</span>
-          <p className="text-[11px] text-slate-400 mt-1.5">days</p>
+          <span className="text-xl font-serif font-semibold text-helix-accent leading-none block">{streakDays}</span>
+          <p className="text-[11px] text-helix-muted mt-1.5">days</p>
         </div>
       </div>
     </div>

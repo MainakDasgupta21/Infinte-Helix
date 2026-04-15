@@ -1,0 +1,411 @@
+================================================================================
+ONE-SHOT PROMPT — PART 12: FRONTEND HOOKS & SERVICES
+================================================================================
+
+Create custom React hooks under src/hooks/ and the service layer under
+src/services/. These provide reusable logic for data fetching, timers,
+and feature-specific behavior.
+
+================================================================================
+CUSTOM HOOKS — src/hooks/
+================================================================================
+
+--------------------------------------------------------------------------------
+useStressDetector.js (~261 lines) — STRESS DETECTION POLLING
+--------------------------------------------------------------------------------
+
+Create a hook that polls the backend for stress metrics and maintains a
+local stress log.
+
+STATE:
+  - stressLevel: 'none' | 'low' | 'medium' | 'high'
+  - isStressed: boolean
+  - latestMetrics: object or null
+  - showIntervention: boolean (triggers StressInterventionToast)
+  - stressLog: array of stress events (persisted in module-level variable)
+  - sessionData: object (session-level aggregate stats)
+
+BEHAVIOR:
+  1. Poll GET /api/stress/latest every 5-10 seconds
+  2. On response:
+     - Update latestMetrics
+     - Determine stress level from typing_speed, delete_ratio, burst_count:
+       * high: typing_speed > 200 AND delete_ratio > 0.3
+       * medium: typing_speed > 150 OR delete_ratio > 0.2
+       * low: typing_speed > 100
+       * none: otherwise
+     - If stress level transitions to 'high': set showIntervention = true
+     - Append event to stressLog with timestamp
+  3. Track session data: total stress events, resolution count,
+     peak hours, average metrics
+
+EXPORTED (from hook return AND module-level functions):
+  Hook return:
+    { stressLevel, isStressed, latestMetrics, showIntervention,
+      resolveStress, dismissIntervention }
+
+  Module-level (importable directly):
+    getStressLog() -> array of stress events
+    getSessionData() -> session aggregate object
+
+  resolveStress():
+    - POST /api/stress/resolve
+    - Set showIntervention = false
+    - Log resolution event
+
+  dismissIntervention():
+    - Set showIntervention = false (without resolving)
+
+Note: stressLog and sessionData are stored in module-level variables
+(not React state) so they persist across component remounts and can be
+accessed by the Reports page without prop drilling.
+
+--------------------------------------------------------------------------------
+useBreakReminder.js (~160 lines) — BREAK INTERVAL TIMER
+--------------------------------------------------------------------------------
+
+Create a hook that manages break reminders based on user settings.
+
+STATE:
+  - showBreakReminder: boolean
+  - minutesSinceBreak: number
+  - isOnBreak: boolean
+  - breakLog: array of break events (module-level)
+
+BEHAVIOR:
+  1. On mount: read break interval from settings (default 45 minutes)
+  2. Start a timer that increments minutesSinceBreak every minute
+  3. When minutesSinceBreak >= breakInterval:
+     - Set showBreakReminder = true
+     - Optionally trigger desktop notification
+  4. Track break events in breakLog
+
+EXPORTED:
+  Hook return:
+    { showBreakReminder, minutesSinceBreak, isOnBreak,
+      takeBreak, endBreak, dismissReminder, snooze }
+
+  Module-level:
+    getBreakLog() -> array of { timestamp, duration, type }
+    getScheduledBreaks() -> array of scheduled break times
+
+  takeBreak():
+    - Set isOnBreak = true, hide reminder
+    - Start break timer
+    - Log break start
+
+  endBreak():
+    - Set isOnBreak = false
+    - Reset minutesSinceBreak to 0
+    - Log break end with duration
+
+  dismissReminder():
+    - Hide reminder without taking break
+
+  snooze(minutes=10):
+    - Hide reminder, reset timer to (breakInterval - snoozeMinutes)
+
+Meal-aware scheduling:
+  - Read meal reminder settings from localStorage 'helix_meal_reminders'
+  - getScheduledBreaks() returns array of scheduled times including
+    configured meal times (breakfast, lunch, dinner) if enabled
+
+--------------------------------------------------------------------------------
+useEmotionAnalysis.js — EMOTION API HOOK
+--------------------------------------------------------------------------------
+
+Simple hook for analyzing text emotion on demand.
+
+STATE:
+  - result: object or null
+  - loading: boolean
+  - error: string or null
+
+EXPORTED:
+  analyzeText(text):
+    - Call emotionAPI.analyze(text)
+    - Set result with emotion, confidence, sentiment, reframe, all_emotions
+    - Return result
+
+  { result, loading, error, analyzeText }
+
+--------------------------------------------------------------------------------
+usePeriodTracker.js — PERIOD ENTRY MANAGEMENT
+--------------------------------------------------------------------------------
+
+Hook that manages menstrual period entries in localStorage.
+
+STORAGE KEY: 'helix_period_entries'
+
+STATE:
+  - entries: array of { id, startDate, endDate } (ISO date strings)
+
+COMPUTED:
+  - hasEntries: boolean
+  - lastPeriodStartIso: string (most recent entry's start date)
+  - nextPeriodInfo: { daysUntil, label, dateIso } based on 28-day cycle
+  - cycleDay: number (1-28, current day in cycle)
+
+EXPORTED:
+  { entries, hasEntries, lastPeriodStartIso, nextPeriodInfo, cycleDay,
+    addEntry, updateEntry, removeEntry }
+
+  addEntry(startDate, endDate):
+    - Create entry with uuid
+    - Save to localStorage
+    - Update state
+
+  updateEntry(id, startDate, endDate):
+    - Update existing entry
+    - Save to localStorage
+
+  removeEntry(id):
+    - Remove entry from list
+    - Save to localStorage
+
+Cycle day calculation:
+  - Diff in days between lastPeriodStartIso and today
+  - Modulo 28, plus 1
+  - Returns 1-28
+
+--------------------------------------------------------------------------------
+usePregnancyMode.js — PREGNANCY MODE STATE
+--------------------------------------------------------------------------------
+
+Hook that manages pregnancy mode toggle and data.
+
+STORAGE KEYS:
+  - 'helix_pregnancy_mode': 'cycle' | 'pregnancy'
+  - 'helix_pregnancy_data': JSON { dueDateIso, ... }
+
+STATE:
+  - mode: 'cycle' | 'pregnancy'
+  - pregnancyData: { dueDateIso, ... }
+
+COMPUTED:
+  - isPregnancy: boolean
+  - weeksPregnant: number (calculated from due date)
+  - trimester: 1 | 2 | 3
+  - daysUntilDue: number
+  - daysUntilAppointment: number (from pregnancyData.nextAppointment)
+
+EXPORTED:
+  { mode, isPregnancy, toggleMode, pregnancyData, updatePregnancyData,
+    weeksPregnant, trimester, daysUntilDue, daysUntilAppointment }
+
+  toggleMode(): switch between 'cycle' and 'pregnancy'
+  updatePregnancyData(data): merge and save to localStorage
+
+Trimester calculation:
+  - Weeks 1-12: Trimester 1
+  - Weeks 13-26: Trimester 2
+  - Weeks 27-40: Trimester 3
+
+--------------------------------------------------------------------------------
+useWellnessPolling.js — DASHBOARD DATA POLLING
+--------------------------------------------------------------------------------
+
+Utility hook used by WellnessContext for periodic data fetching.
+May be a separate hook or integrated into WellnessContext directly.
+
+Behavior:
+  - Configurable polling interval (default 30s)
+  - Fetch /dashboard/today and /tracker/status
+  - Return merged data
+  - Handle errors gracefully (don't crash on network failures)
+  - Cleanup interval on unmount
+
+================================================================================
+SERVICES — src/services/
+================================================================================
+
+--------------------------------------------------------------------------------
+api.js — AXIOS CLIENT & ALL API FUNCTIONS (~149 lines)
+--------------------------------------------------------------------------------
+
+Create a centralized API client with Axios:
+
+SETUP:
+  - Base URL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api'
+  - Timeout: 15000ms
+  - Default headers: Content-Type: application/json
+
+REQUEST INTERCEPTOR:
+  - Get current Firebase user from auth
+  - If user exists: get ID token, set Authorization: Bearer {token}
+  - If token retrieval fails: proceed without auth (for demo mode)
+
+RESPONSE INTERCEPTOR:
+  - On error: console.warn and reject
+
+HELPER:
+  authHeader(token): returns { headers: { Authorization: `Bearer ${token}` } }
+
+API MODULES (exported named objects):
+
+  authAPI:
+    register(token, profile) -> POST /auth/register
+    syncProfile(token) -> POST /auth/sync
+    getProfile(token) -> GET /auth/profile
+
+  emotionAPI:
+    analyze(text) -> POST /emotion/analyze
+
+  sentimentAPI:
+    analyze(text) -> POST /sentiment/analyze
+
+  dashboardAPI:
+    getToday() -> GET /dashboard/today
+    getScreenHistory(days=7) -> GET /dashboard/screen-history
+
+  journalAPI:
+    create(entry) -> POST /journal
+    list(params) -> GET /journal
+    getById(id) -> GET /journal/{id}
+
+  reportsAPI:
+    getWeekly() -> GET /reports/weekly
+
+  trackerAPI:
+    getStatus() -> GET /tracker/status
+    start() -> POST /tracker/start
+    stop() -> POST /tracker/stop
+
+  nudgeAPI:
+    generate(context) -> POST /nudge/generate
+    dismiss(id) -> POST /nudge/{id}/dismiss
+
+  calendarAPI:
+    getMeetings() -> GET /calendar/meetings
+    getNext() -> GET /calendar/next
+    getStatus() -> GET /calendar/status
+    authorize(provider='microsoft') -> GET /calendar/authorize
+    disconnect(provider='microsoft') -> POST /calendar/disconnect
+    createEvent(event) -> POST /calendar/events
+
+  chatAPI:
+    sendMessage(message, page_context, session_id) -> POST /chat/message
+    getHistory(limit) -> GET /chat/history
+    clearHistory(session_id) -> DELETE /chat/history
+    getQuickReplies() -> GET /chat/quick-replies
+    getSessions() -> GET /chat/sessions
+    createSession(title) -> POST /chat/sessions
+    deleteSession(id) -> DELETE /chat/sessions/{id}
+    getSessionMessages(id, limit) -> GET /chat/sessions/{id}/messages
+
+  cycleAPI:
+    getSuggestions(phase) -> GET /cycle/suggestions/{phase}
+    setPhase(phase) -> POST /cycle/phase
+
+  hydrationAPI:
+    log(amount_ml=250) -> POST /hydration/log
+    getToday() -> GET /hydration/today
+
+  selfCareAPI:
+    log(action) -> POST /selfcare/log
+    getToday() -> GET /selfcare/today
+
+  todoAPI:
+    create(text, remindAt, userId, date, category) -> POST /todos
+    getToday(userId) -> GET /todos/today
+    getByDate(date, userId) -> GET /todos/date/{date}
+    getUpcoming(userId) -> GET /todos/upcoming
+    getHistory(userId, days=30) -> GET /todos/history
+    toggle(todoId, userId) -> POST /todos/{todoId}/toggle
+    remove(todoId, userId) -> DELETE /todos/{todoId}
+
+  settingsAPI:
+    get() -> GET /user/settings
+    update(settings) -> PUT /user/settings
+
+  privateCareAPI:
+    log(type, note) -> POST /privatecare/log
+    getHistory(days=90) -> GET /privatecare/history
+    getPeriodHistory(start, end) -> GET /privatecare/period-history
+
+  export default api (the Axios instance)
+
+--------------------------------------------------------------------------------
+notifications.js — WEB NOTIFICATIONS API
+--------------------------------------------------------------------------------
+
+Wrapper for the browser Notifications API:
+
+  requestPermission():
+    - Call Notification.requestPermission()
+    - Return granted/denied
+
+  sendNotification(title, body, options={}):
+    - Check if permission is granted
+    - Create new Notification(title, { body, icon, ...options })
+    - Auto-close after timeout (default 10s)
+
+  isSupported():
+    - Return 'Notification' in window
+
+--------------------------------------------------------------------------------
+mealReminders.js — MEAL REMINDER SCHEDULER
+--------------------------------------------------------------------------------
+
+STORAGE KEY: 'helix_meal_reminders'
+
+Default settings:
+  { enabled: false, breakfast: '08:00', lunch: '13:00', dinner: '19:00' }
+
+  loadSettings(): read from localStorage, merge with defaults
+  saveSettings(settings): write to localStorage
+
+  startMealReminders():
+    - Read settings
+    - If not enabled: return
+    - Set interval checking every minute
+    - If current time matches a meal time (HH:MM): send notification
+    - Prevent duplicate notifications (track last notified meal)
+
+  stopMealReminders():
+    - Clear the interval
+
+--------------------------------------------------------------------------------
+todoReminder.js — TODO REMINDER SCHEDULER
+--------------------------------------------------------------------------------
+
+  startTodoReminders(getTodos):
+    - Set interval checking every minute
+    - For each todo with remind_at:
+      * If current time matches remind_at and not completed: notify
+      * Track notified todos to prevent duplicates
+
+  stopTodoReminders():
+    - Clear interval
+
+--------------------------------------------------------------------------------
+privateCareReminder.js — PRIVATE CARE REMINDER
+--------------------------------------------------------------------------------
+
+  Provides gentle reminders for pad changes during period days.
+  - Check cycle day (from localStorage)
+  - If in period phase (days 1-5): set 3-hour interval reminders
+  - Discrete notification: "Gentle reminder for a freshen-up break"
+
+--------------------------------------------------------------------------------
+eyeRestReminder.js — EYE REST REMINDER
+--------------------------------------------------------------------------------
+
+  20-20-20 rule reminder:
+  - Every 20 minutes of screen time
+  - Notification: "Look at something 20 feet away for 20 seconds"
+  - Track and prevent duplicate notifications
+
+================================================================================
+UTILS — src/utils/
+================================================================================
+
+--------------------------------------------------------------------------------
+periodMath.js — CYCLE DATE UTILITIES
+--------------------------------------------------------------------------------
+
+  toIso(date): Convert Date to 'YYYY-MM-DD' string
+  startOfDay(date): Return Date with time set to 00:00:00
+  daysBetween(date1, date2): Integer days between two dates
+  addDays(date, n): Return new Date with n days added
+  cycleDayFromStart(startIso, targetDate): Calculate cycle day (1-28)

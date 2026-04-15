@@ -32,7 +32,7 @@ function BreathingExercise({ onDone }) {
   }, [seconds]);
 
   const PHASE_CONFIG = {
-    in:   { label: 'Breathe In',  color: 'text-violet-600', ring: 'ring-violet-400', scale: 1.15 },
+    in:   { label: 'Breathe In',  color: 'text-helix-accent', ring: 'ring-helix-accent/50', scale: 1.15 },
     hold: { label: 'Hold',        color: 'text-blue-500',   ring: 'ring-blue-400',   scale: 1.15 },
     out:  { label: 'Breathe Out', color: 'text-emerald-500',ring: 'ring-emerald-400', scale: 1.0 },
     rest: { label: 'Rest',        color: 'text-rose-400',   ring: 'ring-rose-300',    scale: 1.0 },
@@ -45,12 +45,12 @@ function BreathingExercise({ onDone }) {
       <motion.div
         animate={{ scale: cfg.scale }}
         transition={{ duration: 2, ease: 'easeInOut' }}
-        className={`w-16 h-16 rounded-full bg-white border-2 ${cfg.ring} flex items-center justify-center shadow-sm`}
+        className={`w-16 h-16 rounded-full bg-helix-surface border-2 ${cfg.ring} flex items-center justify-center shadow-sm`}
       >
         <span className={`text-sm font-bold ${cfg.color}`}>{seconds}s</span>
       </motion.div>
       <p className={`text-sm font-semibold ${cfg.color} transition-colors`}>{cfg.label}</p>
-      <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+      <div className="w-full bg-helix-border/30 rounded-full h-1.5 overflow-hidden">
         <motion.div
           className="h-full bg-gradient-to-r from-violet-500 to-emerald-500 rounded-full"
           initial={{ width: '100%' }}
@@ -93,11 +93,11 @@ export default function StressInterventionToast({ isStressed, onDismiss, onSnooz
           transition={{ type: 'spring', stiffness: 400, damping: 30 }}
           className="fixed bottom-24 right-6 z-[60] w-[340px]"
         >
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-xl shadow-slate-900/10 overflow-hidden">
+          <div className="bg-helix-surface rounded-2xl border border-helix-border/50 shadow-xl shadow-lg overflow-hidden">
             {/* Privacy badge strip */}
-            <div className="bg-slate-50 border-b border-slate-100 px-4 py-1.5 flex items-center gap-1.5">
+            <div className="bg-helix-surface/50 border-b border-helix-border/30 px-4 py-1.5 flex items-center gap-1.5">
               <HiOutlineShieldCheck className="w-3 h-3 text-emerald-600" />
-              <span className="text-[10px] text-slate-500 font-semibold">
+              <span className="text-[10px] text-helix-muted font-semibold">
                 Privacy-first — patterns only, never content
               </span>
             </div>
@@ -106,7 +106,7 @@ export default function StressInterventionToast({ isStressed, onDismiss, onSnooz
               {/* Close button */}
               <button
                 onClick={onDismiss}
-                className="absolute top-8 right-3 p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+                className="absolute top-8 right-3 p-1 rounded-lg text-helix-muted hover:text-helix-text hover:bg-helix-border/30 transition-colors"
               >
                 <HiOutlineX className="w-4 h-4" />
               </button>
@@ -117,11 +117,11 @@ export default function StressInterventionToast({ isStressed, onDismiss, onSnooz
                   animate={{ opacity: 1 }}
                   className="text-center py-4"
                 >
-                  <div className="w-12 h-12 rounded-full bg-emerald-100 border border-emerald-200 flex items-center justify-center mx-auto mb-3">
+                  <div className="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto mb-3">
                     <HiOutlineHeart className="w-6 h-6 text-emerald-600" />
                   </div>
-                  <p className="text-sm font-bold text-slate-800">You did great.</p>
-                  <p className="text-xs text-slate-500 mt-1">Your body thanks you for that pause.</p>
+                  <p className="text-sm font-bold text-helix-text">You did great.</p>
+                  <p className="text-xs text-helix-muted mt-1">Your body thanks you for that pause.</p>
                 </motion.div>
               ) : breathing ? (
                 <BreathingExercise onDone={handleBreathDone} />
@@ -129,14 +129,14 @@ export default function StressInterventionToast({ isStressed, onDismiss, onSnooz
                 <>
                   {/* Icon + Message */}
                   <div className="flex items-start gap-3 mb-4">
-                    <div className="w-10 h-10 rounded-xl bg-violet-100 border border-violet-200 flex items-center justify-center shrink-0">
-                      <HiOutlineHeart className="w-5 h-5 text-violet-600" />
+                    <div className="w-10 h-10 rounded-xl bg-helix-accent/15 border border-helix-accent/20 flex items-center justify-center shrink-0">
+                      <HiOutlineHeart className="w-5 h-5 text-helix-accent" />
                     </div>
                     <div>
-                      <h4 className="text-sm font-bold text-slate-900 leading-snug">
+                      <h4 className="text-sm font-bold text-helix-text leading-snug">
                         Your body is talking
                       </h4>
-                      <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                      <p className="text-xs text-helix-muted mt-1 leading-relaxed">
                         Your typing patterns suggest you might be frustrated or rushing. 
                         Take a breath — you're doing enough.
                       </p>
@@ -146,13 +146,13 @@ export default function StressInterventionToast({ isStressed, onDismiss, onSnooz
                   {/* Live metrics */}
                   {metrics && (
                     <div className="flex gap-2 mb-4">
-                      <div className="flex-1 bg-slate-50 rounded-lg border border-slate-100 px-3 py-2 text-center">
-                        <p className="text-lg font-bold text-slate-800">{metrics.speed}</p>
-                        <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">keys/min</p>
+                      <div className="flex-1 bg-helix-surface/50 rounded-lg border border-helix-border/30 px-3 py-2 text-center">
+                        <p className="text-lg font-bold text-helix-text">{metrics.speed}</p>
+                        <p className="text-[10px] text-helix-muted font-semibold uppercase tracking-wider">keys/min</p>
                       </div>
-                      <div className="flex-1 bg-rose-50 rounded-lg border border-rose-100 px-3 py-2 text-center">
+                      <div className="flex-1 bg-rose-500/10 rounded-lg border border-rose-500/20 px-3 py-2 text-center">
                         <p className="text-lg font-bold text-rose-600">{metrics.backspaces}</p>
-                        <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">corrections</p>
+                        <p className="text-[10px] text-helix-muted font-semibold uppercase tracking-wider">corrections</p>
                       </div>
                     </div>
                   )}
@@ -161,14 +161,14 @@ export default function StressInterventionToast({ isStressed, onDismiss, onSnooz
                   <div className="flex gap-2">
                     <button
                       onClick={() => setBreathing(true)}
-                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-xs font-bold shadow-md shadow-violet-600/15 hover:shadow-lg transition-all"
+                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-xs font-bold shadow-md hover:shadow-lg transition-all"
                     >
                       <HiOutlineClock className="w-3.5 h-3.5" />
                       Start 60s Breathing
                     </button>
                     <button
                       onClick={() => onSnooze(30)}
-                      className="px-4 py-2.5 rounded-xl bg-slate-100 border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all"
+                      className="px-4 py-2.5 rounded-xl bg-helix-border/30 border border-helix-border/50 text-xs font-bold text-helix-text hover:bg-helix-card/60 transition-all"
                     >
                       Snooze
                     </button>

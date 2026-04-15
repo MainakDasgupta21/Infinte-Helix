@@ -12,7 +12,7 @@ function ToggleMini({ enabled, onChange, ariaLabel }) {
       onClick={() => onChange(!enabled)}
       className={`w-9 h-5 rounded-full p-0.5 transition-colors shrink-0 ${enabled ? 'bg-helix-accent' : 'bg-helix-border'}`}
     >
-      <div className={`w-4 h-4 rounded-full bg-white transition-transform ${enabled ? 'translate-x-4' : 'translate-x-0'}`} />
+      <div className={`w-4 h-4 rounded-full bg-helix-surface transition-transform ${enabled ? 'translate-x-4' : 'translate-x-0'}`} />
     </button>
   );
 }
@@ -68,7 +68,7 @@ export default function MealReminderSettings() {
                 type="time"
                 value={r.time}
                 onChange={(e) => updateRow(r.id, { time: e.target.value })}
-                className="bg-helix-bg border border-helix-border rounded-lg px-2 py-1 text-sm text-helix-text focus:border-helix-accent outline-none"
+                className="bg-helix-bg border border-helix-border rounded-lg px-2 py-1 text-sm text-helix-text focus:border-helix-accent/50 focus:ring-1 focus:ring-helix-accent/10 outline-none"
               />
             </div>
           ))}

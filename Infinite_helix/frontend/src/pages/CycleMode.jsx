@@ -69,7 +69,7 @@ function phaseInfo(cycleDay) {
     return { name: 'Energy rising', desc: 'Your energy is picking up this week. Good time for focused work and meetings.', color: 'text-emerald-600' };
   if (cycleDay >= 14 && cycleDay <= 16)
     return { name: 'Peak energy', desc: 'Confidence and focus are at their highest. Tackle challenging projects and speak up.', color: 'text-amber-600' };
-  return { name: 'Winding down', desc: 'Finish open tasks and tie up loose ends. Gentle routines feel better than new starts.', color: 'text-violet-600' };
+  return { name: 'Winding down', desc: 'Finish open tasks and tie up loose ends. Gentle routines feel better than new starts.', color: 'text-helix-accent' };
 }
 
 function addDays(date, n) {
@@ -130,7 +130,7 @@ function PregnancySetup({ updatePregnancyData }) {
   };
 
   return (
-    <div className="bento-card p-8 text-center border-amber-200 bg-amber-50">
+    <div className="bento-card p-8 text-center border-amber-500/20 bg-amber-500/10">
       <p className="text-4xl mb-3">🤰</p>
       <h2 className="text-xl font-serif font-bold text-amber-900 mb-2">Welcome to Motherhood Shield</h2>
       <p className="text-sm text-amber-700 max-w-sm mx-auto mb-6">
@@ -141,7 +141,7 @@ function PregnancySetup({ updatePregnancyData }) {
           type="date"
           value={dueDate}
           onChange={(e) => setDueDate(e.target.value)}
-          className="flex-1 bg-white border border-amber-300 rounded-xl px-4 py-2.5 text-sm text-amber-900 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-100"
+          className="flex-1 bg-helix-surface border border-amber-500/20 rounded-xl px-4 py-2.5 text-sm text-amber-900 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20"
         />
         <button
           onClick={handleSave}
@@ -281,10 +281,10 @@ export default function CycleMode() {
       {/* Header with Smart Switch */}
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
-          <h1 className={`text-2xl font-serif font-bold transition-colors duration-500 ${isPregnancy ? 'text-amber-900' : 'text-slate-900'}`}>
+          <h1 className={`text-2xl font-serif font-bold transition-colors duration-500 ${isPregnancy ? 'text-amber-900' : 'text-helix-text'}`}>
             {isPregnancy ? 'Motherhood Shield' : 'My Cycle'}
           </h1>
-          <p className={`text-sm mt-1 font-medium transition-colors duration-500 ${isPregnancy ? 'text-amber-700' : 'text-slate-500'}`}>
+          <p className={`text-sm mt-1 font-medium transition-colors duration-500 ${isPregnancy ? 'text-amber-700' : 'text-helix-muted'}`}>
             {isPregnancy ? 'Nurturing you through every trimester' : 'Everything based on your last period date'}
           </p>
         </div>
@@ -293,7 +293,7 @@ export default function CycleMode() {
           {!isPregnancy && (
             <button
               onClick={openChangeDate}
-              className="px-4 py-2 rounded-xl bg-white border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-colors"
+              className="px-4 py-2 rounded-xl bg-helix-surface border border-helix-border/50 text-sm font-semibold text-helix-text hover:bg-helix-card/60 hover:border-helix-border transition-colors"
             >
               Change start date
             </button>
@@ -343,7 +343,7 @@ export default function CycleMode() {
             className="space-y-5"
           >
             {/* Privacy badge */}
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
               <HiOutlineShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
               <span className="text-xs text-emerald-700 font-semibold">Only saved on your device</span>
             </div>
@@ -360,10 +360,10 @@ export default function CycleMode() {
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="mt-4 p-3 rounded-xl border border-slate-200 bg-slate-50"
+                      className="mt-4 p-3 rounded-xl border border-helix-border/50 bg-helix-surface/50"
                     >
-                      <p className="text-sm font-bold text-slate-800">{selectedPhase.name} Phase</p>
-                      <p className="text-xs text-slate-500 mt-1">
+                      <p className="text-sm font-bold text-helix-text">{selectedPhase.name} Phase</p>
+                      <p className="text-xs text-helix-muted mt-1">
                         Days {selectedPhase.days[0]}–{selectedPhase.days[1]} &middot; <span style={{ color: selectedPhase.color }}>{selectedPhase.label}</span>
                       </p>
                     </motion.div>
@@ -372,10 +372,10 @@ export default function CycleMode() {
                 <EnergyForecast cycleDay={cycleDay} />
               </div>
             ) : (
-              <div className="bento-card p-8 text-center border-dashed border-slate-300">
+              <div className="bento-card p-8 text-center border-dashed border-helix-border">
                 <p className="text-4xl mb-3">🌸</p>
-                <p className="text-sm text-slate-500 max-w-md mx-auto">
-                  Tap <span className="text-slate-800 font-bold">Change start date</span> to log
+                <p className="text-sm text-helix-muted max-w-md mx-auto">
+                  Tap <span className="text-helix-text font-bold">Change start date</span> to log
                   when your last period started. Everything else builds from there.
                 </p>
               </div>
@@ -396,13 +396,13 @@ export default function CycleMode() {
                         key={d.toISOString()}
                         className={`rounded-xl py-2.5 px-1 text-center transition-all border ${
                           isToday
-                            ? 'bg-rose-100 border-rose-300 ring-1 ring-rose-300'
-                            : 'bg-slate-50 border-slate-200'
+                            ? 'bg-rose-500/15 border-rose-500/30 ring-1 ring-rose-500/30'
+                            : 'bg-helix-surface/50 border-helix-border/50'
                         }`}
                       >
-                        <p className="text-[10px] text-slate-500 font-bold uppercase">{label}</p>
-                        <p className={`text-base font-bold mt-0.5 ${isToday ? 'text-rose-600' : 'text-slate-800'}`}>{dateNum}</p>
-                        <p className={`text-[10px] mt-0.5 font-semibold ${isToday ? 'text-rose-600' : 'text-slate-500'}`}>
+                        <p className="text-[10px] text-helix-muted font-bold uppercase">{label}</p>
+                        <p className={`text-base font-bold mt-0.5 ${isToday ? 'text-rose-600' : 'text-helix-text'}`}>{dateNum}</p>
+                        <p className={`text-[10px] mt-0.5 font-semibold ${isToday ? 'text-rose-600' : 'text-helix-muted'}`}>
                           Day {cd != null ? cd : '—'}
                         </p>
                       </div>
@@ -424,8 +424,8 @@ export default function CycleMode() {
                         onClick={() => { setMood(m.id); setSaved(false); }}
                         className={`flex items-center gap-2 px-3.5 py-2 rounded-lg border text-sm font-semibold transition-all ${
                           mood === m.id
-                            ? 'bg-rose-100 border-rose-300 text-rose-700'
-                            : 'bg-slate-50 border-slate-200 text-slate-600 hover:text-slate-800 hover:border-slate-300'
+                            ? 'bg-rose-500/15 border-rose-500/30 text-rose-700'
+                            : 'bg-helix-surface/50 border-helix-border/50 text-helix-text hover:text-helix-text hover:border-helix-border'
                         }`}
                       >
                         <span className="text-base">{m.emoji}</span>
@@ -436,7 +436,7 @@ export default function CycleMode() {
                 </div>
                 <div className="bento-card">
                   <h3 className="bento-label mb-1">Flow Today</h3>
-                  <p className="text-[10px] text-slate-400 font-medium mb-3">
+                  <p className="text-[10px] text-helix-muted font-medium mb-3">
                     {isPeriodDay ? 'Log your flow level' : 'Only during period days'}
                   </p>
                   <div className="flex flex-wrap gap-2">
@@ -447,10 +447,10 @@ export default function CycleMode() {
                         disabled={!isPeriodDay}
                         className={`px-3.5 py-2 rounded-lg border text-sm font-semibold transition-all ${
                           flow === f.id && isPeriodDay
-                            ? 'bg-rose-100 border-rose-300 text-rose-700'
+                            ? 'bg-rose-500/15 border-rose-500/30 text-rose-700'
                             : isPeriodDay
-                              ? 'bg-slate-50 border-slate-200 text-slate-600 hover:text-slate-800 hover:border-slate-300'
-                              : 'bg-slate-50 border-slate-100 text-slate-300 cursor-not-allowed'
+                              ? 'bg-helix-surface/50 border-helix-border/50 text-helix-text hover:text-helix-text hover:border-helix-border'
+                              : 'bg-helix-surface/50 border-helix-border/30 text-helix-muted cursor-not-allowed'
                         }`}
                       >
                         {f.label}
@@ -473,8 +473,8 @@ export default function CycleMode() {
                         onClick={() => toggleSymptom(s)}
                         className={`px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all ${
                           symptoms.includes(s)
-                            ? 'bg-rose-100 border-rose-300 text-rose-700'
-                            : 'bg-slate-50 border-slate-200 text-slate-600 hover:text-slate-800 hover:border-slate-300'
+                            ? 'bg-rose-500/15 border-rose-500/30 text-rose-700'
+                            : 'bg-helix-surface/50 border-helix-border/50 text-helix-text hover:text-helix-text hover:border-helix-border'
                         }`}
                       >
                         {symptoms.includes(s) && <span className="mr-1">●</span>}
@@ -492,8 +492,8 @@ export default function CycleMode() {
                         onClick={() => handleDurationChange(d.value)}
                         className={`px-3.5 py-2 rounded-lg border text-sm font-semibold transition-all ${
                           periodDuration === d.value
-                            ? 'bg-rose-100 border-rose-300 text-rose-700'
-                            : 'bg-slate-50 border-slate-200 text-slate-600 hover:text-slate-800 hover:border-slate-300'
+                            ? 'bg-rose-500/15 border-rose-500/30 text-rose-700'
+                            : 'bg-helix-surface/50 border-helix-border/50 text-helix-text hover:text-helix-text hover:border-helix-border'
                         }`}
                       >
                         {d.label}
@@ -510,8 +510,8 @@ export default function CycleMode() {
                 onClick={handleSaveToday}
                 className={`w-full py-3 rounded-xl font-bold text-sm transition-all ${
                   saved
-                    ? 'bg-emerald-100 border border-emerald-300 text-emerald-700'
-                    : 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:shadow-lg hover:shadow-violet-600/20 shadow-md shadow-violet-600/15'
+                    ? 'bg-emerald-500/15 border border-emerald-500/20 text-emerald-700'
+                    : 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:shadow-lg shadow-md'
                 }`}
               >
                 {saved ? '✓ Saved for today' : 'Save today →'}
@@ -522,9 +522,9 @@ export default function CycleMode() {
             {hasEntries && patternInsight && (
               <div className="bento-card">
                 <h3 className="bento-label mb-1">Pattern Insight</h3>
-                <div className="mt-3 bg-violet-50 border border-violet-200 rounded-xl p-4">
-                  <p className="text-[10px] font-bold text-violet-600 uppercase tracking-wider mb-1.5">{patternInsight.title}</p>
-                  <p className="text-sm text-slate-800 leading-relaxed">{patternInsight.text}</p>
+                <div className="mt-3 bg-helix-accent/10 border border-helix-accent/20 rounded-xl p-4">
+                  <p className="text-[10px] font-bold text-helix-accent uppercase tracking-wider mb-1.5">{patternInsight.title}</p>
+                  <p className="text-sm text-helix-text leading-relaxed">{patternInsight.text}</p>
                 </div>
               </div>
             )}
@@ -541,7 +541,7 @@ export default function CycleMode() {
             {hasEntries && (
               <button
                 onClick={openChangeDate}
-                className="text-xs text-slate-500 hover:text-slate-800 transition-colors underline underline-offset-4 font-medium"
+                className="text-xs text-helix-muted hover:text-helix-text transition-colors underline underline-offset-4 font-medium"
               >
                 Change my period start date
               </button>

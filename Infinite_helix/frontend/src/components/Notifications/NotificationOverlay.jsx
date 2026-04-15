@@ -12,7 +12,7 @@ const TYPE_STYLES = {
   posture:   { gradient: 'from-teal-500/20 to-emerald-500/20', border: 'border-teal-500/30', emoji: '\uD83E\uDEBB' },
   eyes:      { gradient: 'from-purple-500/20 to-indigo-500/20', border: 'border-purple-500/30', emoji: '\uD83D\uDC41\uFE0F' },
   meeting:   { gradient: 'from-pink-500/20 to-rose-500/20', border: 'border-pink-500/30', emoji: '\uD83C\uDFAF' },
-  emotional: { gradient: 'from-violet-500/20 to-purple-500/20', border: 'border-violet-500/30', emoji: '\uD83D\uDC9C' },
+  emotional: { gradient: 'from-violet-500/20 to-purple-500/20', border: 'border-helix-accent/30', emoji: '\uD83D\uDC9C' },
   winddown:  { gradient: 'from-indigo-500/20 to-blue-500/20', border: 'border-indigo-500/30', emoji: '\uD83C\uDF19' },
   morning:   { gradient: 'from-amber-500/20 to-yellow-500/20', border: 'border-amber-500/30', emoji: '\u2600\uFE0F' },
   streak:    { gradient: 'from-yellow-500/20 to-amber-500/20', border: 'border-yellow-500/30', emoji: '\uD83C\uDFC6' },

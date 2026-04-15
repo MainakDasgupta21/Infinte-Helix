@@ -83,23 +83,23 @@ export default function EnergyForecast({ cycleDay }) {
   return (
     <div className="bento-card p-5 rounded-2xl">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Energy Forecast</h3>
-        <span className="text-[10px] text-slate-500">Next 7 days</span>
+        <h3 className="text-xs font-bold text-helix-muted uppercase tracking-wider">Energy Forecast</h3>
+        <span className="text-[10px] text-helix-muted">Next 7 days</span>
       </div>
       <div className="h-40">
         <Line ref={chartRef} data={chartData} options={options} />
       </div>
       <div className="flex gap-3 mt-3 flex-wrap">
-        <span className="flex items-center gap-1.5 text-[10px] text-slate-500">
+        <span className="flex items-center gap-1.5 text-[10px] text-helix-muted">
           <span className="w-2 h-2 rounded-full bg-[#d95f8c]" /> Rest
         </span>
-        <span className="flex items-center gap-1.5 text-[10px] text-slate-500">
+        <span className="flex items-center gap-1.5 text-[10px] text-helix-muted">
           <span className="w-2 h-2 rounded-full bg-[#2d9e6e]" /> Plan
         </span>
-        <span className="flex items-center gap-1.5 text-[10px] text-slate-500">
+        <span className="flex items-center gap-1.5 text-[10px] text-helix-muted">
           <span className="w-2 h-2 rounded-full bg-[#c88a2d]" /> Execute
         </span>
-        <span className="flex items-center gap-1.5 text-[10px] text-slate-500">
+        <span className="flex items-center gap-1.5 text-[10px] text-helix-muted">
           <span className="w-2 h-2 rounded-full bg-[#7c6cdb]" /> Refine
         </span>
       </div>

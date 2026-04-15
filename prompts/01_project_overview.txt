@@ -1,0 +1,176 @@
+================================================================================
+ONE-SHOT PROMPT — PART 1: PROJECT OVERVIEW
+================================================================================
+
+Build a full-stack web application called "Infinite Helix" — an AI-Powered
+Micro Wellness & Productivity Assistant designed specifically for women
+employees. The app runs as a background AI assistant that helps users manage
+work, emotions, energy, and mental well-being through context-aware wellness
+nudges, emotion AI, and optional cycle-aware insights.
+
+PROJECT NAME: Infinite Helix
+TAGLINE: "AI Micro Wellness Assistant"
+TARGET AUDIENCE: Women employees in office/remote work environments
+
+--------------------------------------------------------------------------------
+VISION & GOALS
+--------------------------------------------------------------------------------
+
+1. Provide supportive, non-intrusive wellness nudges during the workday
+   (hydration, stretch, eye rest, breathing exercises).
+2. Track work behavior (keyboard/mouse activity, screen time, idle periods)
+   to detect fatigue and stress patterns.
+3. Offer emotion and sentiment analysis on journal entries using AI, with
+   supportive reframing for negative sentiments.
+4. Include an optional, private menstrual cycle tracker that adjusts energy
+   forecasts and nudge tone based on cycle phase.
+5. Integrate with Google Calendar and Microsoft Graph to detect upcoming
+   meetings and suggest pre-meeting calm exercises.
+6. Provide a conversational AI chatbot ("Helix") that is page-context-aware
+   and delivers personalized wellness advice.
+7. Generate weekly wellness report cards with printable/downloadable reports.
+8. Keep all cycle/pregnancy data strictly on-device (localStorage) for privacy.
+9. Support both a full Firebase cloud mode and a zero-config demo mode with
+   SQLite fallback and mock AI models.
+
+--------------------------------------------------------------------------------
+CORE FEATURES (Complete List)
+--------------------------------------------------------------------------------
+
+1.  WORK BEHAVIOR TRACKING
+    - Keyboard and mouse activity monitoring using pynput
+    - Idle detection with configurable threshold (default 60s)
+    - Continuous work monitoring with fatigue threshold (default 120 min)
+    - Typing intensity and keystroke counting
+    - Screen time tracking via psutil (active window titles, app categorization)
+
+2.  CONTEXT-AWARE WELLNESS NUDGES
+    - Smart reminders: hydration, stretch, eye rest, breathing
+    - Nudge cooldown system (default 30 min, 5 min in demo mode)
+    - Priority-based nudge evaluation based on current activity context
+    - Nudge templates with supportive, non-intrusive language
+    - Dismissible nudge feed on the dashboard
+
+3.  EMOTION & SENTIMENT AI
+    - HuggingFace Transformers: j-hartmann/emotion-english-distilroberta-base
+      for 7-class emotion detection (joy, sadness, anger, fear, surprise,
+      disgust, neutral)
+    - cardiffnlp/twitter-roberta-base-sentiment for 3-class sentiment
+    - Supportive reframing messages for negative sentiment entries
+    - Demo mode: keyword-based mock classifiers (no model download needed)
+
+4.  EMOTION JOURNAL
+    - Write text entries, receive instant AI emotion + sentiment analysis
+    - Confidence scores for each detected emotion
+    - Entry history with emotion badges
+    - AI-generated supportive responses
+
+5.  CYCLE ENERGY MODE (Optional, Private)
+    - Menstrual cycle tracking with period start/end date logging
+    - 28-day cycle model with 4 phases:
+      * Days 1-5: Menstrual (Period days) — rest-focused nudges
+      * Days 6-13: Follicular (Energy rising) — focused work encouraged
+      * Days 14-16: Ovulatory (Peak energy) — tackle challenging projects
+      * Days 17-28: Luteal (Winding down) — wrap-up, gentle routines
+    - Cycle ring visualization (SVG donut chart)
+    - Energy forecast with 7-day lookahead
+    - Daily mood, flow level, and symptom logging
+    - Pattern insights from past cycle data
+    - All data stored in localStorage only (never sent to server)
+
+6.  PREGNANCY / MOTHERHOOD SHIELD MODE
+    - Toggle between cycle mode and pregnancy mode
+    - Due date entry with trimester calculation
+    - Week-by-week pregnancy tracking
+    - Appointment countdown
+    - Adapted breathing exercises (deep pelvic breathing)
+
+7.  PRE-MEETING CALM
+    - Google Calendar and Microsoft Graph integration
+    - Detects upcoming meetings and suggests breathing/confidence exercises
+    - "Confidence Breath" component with guided breathing animation
+    - Meeting timeline display
+
+8.  AI CHATBOT ("Helix")
+    - Groq API integration (llama-3.3-70b-versatile model)
+    - Page-context-aware: knows what page user is on and relevant data
+    - Intent classification via regex patterns (20 intent categories)
+    - Template fallback when Groq API key is not configured
+    - Session management (create, list, switch, delete sessions)
+    - Message history with conversation memory
+    - Emotional trajectory tracking across sessions
+    - Quick reply suggestions based on context
+    - Crisis/distress detection with India helpline numbers
+
+9.  DASHBOARD
+    - Real-time wellness score (0-100) calculated from multiple metrics
+    - Productivity score with streak tracking
+    - Screen time donut chart with app categorization
+    - Break balance tracker (taken vs suggested)
+    - Focus timeline (session visualization)
+    - Hydration tracker with water glass logging (250ml per glass)
+    - Self-care tracker (stretch and eye rest counts)
+    - Today's tasks widget
+    - Active nudge feed
+    - AI Wellness Engine status indicator
+
+10. REPORTS & ANALYTICS
+    - Weekly wellness report card with scores and trends
+    - Emotion chart (distribution over time)
+    - Stress heatmap (hour-of-day vs day-of-week)
+    - Work hours chart
+    - Self-care metrics
+    - Digital Body Language report (typing patterns, stress events)
+    - Break tracker analytics (meal schedule, break log)
+    - Daily wellness report with mental load scoring
+    - Printable/downloadable HTML reports with SVG charts
+    - Manager-safe vs private report variants
+    - Cycle phase integration in reports (when active)
+
+11. TODO / TASK MANAGEMENT
+    - Create tasks with optional reminder time, date, and category
+    - Categories: work, personal, health, meeting
+    - Toggle completion, delete tasks
+    - Today view, upcoming view, history view
+    - Date-based navigation with calendar picker
+    - Overdue task highlighting
+
+12. SETTINGS
+    - Meal reminder configuration (breakfast, lunch, dinner times + enable/disable)
+    - Break interval settings
+    - Notification preferences
+    - Theme toggle (dark/light mode)
+
+13. AUTHENTICATION
+    - Firebase Authentication
+    - Email/password registration and login
+    - Google OAuth 2.0 sign-in
+    - Bearer token on all API requests
+    - Demo mode: local user ID generation without Firebase
+
+14. MULTI-CHANNEL NOTIFICATIONS
+    - Desktop toasts via plyer (cross-platform)
+    - Browser Web Notifications API
+    - In-app notification overlay
+    - Stress intervention toast (full-screen calming overlay)
+    - Break reminder toast
+
+15. STRESS DETECTION
+    - Optional standalone stress_agent.py using pynput
+    - Tracks typing patterns (speed, delete ratio, burst detection)
+    - Posts metrics to /api/stress/ingest every 10 seconds
+    - Frontend useStressDetector hook polls /stress/latest
+    - Stress intervention overlay with breathing exercise
+    - Stress event logging and resolution tracking
+
+--------------------------------------------------------------------------------
+DESIGN PHILOSOPHY
+--------------------------------------------------------------------------------
+
+- Supportive, not surveillance: nudges feel caring, not intrusive
+- Privacy-first: cycle/pregnancy data stays on-device (localStorage)
+- Inclusivity: cycle tracking is entirely optional and toggleable
+- Beautiful UI: dark-first design with light mode, bento-grid layout,
+  glass morphism cards, smooth Framer Motion animations
+- Zero-config demo: works immediately without Firebase, Groq, or ML models
+- Women-centric but not exclusionary

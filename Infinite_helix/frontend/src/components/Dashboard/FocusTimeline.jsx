@@ -134,8 +134,8 @@ export default function FocusTimeline({ sessions = [] }) {
             onClick={() => setActiveFilter(null)}
             className={`text-[11px] px-3 py-1.5 rounded-xl font-medium transition-all ${
               activeFilter === null
-                ? 'bg-violet-100 text-violet-600 shadow-[0_2px_8px_rgba(124,108,219,0.1)]'
-                : 'bg-transparent text-slate-400 hover:text-slate-600'
+                ? 'bg-helix-accent/15 text-helix-accent shadow-sm'
+                : 'bg-transparent text-helix-muted hover:text-helix-text'
             }`}
           >
             All
@@ -149,8 +149,8 @@ export default function FocusTimeline({ sessions = [] }) {
                 onClick={() => setActiveFilter(name)}
                 className={`text-[11px] px-3 py-1.5 rounded-xl font-medium transition-all ${
                   active
-                    ? 'bg-violet-100 text-violet-600 shadow-[0_2px_8px_rgba(124,108,219,0.1)]'
-                    : 'bg-transparent text-slate-400 hover:text-slate-600'
+                    ? 'bg-helix-accent/15 text-helix-accent shadow-sm'
+                    : 'bg-transparent text-helix-muted hover:text-helix-text'
                 }`}
               >
                 {name}
@@ -161,7 +161,7 @@ export default function FocusTimeline({ sessions = [] }) {
       </div>
       <div className="h-44 flex-1 min-h-[11rem] relative">
         {filtered.length === 0 ? (
-          <p className="text-sm text-slate-400 flex items-center justify-center h-full">
+          <p className="text-sm text-helix-muted flex items-center justify-center h-full">
             No focus blocks match this filter today.
           </p>
         ) : (
@@ -173,7 +173,7 @@ export default function FocusTimeline({ sessions = [] }) {
           />
         )}
         {filtered.length > 0 && (
-          <span className="absolute bottom-1 right-2 text-[10px] uppercase tracking-wider text-slate-400/80 pointer-events-none">
+          <span className="absolute bottom-1 right-2 text-[10px] uppercase tracking-wider text-helix-muted/80 pointer-events-none">
             Current
           </span>
         )}

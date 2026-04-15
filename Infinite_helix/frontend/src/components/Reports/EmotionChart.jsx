@@ -57,17 +57,17 @@ export default function EmotionChart({ distribution }) {
 
   return (
     <div className="glass-card p-6">
-      <h3 className="text-sm font-medium text-slate-500 mb-4">Emotional Wellness</h3>
+      <h3 className="text-sm font-medium text-helix-muted mb-4">Emotional Wellness</h3>
 
       <div className="flex items-center gap-6">
         {/* Doughnut */}
         <div className="relative w-44 h-44 flex-shrink-0">
           <Doughnut data={data} options={options} />
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none px-2 text-center">
-            <span className="text-lg font-semibold text-slate-800 capitalize leading-tight">
+            <span className="text-lg font-semibold text-helix-text capitalize leading-tight">
               {topEmotion?.[0] || '—'}
             </span>
-            <span className="text-xs text-slate-500 mt-1">{topEmotion?.[1] != null ? `${topEmotion[1]}%` : ''}</span>
+            <span className="text-xs text-helix-muted mt-1">{topEmotion?.[1] != null ? `${topEmotion[1]}%` : ''}</span>
           </div>
         </div>
 
@@ -79,14 +79,14 @@ export default function EmotionChart({ distribution }) {
                 className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                 style={{ backgroundColor: EMOTION_COLORS[emotion] || '#9490a8' }}
               />
-              <span className="text-xs text-slate-500 capitalize flex-1">{emotion}</span>
-              <div className="w-16 h-1.5 bg-slate-200/60 rounded-full overflow-hidden">
+              <span className="text-xs text-helix-muted capitalize flex-1">{emotion}</span>
+              <div className="w-16 h-1.5 bg-helix-border/30 rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full transition-all duration-500"
                   style={{ width: `${pct}%`, backgroundColor: EMOTION_COLORS[emotion] || '#9490a8' }}
                 />
               </div>
-              <span className="text-xs text-slate-800 font-medium w-8 text-right">{pct}%</span>
+              <span className="text-xs text-helix-text font-medium w-8 text-right">{pct}%</span>
             </div>
           ))}
         </div>

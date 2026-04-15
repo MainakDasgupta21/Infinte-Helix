@@ -104,26 +104,26 @@ export default function MotherhoodShield({
   return (
     <div className="space-y-5">
       {/* Hero — Trimester Ring */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-100 via-amber-50 to-amber-50 border border-amber-200 p-6">
-        <div className="absolute -top-16 -right-16 w-56 h-56 bg-gradient-radial from-amber-100 to-transparent rounded-full" />
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500/15 via-amber-500/10 to-amber-500/10 border border-amber-500/20 p-6">
+        <div className="absolute -top-16 -right-16 w-56 h-56 bg-gradient-radial from-amber-500/15 to-transparent rounded-full" />
         <div className="flex items-start justify-between flex-wrap gap-4 relative">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2">
               <HiOutlineHeart className="w-5 h-5 text-amber-600" />
               <span className="text-xs font-bold uppercase tracking-wider text-amber-600">{info.name}</span>
-              <span className="text-[10px] text-amber-700">{info.weeks}</span>
+              <span className="text-[10px] text-helix-muted">{info.weeks}</span>
             </div>
-            <p className="text-3xl font-serif font-bold text-amber-900">
+            <p className="text-3xl font-serif font-bold text-helix-text">
               Week {weeksPregnant}
             </p>
-            <p className="text-sm text-amber-700 mt-2 leading-relaxed max-w-md">{info.desc}</p>
+            <p className="text-sm text-helix-muted mt-2 leading-relaxed max-w-md">{info.desc}</p>
 
             <div className="mt-4 w-full max-w-xs">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-[10px] text-amber-700">Pregnancy Progress</span>
+                <span className="text-[10px] text-helix-muted">Pregnancy Progress</span>
                 <span className="text-[10px] font-semibold text-amber-600">{progress}%</span>
               </div>
-              <div className="h-2 rounded-full bg-amber-200 overflow-hidden">
+              <div className="h-2 rounded-full bg-helix-border/30 overflow-hidden">
                 <div
                   className="h-full rounded-full bg-sunrise-gradient transition-all duration-700"
                   style={{ width: `${progress}%` }}
@@ -133,40 +133,40 @@ export default function MotherhoodShield({
           </div>
 
           {daysUntilDue !== null && (
-            <div className="bg-amber-100 border border-amber-200 rounded-xl px-5 py-3 text-center shrink-0">
+            <div className="bg-amber-500/15 border border-amber-500/20 rounded-xl px-5 py-3 text-center shrink-0">
               <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Due Date</p>
-              <p className="text-2xl font-serif font-bold text-amber-900 mt-0.5">
+              <p className="text-2xl font-serif font-bold text-helix-text mt-0.5">
                 {daysUntilDue}
               </p>
-              <p className="text-xs text-amber-700">days to go</p>
+              <p className="text-xs text-helix-muted">days to go</p>
             </div>
           )}
         </div>
       </div>
 
       {/* The Gentle Nudge */}
-      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+      <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-5">
         <div className="flex items-start gap-3">
-          <div className="w-9 h-9 rounded-xl bg-amber-200 border border-amber-200 flex items-center justify-center shrink-0 mt-0.5">
+          <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/20 flex items-center justify-center shrink-0 mt-0.5">
             <HiOutlineHeart className="w-5 h-5 text-amber-600" />
           </div>
           <div>
             <h3 className="text-xs font-bold text-amber-600 uppercase tracking-wider mb-1">The Gentle Nudge</h3>
-            <p className="text-sm text-amber-900 leading-relaxed">{nudge}</p>
-            <p className="text-[10px] text-amber-700 mt-2 italic">{info.tip}</p>
+            <p className="text-sm text-helix-text leading-relaxed">{nudge}</p>
+            <p className="text-[10px] text-helix-muted mt-2 italic">{info.tip}</p>
           </div>
         </div>
       </div>
 
       {/* Cognitive Load Protector */}
-      <div className="rounded-2xl border border-amber-200 bg-white/70 backdrop-blur-sm p-5">
+      <div className="rounded-2xl border border-amber-500/20 bg-helix-surface/80 backdrop-blur-sm p-5">
         <div className="flex items-center gap-2 mb-4">
-          <div className="w-8 h-8 rounded-lg bg-amber-200 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-amber-500/20 flex items-center justify-center">
             <HiOutlineLightBulb className="w-4 h-4 text-amber-600" />
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-amber-900">Pregnancy Brain Support</h3>
-            <p className="text-[10px] text-amber-700">Large tasks auto-break into 10-min micro-steps</p>
+            <h3 className="text-sm font-semibold text-helix-text">Pregnancy Brain Support</h3>
+            <p className="text-[10px] text-helix-muted">Large tasks auto-break into 10-min micro-steps</p>
           </div>
         </div>
 
@@ -177,7 +177,7 @@ export default function MotherhoodShield({
             onChange={(e) => setNewTask(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && addTask()}
             placeholder="Add a task to break down..."
-            className="flex-1 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5 text-sm text-amber-900 placeholder:text-amber-700 focus:outline-none focus:border-amber-400 transition-all"
+            className="flex-1 bg-amber-500/10 border border-amber-500/20 rounded-xl px-3 py-2.5 text-sm text-helix-text placeholder:text-helix-muted focus:outline-none focus:border-helix-accent/50 focus:ring-1 focus:ring-helix-accent/10 transition-all"
           />
           <button
             onClick={addTask}
@@ -190,8 +190,8 @@ export default function MotherhoodShield({
 
         {microTasks.length === 0 ? (
           <div className="text-center py-6">
-            <HiOutlineClipboardList className="w-8 h-8 mx-auto text-amber-300 mb-2" />
-            <p className="text-xs text-amber-700">Add a task and it will be broken into tiny, manageable steps</p>
+            <HiOutlineClipboardList className="w-8 h-8 mx-auto text-helix-muted mb-2" />
+            <p className="text-xs text-helix-muted">Add a task and it will be broken into tiny, manageable steps</p>
           </div>
         ) : (
           <div className="space-y-4 max-h-72 overflow-y-auto pr-1">
@@ -199,14 +199,14 @@ export default function MotherhoodShield({
               const doneCount = task.steps.filter(s => s.done).length;
               const allDone = doneCount === task.steps.length;
               return (
-                <div key={taskIdx} className={`rounded-xl border p-4 transition-all ${allDone ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'}`}>
+                <div key={taskIdx} className={`rounded-xl border p-4 transition-all ${allDone ? 'border-emerald-500/20 bg-emerald-500/10' : 'border-amber-500/20 bg-amber-500/10'}`}>
                   <div className="flex items-center justify-between mb-2">
-                    <p className={`text-sm font-medium ${allDone ? 'text-emerald-600 line-through' : 'text-amber-900'}`}>
+                    <p className={`text-sm font-medium ${allDone ? 'text-emerald-600 line-through' : 'text-helix-text'}`}>
                       {task.original}
                     </p>
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] text-amber-700">{doneCount}/{task.steps.length}</span>
-                      <button onClick={() => removeTask(taskIdx)} className="p-1 rounded text-amber-700 hover:text-red-600 transition-colors">
+                      <span className="text-[10px] text-helix-muted">{doneCount}/{task.steps.length}</span>
+                      <button onClick={() => removeTask(taskIdx)} className="p-1 rounded text-helix-muted hover:text-red-600 transition-colors">
                         <HiOutlineTrash className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -216,16 +216,16 @@ export default function MotherhoodShield({
                       <button
                         key={step.id}
                         onClick={() => toggleStep(taskIdx, stepIdx)}
-                        className="w-full flex items-center gap-2.5 text-left p-2 rounded-lg hover:bg-amber-100 transition-colors group"
+                        className="w-full flex items-center gap-2.5 text-left p-2 rounded-lg hover:bg-helix-border/30 transition-colors group"
                       >
                         <div className={`w-4.5 h-4.5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
                           step.done
                             ? 'bg-emerald-500 border-emerald-500'
-                            : 'border-amber-300 group-hover:border-amber-500'
+                            : 'border-amber-500/30 group-hover:border-amber-500'
                         }`}>
                           {step.done && <HiOutlineCheck className="w-3 h-3 text-white" />}
                         </div>
-                        <span className={`text-xs leading-snug ${step.done ? 'text-amber-700 line-through' : 'text-amber-900'}`}>
+                        <span className={`text-xs leading-snug ${step.done ? 'text-helix-muted line-through' : 'text-helix-text'}`}>
                           {step.text}
                         </span>
                       </button>
@@ -246,7 +246,7 @@ export default function MotherhoodShield({
       />
 
       {/* Privacy badge */}
-      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-100 border border-amber-200">
+      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/15 border border-amber-500/20">
         <HiOutlineShieldCheck className="w-3.5 h-3.5 text-amber-600" />
         <span className="text-xs text-amber-600 font-medium">All data stays on your device</span>
       </div>

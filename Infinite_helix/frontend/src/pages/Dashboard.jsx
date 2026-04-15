@@ -43,15 +43,15 @@ function workIntensityLabel(typingIntensity) {
 function DashboardSkeleton() {
   return (
     <div className="max-w-[1400px] mx-auto animate-pulse space-y-5">
-      <div className="h-24 bg-white rounded-2xl border border-slate-200" />
+      <div className="h-24 bg-helix-card rounded-2xl border border-helix-border/50" />
       <div className="grid grid-cols-12 gap-5">
-        <div className="col-span-12 md:col-span-4 h-60 bg-white rounded-2xl border border-slate-200" />
-        <div className="col-span-12 md:col-span-4 h-60 bg-white rounded-2xl border border-slate-200" />
-        <div className="col-span-12 md:col-span-4 h-60 bg-white rounded-2xl border border-slate-200" />
+        <div className="col-span-12 md:col-span-4 h-60 bg-helix-card rounded-2xl border border-helix-border/50" />
+        <div className="col-span-12 md:col-span-4 h-60 bg-helix-card rounded-2xl border border-helix-border/50" />
+        <div className="col-span-12 md:col-span-4 h-60 bg-helix-card rounded-2xl border border-helix-border/50" />
       </div>
       <div className="grid grid-cols-12 gap-5">
-        <div className="col-span-12 lg:col-span-8 h-64 bg-white rounded-2xl border border-slate-200" />
-        <div className="col-span-12 lg:col-span-4 h-64 bg-white rounded-2xl border border-slate-200" />
+        <div className="col-span-12 lg:col-span-8 h-64 bg-helix-card rounded-2xl border border-helix-border/50" />
+        <div className="col-span-12 lg:col-span-4 h-64 bg-helix-card rounded-2xl border border-helix-border/50" />
       </div>
     </div>
   );
@@ -94,27 +94,27 @@ export default function Dashboard() {
     <div className="max-w-[1400px] mx-auto space-y-5 animate-slide-up">
       {/* ── Hero Greeting ── */}
       <div className="bento-card-lg relative overflow-hidden">
-        <div className="absolute -top-20 -right-20 w-60 h-60 bg-gradient-radial from-violet-100/50 to-transparent rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute -top-20 -right-20 w-60 h-60 bg-gradient-radial from-helix-accent/10 to-transparent rounded-full blur-2xl pointer-events-none" />
         <div className="relative flex items-start justify-between flex-wrap gap-4">
           <div className="min-w-0 flex-1">
-            <h1 className="text-2xl font-serif font-bold text-slate-900 tracking-tight">
+            <h1 className="text-2xl font-serif font-bold text-helix-text tracking-tight">
               {getGreeting()}, {user?.displayName?.split(' ')[0] || 'there'}
             </h1>
-            <p className="text-sm text-slate-500 mt-1.5 leading-relaxed font-medium">
+            <p className="text-sm text-helix-muted mt-1.5 leading-relaxed font-medium">
               {wellnessStatusLine(todayMetrics.score)}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2 shrink-0">
-            <span className="inline-flex items-center gap-2 rounded-xl bg-violet-100 border border-violet-200 px-3.5 py-1.5 text-xs font-bold text-violet-700">
-              <span className="text-violet-500 font-semibold">Focus</span>
+            <span className="helix-badge helix-badge-accent">
+              <span className="font-semibold">Focus</span>
               <span className="tabular-nums">{todayMetrics.focusSessions.length}</span>
             </span>
-            <span className="inline-flex items-center gap-2 rounded-xl bg-rose-100 border border-rose-200 px-3.5 py-1.5 text-xs font-bold text-rose-700">
-              <span className="text-rose-500 font-semibold">Breaks</span>
+            <span className="helix-badge helix-badge-pink">
+              <span className="font-semibold">Breaks</span>
               <span className="tabular-nums">{todayMetrics.breaks?.taken ?? 0}</span>
             </span>
-            <span className="inline-flex items-center gap-2 rounded-xl bg-emerald-100 border border-emerald-200 px-3.5 py-1.5 text-xs font-bold text-emerald-700">
-              <span className="text-emerald-500 font-semibold">Self Care</span>
+            <span className="helix-badge helix-badge-mint">
+              <span className="font-semibold">Self Care</span>
               <span className="tabular-nums">{todayMetrics.selfCare?.eye_rest ?? 0}</span>
             </span>
           </div>
@@ -169,24 +169,24 @@ export default function Dashboard() {
             {trackerStatus === 'connected' ? (
               <>
                 <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-60" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-helix-mint opacity-60" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-helix-mint" />
                 </span>
-                <span className="text-xs text-slate-600 font-semibold">
+                <span className="text-xs text-helix-text font-semibold">
                   AI Wellness Engine Active
                 </span>
               </>
             ) : (
               <>
-                <div className="w-2 h-2 rounded-full bg-rose-400 animate-pulse" />
-                <span className="text-xs text-slate-500">Connecting to your wellness flow...</span>
+                <div className="w-2 h-2 rounded-full bg-helix-red animate-pulse" />
+                <span className="text-xs text-helix-muted">Connecting to your wellness flow...</span>
               </>
             )}
           </div>
-          <div className="flex items-center gap-4 text-xs text-slate-500 flex-wrap justify-end">
-            <span>Activity: <span className="text-slate-700 font-bold">{typingActivityLabel(ks)}</span></span>
-            <span>Screen: <span className="text-slate-700 font-bold">{todayMetrics.screenTime?.total ?? 0}h</span></span>
-            <span>Intensity: <span className="text-slate-700 font-bold">{workIntensityLabel(intensity)}</span></span>
+          <div className="flex items-center gap-4 text-xs text-helix-muted flex-wrap justify-end">
+            <span>Activity: <span className="text-helix-text font-bold">{typingActivityLabel(ks)}</span></span>
+            <span>Screen: <span className="text-helix-text font-bold">{todayMetrics.screenTime?.total ?? 0}h</span></span>
+            <span>Intensity: <span className="text-helix-text font-bold">{workIntensityLabel(intensity)}</span></span>
           </div>
         </div>
       </div>

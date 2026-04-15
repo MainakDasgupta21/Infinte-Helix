@@ -52,6 +52,7 @@ def send_message():
     user_id = request.uid
     message = data.get('message', '').strip()[:2000]
     page_context = data.get('page_context') if isinstance(data.get('page_context'), dict) else {}
+    session_id = data.get('session_id')
 
     if not message:
         return jsonify({'error': 'Message is required'}), 400
@@ -68,9 +69,43 @@ def send_message():
         current_page, has_wellness, has_page_data, other_pages,
     )
 
-    response = chatbot_service.process_message(user_id, message, app_context)
+    response = chatbot_service.process_message(user_id, message, app_context, session_id=session_id)
 
     return jsonify(response)
+
+
+@chatbot_bp.route('/sessions', methods=['GET'])
+@require_auth
+def list_sessions():
+    user_id = request.uid
+    sessions = chatbot_service.get_sessions(user_id)
+    return jsonify(sessions)
+
+
+@chatbot_bp.route('/sessions', methods=['POST'])
+@require_auth
+def create_session():
+    user_id = request.uid
+    data = request.get_json(silent=True) or {}
+    title = data.get('title')
+    session = chatbot_service.create_session(user_id, title=title)
+    return jsonify(session), 201
+
+
+@chatbot_bp.route('/sessions/<session_id>', methods=['DELETE'])
+@require_auth
+def delete_session(session_id):
+    user_id = request.uid
+    chatbot_service.delete_session(user_id, session_id)
+    return jsonify({'status': 'deleted'})
+
+
+@chatbot_bp.route('/sessions/<session_id>/messages', methods=['GET'])
+@require_auth
+def get_session_messages(session_id):
+    limit = request.args.get('limit', 200, type=int)
+    messages = chatbot_service.get_session_messages(session_id, limit)
+    return jsonify(messages)
 
 
 @chatbot_bp.route('/history', methods=['GET'])
@@ -78,7 +113,8 @@ def send_message():
 def get_history():
     user_id = request.uid
     limit = request.args.get('limit', 50, type=int)
-    history = chatbot_service.get_history(user_id, limit)
+    session_id = request.args.get('session_id')
+    history = chatbot_service.get_history(user_id, limit, session_id=session_id)
     return jsonify(history)
 
 
@@ -86,7 +122,9 @@ def get_history():
 @require_auth
 def clear_history():
     user_id = request.uid
-    chatbot_service.clear_history(user_id)
+    data = request.get_json(silent=True) or {}
+    session_id = data.get('session_id')
+    chatbot_service.clear_history(user_id, session_id=session_id)
     return jsonify({'status': 'cleared'})
 
 

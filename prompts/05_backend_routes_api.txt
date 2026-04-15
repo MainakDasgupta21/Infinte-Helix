@@ -1,0 +1,408 @@
+================================================================================
+ONE-SHOT PROMPT — PART 5: BACKEND ROUTES & API ENDPOINTS
+================================================================================
+
+Create 17 Flask Blueprint modules under backend/app/routes/. Each blueprint
+handles a specific feature domain. All routes are prefixed with /api/.
+
+Every route that requires authentication should extract the user ID from the
+Authorization: Bearer <token> header. In demo mode, decode the Firebase token
+or generate a local user ID. Create a helper decorator or inline extraction
+pattern: get the token, verify it with Firebase Admin SDK (or use a fallback
+local-{timestamp} ID in demo mode).
+
+--------------------------------------------------------------------------------
+1. AUTH ROUTES — backend/app/routes/auth_routes.py
+   Blueprint: auth_bp, prefix: /api/auth
+--------------------------------------------------------------------------------
+
+POST /api/auth/register
+  Input: Bearer token + JSON body { display_name, email, photo_url? }
+  Behavior:
+    - Verify Firebase ID token to get uid, email, etc.
+    - If no Firebase: generate uid = "local-{timestamp}"
+    - Save user document to Firestore 'users' collection or LocalStore
+    - Return { status: 'ok', user: { uid, email, display_name, ... } }
+
+POST /api/auth/sync
+  Input: Bearer token
+  Behavior:
+    - Verify token, extract user info
+    - Update last_login timestamp in user document
+    - Return { status: 'ok', synced: true }
+
+GET /api/auth/profile
+  Input: Bearer token (require_auth decorator)
+  Behavior:
+    - Read user document from Firestore/LocalStore
+    - Return { status: 'ok', user: { ... } }
+
+--------------------------------------------------------------------------------
+2. EMOTION ROUTES — backend/app/routes/emotion_routes.py
+   Blueprint: emotion_bp, prefix: /api/emotion
+--------------------------------------------------------------------------------
+
+POST /api/emotion/analyze
+  Input: JSON { text: string }
+  Behavior:
+    - Get emotion_detector from current_app
+    - Call emotion_detector.analyze(text)
+    - Also call sentiment_analyzer.analyze(text)
+    - Return {
+        emotion, confidence, all_emotions,
+        sentiment, sentiment_confidence, reframe, all_sentiments
+      }
+    - If no text: return neutral defaults
+
+--------------------------------------------------------------------------------
+3. SENTIMENT ROUTES — backend/app/routes/sentiment_routes.py
+   Blueprint: sentiment_bp, prefix: /api/sentiment
+--------------------------------------------------------------------------------
+
+POST /api/sentiment/analyze
+  Input: JSON { text: string }
+  Behavior:
+    - Call sentiment_analyzer.analyze(text)
+    - Return { sentiment, confidence, all_sentiments, reframe }
+
+--------------------------------------------------------------------------------
+4. JOURNAL ROUTES — backend/app/routes/journal_routes.py
+   Blueprint: journal_bp, prefix: /api/journal
+--------------------------------------------------------------------------------
+
+POST /api/journal
+  Input: JSON { text: string, user_id?: string }
+  Behavior:
+    - Analyze text with emotion_detector and sentiment_analyzer
+    - Build entry dict with text, emotion, confidence, sentiment, reframe,
+      all_emotions, all_sentiments
+    - Save via save_journal_entry(user_id, entry)
+    - Also save mood log via save_mood_log(user_id, mood_data)
+    - Return { status: 'ok', entry: { ... } }
+
+GET /api/journal
+  Input: Query params { user_id?, limit? }
+  Behavior:
+    - Call get_journal_entries(user_id, limit)
+    - Return { entries: [...] }
+
+GET /api/journal/<entry_id>
+  Behavior: Return specific entry (stub/lookup)
+
+--------------------------------------------------------------------------------
+5. DASHBOARD ROUTES — backend/app/routes/dashboard_routes.py
+   Blueprint: dashboard_bp, prefix: /api/dashboard
+--------------------------------------------------------------------------------
+
+GET /api/dashboard/today
+  Input: Query param { user_id? }
+  Behavior:
+    1. Get screen tracker data from app.tracker (screen_tracker module)
+       - Active window, top apps, total screen hours, breakdown by category
+    2. Save screen time snapshot via save_screen_time()
+    3. Get activity monitor stats (keystrokes, mouse_clicks, idle_seconds,
+       typing_intensity, last_activity, continuous_work_minutes)
+    4. Get hydration today via get_hydration_today()
+    5. Calculate wellness score via _calculate_wellness_score() using:
+       - Hydration (30% weight, goal 2000ml)
+       - Breaks (30% weight, 6 suggested/day)
+       - Self-care (20% weight)
+       - Activity (20% weight)
+    6. Get current mood from recent mood logs
+    7. Get activity streak via get_activity_streak()
+    8. Get self-care counts via get_selfcare_today()
+    9. Build focus sessions from activity data via _build_focus_sessions()
+    10. Return comprehensive dashboard object:
+        { score, mood, streakDays, screenTime: { total, breakdown, topApps },
+          activity: { keystrokes, mouse_clicks, idle_seconds, typing_intensity,
+                      last_activity, continuous_work_minutes },
+          breaks: { taken, suggested, lastBreak },
+          hydration: { ml_today, entries, goal_ml },
+          selfCare: { stretch, eye_rest },
+          focusSessions: [...],
+          timestamp }
+
+GET /api/dashboard/screen-history
+  Input: Query param { days? } (default 7)
+  Behavior:
+    - Call get_screen_time_history(user_id, days)
+    - Return { history: [...] }
+
+Helper: _calculate_wellness_score(hydration, breaks, selfCare, activity)
+  Weighted average: hydration 30%, breaks 30%, self-care 20%, activity 20%
+  Each component normalized to 0-100 scale, clamped to 0-100 final.
+
+Helper: _build_focus_sessions(activity_data)
+  Parse activity timestamps into focus session blocks with start, end, duration.
+
+Helper: _get_current_mood(user_id)
+  Get most recent mood log's emotion, or 'neutral' if none.
+
+--------------------------------------------------------------------------------
+6. REPORTS ROUTES — backend/app/routes/reports_routes.py
+   Blueprint: reports_bp, prefix: /api/reports
+--------------------------------------------------------------------------------
+
+GET /api/reports/weekly
+  Input: Query param { user_id? }
+  Behavior:
+    - Call wellness_report_service.generate_weekly_report(user_id)
+    - Return the report object with daily scores, emotion distribution,
+      work hours, self-care metrics, insights, recommendations
+
+--------------------------------------------------------------------------------
+7. TRACKER ROUTES — backend/app/routes/tracker_routes.py
+   Blueprint: tracker_bp, prefix: /api/tracker
+--------------------------------------------------------------------------------
+
+GET /api/tracker/status
+  Behavior:
+    - Get activity_monitor from app module
+    - If running: return stats (keystrokes, mouse_clicks, idle_seconds, etc.)
+    - If not running: return { status: 'stopped' }
+
+POST /api/tracker/start
+  Behavior: Start the activity monitor if not running
+
+POST /api/tracker/stop
+  Behavior: Stop the activity monitor
+
+--------------------------------------------------------------------------------
+8. NUDGE ROUTES — backend/app/routes/nudge_routes.py
+   Blueprint: nudge_bp, prefix: /api/nudge
+--------------------------------------------------------------------------------
+
+POST /api/nudge/generate
+  Input: JSON { context: { ... } } — current user activity context
+  Behavior:
+    - Pass context to NudgeEngine.generate(context)
+    - Return generated nudge or null
+
+GET /api/nudge/pending
+  Behavior:
+    - Return list of pending (undismissed) nudges
+
+POST /api/nudge/<nudge_id>/dismiss
+  Behavior:
+    - Mark nudge as dismissed
+    - Return { status: 'ok' }
+
+--------------------------------------------------------------------------------
+9. CALENDAR ROUTES — backend/app/routes/calendar_routes.py
+   Blueprint: calendar_bp, prefix: /api/calendar
+--------------------------------------------------------------------------------
+
+GET /api/calendar/meetings
+  Behavior: Fetch today's meetings from connected calendar provider
+
+GET /api/calendar/next
+  Behavior: Get the next upcoming meeting
+
+GET /api/calendar/status
+  Behavior: Return connection status for each provider (google, microsoft)
+
+GET /api/calendar/authorize
+  Input: Query param { provider } ('google' or 'microsoft')
+  Behavior: Generate OAuth authorization URL, return { auth_url }
+
+GET /api/calendar/google/callback
+  Behavior: Handle Google OAuth callback, store tokens
+
+GET /api/calendar/callback
+  Behavior: Handle Microsoft OAuth callback, store tokens
+
+POST /api/calendar/disconnect
+  Input: JSON { provider }
+  Behavior: Delete stored calendar token for provider
+
+POST /api/calendar/events
+  Input: JSON event object
+  Behavior: Create a calendar event via the provider API
+
+--------------------------------------------------------------------------------
+10. CYCLE ROUTES — backend/app/routes/cycle_routes.py
+    Blueprint: cycle_bp, prefix: /api/cycle
+--------------------------------------------------------------------------------
+
+GET /api/cycle/suggestions/<phase>
+  Behavior:
+    - Return phase-specific wellness suggestions
+    - Phases: menstrual, follicular, ovulatory, luteal
+    - Each phase returns tailored nudge content, energy advice, self-care tips
+
+POST /api/cycle/phase
+  Input: JSON { phase }
+  Behavior: Set current cycle phase (in-memory or session)
+
+--------------------------------------------------------------------------------
+11. HYDRATION ROUTES — backend/app/routes/hydration_routes.py
+    Blueprint: hydration_bp, prefix: /api/hydration
+--------------------------------------------------------------------------------
+
+POST /api/hydration/log
+  Input: JSON { amount_ml? } (default 250)
+  Behavior:
+    - Call log_hydration(user_id, amount_ml)
+    - Return { status: 'ok', log: { ... } }
+
+GET /api/hydration/today
+  Input: Query param { user_id? }
+  Behavior:
+    - Call get_hydration_today(user_id)
+    - Return { ml_today, entries }
+
+--------------------------------------------------------------------------------
+12. SELF-CARE ROUTES — backend/app/routes/selfcare_routes.py
+    Blueprint: selfcare_bp, prefix: /api/selfcare
+--------------------------------------------------------------------------------
+
+POST /api/selfcare/log
+  Input: JSON { action } ('stretch' or 'eye_rest')
+  Behavior:
+    - Call log_selfcare_action(user_id, action)
+    - Return { status: 'ok', log: { ... } }
+
+GET /api/selfcare/today
+  Input: Query param { user_id? }
+  Behavior:
+    - Call get_selfcare_today(user_id)
+    - Return { stretch: int, eye_rest: int }
+
+--------------------------------------------------------------------------------
+13. PRIVATE CARE ROUTES — backend/app/routes/privatecare_routes.py
+    Blueprint: privatecare_bp, prefix: /api/privatecare
+--------------------------------------------------------------------------------
+
+POST /api/privatecare/log
+  Input: JSON { type, note? }
+  Behavior:
+    - Call log_privatecare(user_id, type, note)
+    - Return { status: 'ok', log: { ... } }
+
+GET /api/privatecare/history
+  Input: Query param { days? } (default 90)
+  Behavior:
+    - Call get_privatecare_logs(user_id, days)
+    - Return { logs: [...] }
+
+GET /api/privatecare/period-history
+  Input: Query params { start, end }
+  Behavior:
+    - Call get_privatecare_for_period(user_id, start, end)
+    - Return { logs: [...] }
+
+--------------------------------------------------------------------------------
+14. TODO ROUTES — backend/app/routes/todo_routes.py
+    Blueprint: todo_bp, prefix: /api/todos
+--------------------------------------------------------------------------------
+
+POST /api/todos
+  Input: JSON { text, remind_at?, date?, category?, user_id? }
+  Behavior:
+    - Call save_todo(user_id, text, remind_at, date, category)
+    - Return { status: 'ok', todo: { ... } }
+
+GET /api/todos/today
+  Input: Query param { user_id? }
+  Behavior: Return today's todos
+
+GET /api/todos/date/<date>
+  Input: Query param { user_id? }
+  Behavior: Return todos for specific date (YYYY-MM-DD)
+
+GET /api/todos/upcoming
+  Input: Query param { user_id? }
+  Behavior: Return incomplete todos for today and future
+
+GET /api/todos/history
+  Input: Query params { user_id?, days? }
+  Behavior: Return all todos for last N days
+
+POST /api/todos/<todo_id>/toggle
+  Input: JSON { user_id? }
+  Behavior: Toggle completed status, return updated todo
+
+DELETE /api/todos/<todo_id>
+  Input: JSON body { user_id? }
+  Behavior: Delete the todo
+
+--------------------------------------------------------------------------------
+15. USER ROUTES — backend/app/routes/user_routes.py
+    Blueprint: user_bp, prefix: /api/user
+--------------------------------------------------------------------------------
+
+GET /api/user/settings
+  Behavior: Return user settings from Firestore 'users' doc or LocalStore
+
+PUT /api/user/settings
+  Input: JSON { settings: { ... } }
+  Behavior: Update user settings, return { status: 'ok', settings }
+
+GET /api/user/profile
+  Behavior: Return user profile data
+
+--------------------------------------------------------------------------------
+16. CHATBOT ROUTES — backend/app/routes/chatbot_routes.py
+    Blueprint: chatbot_bp, prefix: /api/chat
+--------------------------------------------------------------------------------
+
+POST /api/chat/message
+  Input: JSON { message, page_context?, session_id? }
+  Behavior:
+    - Gather app context (settings, hydration, activity stats)
+    - Call chatbot_service.process_message(message, page_context,
+        session_id, app_context)
+    - Return { reply, ai_powered, session_id, quick_replies? }
+
+GET /api/chat/sessions
+  Behavior: Return list of chat sessions
+
+POST /api/chat/sessions
+  Input: JSON { title? }
+  Behavior: Create new session, return { session }
+
+DELETE /api/chat/sessions/<session_id>
+  Behavior: Delete session and its messages
+
+GET /api/chat/sessions/<session_id>/messages
+  Input: Query param { limit? }
+  Behavior: Return messages for the session
+
+GET /api/chat/history
+  Input: Query param { limit? }
+  Behavior: Return recent chat history across sessions
+
+DELETE /api/chat/history
+  Input: JSON { session_id? }
+  Behavior: Clear chat history
+
+GET /api/chat/quick-replies
+  Behavior: Return contextual quick reply suggestions
+
+--------------------------------------------------------------------------------
+17. STRESS ROUTES — backend/app/routes/stress_routes.py
+    Blueprint: stress_bp, prefix: /api/stress
+--------------------------------------------------------------------------------
+
+POST /api/stress/ingest
+  Input: JSON { typing_speed, delete_ratio, burst_count, sample_seconds, ... }
+  Behavior:
+    - Store in module-level _latest_metrics dict
+    - Append to _stress_log list with timestamp and is_stressed flag
+    - Determine is_stressed based on thresholds
+    - Return { status: 'ok', is_stressed, level }
+
+GET /api/stress/latest
+  Behavior: Return _latest_metrics or empty/neutral state
+
+GET /api/stress/log
+  Behavior: Return full _stress_log list
+
+POST /api/stress/resolve
+  Behavior:
+    - Mark latest stress event as resolved
+    - Append resolution entry to _stress_log
+    - Return { status: 'ok' }
+
+Note: Stress data is in-memory only (not persisted to Firestore/SQLite).
+It resets on server restart.

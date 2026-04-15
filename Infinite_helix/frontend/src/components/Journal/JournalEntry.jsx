@@ -22,14 +22,14 @@ export default function JournalEntry({ onSubmit, isAnalyzing }) {
   };
 
   return (
-    <div className="glass-card p-6 border border-slate-200">
+    <div className="glass-card p-6 border border-helix-border/50">
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-8 h-8 rounded-xl bg-violet-100 border border-violet-200 flex items-center justify-center">
-          <HiOutlinePencilAlt className="w-4 h-4 text-violet-600" />
+        <div className="w-8 h-8 rounded-xl bg-helix-accent/15 border border-helix-accent/20 flex items-center justify-center">
+          <HiOutlinePencilAlt className="w-4 h-4 text-helix-accent" />
         </div>
         <div>
-          <h3 className="text-sm font-medium text-slate-800">Emotion Journal</h3>
-          <p className="text-xs text-slate-500">Write freely — get real advice, not just labels</p>
+          <h3 className="text-sm font-medium text-helix-text">Emotion Journal</h3>
+          <p className="text-xs text-helix-muted">Write freely — get real advice, not just labels</p>
         </div>
       </div>
 
@@ -40,12 +40,12 @@ export default function JournalEntry({ onSubmit, isAnalyzing }) {
             onChange={(e) => setText(e.target.value)}
             placeholder={prompt}
             rows={4}
-            className="w-full bg-slate-100/50 border border-slate-200 rounded-xl p-4 text-sm text-slate-800
-                       placeholder:text-slate-500 resize-none focus:outline-none focus:border-violet-300
-                       focus:ring-1 focus:ring-violet-200 transition-all"
+            className="w-full bg-helix-surface/50 border border-helix-border/50 rounded-xl p-4 text-sm text-helix-text
+                       placeholder:text-helix-muted resize-none focus:outline-none focus:border-helix-accent/50
+                       focus:ring-1 focus:ring-helix-accent/10 transition-all"
           />
           <div className="absolute bottom-3 right-3 flex items-center gap-2">
-            <span className="text-xs text-slate-500">{text.length} chars</span>
+            <span className="text-xs text-helix-muted">{text.length} chars</span>
           </div>
         </div>
 
