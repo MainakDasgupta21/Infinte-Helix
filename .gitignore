@@ -9,3 +9,4 @@ __pycache__/
 **/data/local.db
 **/data/local.db-wal
 **/data/local.db-shm
+**/build/

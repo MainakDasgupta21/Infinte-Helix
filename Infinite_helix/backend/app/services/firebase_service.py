@@ -1,4 +1,5 @@
 import os
+import json
 import logging
 import uuid
 from datetime import datetime, timedelta
@@ -16,6 +17,27 @@ _db = None
 _initialized = False
 
 
+def _load_firebase_credentials():
+    """Load Firebase credentials from env var JSON string or file path."""
+    import firebase_admin
+    from firebase_admin import credentials
+
+    cred_json = os.getenv('FIREBASE_CREDENTIALS_JSON')
+    if cred_json:
+        cred_dict = json.loads(cred_json)
+        return credentials.Certificate(cred_dict)
+
+    cred_path = os.getenv('FIREBASE_CREDENTIALS_PATH', './config/firebase-credentials.json')
+    if not os.path.isabs(cred_path):
+        cred_path = os.path.join(_BACKEND_ROOT, cred_path)
+    cred_path = os.path.normpath(cred_path)
+
+    if os.path.exists(cred_path):
+        return credentials.Certificate(cred_path)
+
+    return None
+
+
 def init_firebase():
     """Initialize Firebase Admin SDK. Safe to call multiple times."""
     global _db, _initialized
@@ -24,22 +46,18 @@ def init_firebase():
 
     try:
         import firebase_admin
-        from firebase_admin import credentials, firestore
+        from firebase_admin import firestore
 
-        cred_path = os.getenv('FIREBASE_CREDENTIALS_PATH', './config/firebase-credentials.json')
-        if not os.path.isabs(cred_path):
-            cred_path = os.path.join(_BACKEND_ROOT, cred_path)
-        cred_path = os.path.normpath(cred_path)
-
-        if os.path.exists(cred_path):
-            cred = credentials.Certificate(cred_path)
+        cred = _load_firebase_credentials()
+        if cred:
             firebase_admin.initialize_app(cred)
             _db = firestore.client()
             logger.info('Firebase Admin SDK initialized successfully')
         else:
             logger.warning(
-                'Firebase credentials not found at %s. '
-                'Using SQLite local storage (data persists across restarts).', cred_path
+                'Firebase credentials not found (checked FIREBASE_CREDENTIALS_JSON env var '
+                'and FIREBASE_CREDENTIALS_PATH file). '
+                'Using SQLite local storage (data persists across restarts).'
             )
             _db = None
     except Exception as e:

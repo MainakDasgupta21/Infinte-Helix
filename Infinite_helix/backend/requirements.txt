@@ -4,17 +4,20 @@
 flask>=3.0.0
 flask-cors>=4.0.0
 
+# Production WSGI server
+gunicorn>=21.2.0
+
 # AI / ML
 transformers>=4.36.0
 torch>=2.1.0
 google-genai>=1.0.0
 groq>=1.0.0
 
-# Work Behavior Tracking
+# Work Behavior Tracking (optional — gracefully skipped on headless/cloud)
 psutil>=5.9.0
 pynput>=1.7.6
 
-# Desktop Notifications
+# Desktop Notifications (optional — skipped on headless/cloud)
 plyer>=2.1.0
 
 # Firebase
