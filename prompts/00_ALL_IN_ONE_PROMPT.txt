@@ -1,0 +1,1147 @@
+================================================================================
+CURSOR AI — ALL-IN-ONE BUILD PROMPT
+================================================================================
+PROJECT: Infinite Helix — AI-Powered Micro-Wellness & Productivity Assistant
+         for Women Employees
+================================================================================
+
+Build a complete full-stack web application called "Infinite Helix". It is
+a background AI assistant that helps women employees manage work, emotions,
+energy, and mental well-being through context-aware wellness nudges, emotion AI,
+an LLM-powered chatbot, and optional cycle-aware insights — all with a
+beautiful dark-first UI.
+
+The project must support both a zero-config demo mode (SQLite + mock AI) and
+a full production mode (Firebase + HuggingFace models + Groq LLM).
+
+Build it step-by-step, file-by-file, following the instructions below exactly.
+
+################################################################################
+##                                                                            ##
+##  SECTION 1 — PROJECT OVERVIEW & FEATURES                                   ##
+##                                                                            ##
+################################################################################
+
+PROJECT NAME: Infinite Helix
+TAGLINE: "AI Micro Wellness Assistant"
+TARGET AUDIENCE: Women employees in office/remote work environments
+
+VISION & GOALS:
+1. Supportive, non-intrusive wellness nudges during the workday (hydration,
+   stretch, eye rest, breathing exercises).
+2. Track work behavior (keyboard/mouse activity, screen time, idle periods)
+   to detect fatigue and stress patterns.
+3. Emotion and sentiment analysis on journal entries using AI, with supportive
+   reframing for negative sentiments.
+4. Optional, private menstrual cycle tracker adjusting energy forecasts and
+   nudge tone based on cycle phase.
+5. Google Calendar and Microsoft Graph integration to detect upcoming meetings
+   and suggest pre-meeting calm exercises.
+6. Conversational AI chatbot ("Helix") that is page-context-aware and delivers
+   personalized wellness advice via Groq LLM (llama-3.3-70b-versatile).
+7. Weekly wellness report cards with printable/downloadable reports.
+8. All cycle/pregnancy data stored strictly on-device (localStorage) for privacy.
+9. Support both a full Firebase cloud mode and a zero-config demo mode with
+   SQLite fallback and mock AI models.
+
+CORE FEATURES (15 total):
+
+1. WORK BEHAVIOR TRACKING — pynput keyboard/mouse monitoring, idle detection
+   (60s threshold), continuous work monitoring (120 min fatigue threshold),
+   typing intensity, psutil screen time tracking with app categorization.
+
+2. CONTEXT-AWARE WELLNESS NUDGES — hydration, stretch, eye rest, breathing
+   reminders with cooldown (30 min production / 5 min demo), priority-based
+   evaluation, dismissible feed on dashboard.
+
+3. EMOTION & SENTIMENT AI — HuggingFace emotion
+   (j-hartmann/emotion-english-distilroberta-base, 7 classes: joy, sadness,
+   anger, fear, surprise, disgust, neutral) + sentiment
+   (cardiffnlp/twitter-roberta-base-sentiment, 3 classes). Supportive
+   reframing for negative entries. Demo mode: keyword-based mock classifiers.
+
+4. EMOTION JOURNAL — write entries, instant AI analysis with confidence
+   scores, entry history with emotion badges, AI-generated supportive responses.
+
+5. CYCLE ENERGY MODE (Optional, Private) — 28-day cycle model with 4 phases:
+   Days 1-5 Menstrual (rest-focused), Days 6-13 Follicular (energy rising),
+   Days 14-16 Ovulatory (peak energy), Days 17-28 Luteal (winding down).
+   Cycle ring SVG donut, energy forecast, mood/flow/symptom logging.
+   ALL data stored in localStorage ONLY — never sent to server.
+
+6. PREGNANCY / MOTHERHOOD SHIELD MODE — toggle between cycle and pregnancy,
+   due date with trimester calculation, week-by-week tracking, appointment
+   countdown, adapted deep pelvic breathing exercises.
+
+7. PRE-MEETING CALM — Google Calendar + Microsoft Graph integration,
+   detects meetings, suggests breathing/confidence exercises,
+   ConfidenceBreath component with guided breathing animation.
+
+8. AI CHATBOT ("Helix") — Groq API (llama-3.3-70b-versatile), page-context
+   awareness, 20 intent categories via regex, template fallback without key,
+   session management, message history, emotional trajectory tracking,
+   quick reply suggestions, crisis/distress detection with helpline numbers.
+
+9. DASHBOARD — real-time wellness score (0-100), productivity score with
+   streak, screen time donut chart, break balance, focus timeline, hydration
+   tracker (250ml/glass), self-care tracker, today's tasks widget, nudge feed,
+   AI Wellness Engine status indicator.
+
+10. REPORTS & ANALYTICS — 3-tab Reports page:
+    Tab 1: Digital Body Language (typing patterns, stress events timeline)
+    Tab 2: Daily Wellness Report (metrics, mental load, printable HTML)
+    Tab 3: Weekly Report Card (charts via Chart.js, printable HTML with
+    inline SVG charts). Manager-safe vs private report variants.
+
+11. TODO / TASK MANAGEMENT — tasks with categories (work/personal/health/
+    meeting), reminders, today/upcoming/history views, date navigation,
+    overdue highlighting.
+
+12. SETTINGS — meal reminder configuration, break intervals, notification
+    preferences, theme toggle (dark/light).
+
+13. AUTHENTICATION — Firebase Auth (email/password + Google OAuth 2.0),
+    Bearer token on all API requests. Demo mode: local user ID generation.
+
+14. MULTI-CHANNEL NOTIFICATIONS — plyer desktop toasts, browser Web
+    Notifications API, in-app notification overlay, stress intervention
+    toast (full-screen calming), break reminder toast.
+
+15. STRESS DETECTION — standalone stress_agent.py using pynput, tracks
+    typing patterns (speed, delete ratio, burst detection), posts to
+    /api/stress/ingest every 10s, frontend polls /stress/latest,
+    stress intervention overlay with breathing exercise.
+
+DESIGN PHILOSOPHY:
+- Supportive, not surveillance — nudges feel caring, not intrusive
+- Privacy-first — cycle/pregnancy data stays on-device (localStorage)
+- Inclusivity — cycle tracking is entirely optional and toggleable
+- Beautiful UI — dark-first bento-grid layout, glass morphism cards,
+  smooth Framer Motion animations, Plus Jakarta Sans typeface
+- Zero-config demo — works immediately without Firebase, Groq, or ML models
+- Women-centric but not exclusionary
+
+
+################################################################################
+##                                                                            ##
+##  SECTION 2 — ARCHITECTURE & TECH STACK                                     ##
+##                                                                            ##
+################################################################################
+
+MONOREPO STRUCTURE — root folder is "Infinite_helix":
+
+Infinite_helix/
+├── README.md
+├── SETUP.md
+├── TODO.md
+├── backend/
+│   ├── run.py                          # Entry point + ActivityMonitor thread
+│   ├── setup_demo.py                   # One-command demo setup
+│   ├── stress_agent.py                 # Standalone pynput stress detector
+│   ├── requirements.txt               # Python deps
+│   ├── .env.example                    # Env var documentation
+│   ├── config/
+│   │   └── settings.py                 # Config class from environment
+│   ├── app/
+│   │   ├── __init__.py                 # Flask app factory, 17 blueprints, AI init
+│   │   ├── middleware.py               # Auth decorator
+│   │   ├── routes/                     # 17 Flask Blueprints
+│   │   │   ├── auth_routes.py          # /api/auth
+│   │   │   ├── emotion_routes.py       # /api/emotion
+│   │   │   ├── sentiment_routes.py     # /api/sentiment
+│   │   │   ├── journal_routes.py       # /api/journal
+│   │   │   ├── dashboard_routes.py     # /api/dashboard
+│   │   │   ├── reports_routes.py       # /api/reports
+│   │   │   ├── tracker_routes.py       # /api/tracker
+│   │   │   ├── nudge_routes.py         # /api/nudge
+│   │   │   ├── calendar_routes.py      # /api/calendar
+│   │   │   ├── cycle_routes.py         # /api/cycle
+│   │   │   ├── hydration_routes.py     # /api/hydration
+│   │   │   ├── selfcare_routes.py      # /api/selfcare
+│   │   │   ├── privatecare_routes.py   # /api/privatecare
+│   │   │   ├── todo_routes.py          # /api/todos
+│   │   │   ├── user_routes.py          # /api/user
+│   │   │   ├── chatbot_routes.py       # /api/chat
+│   │   │   └── stress_routes.py        # /api/stress
+│   │   ├── services/
+│   │   │   ├── firebase_service.py     # Firestore CRUD + SQLite fallback
+│   │   │   ├── local_store.py          # SQLite JSON document store
+│   │   │   ├── calendar_service.py     # Calendar provider orchestration
+│   │   │   ├── calendar_provider.py    # Provider abstraction base
+│   │   │   ├── google_calendar.py      # Google Calendar OAuth + API
+│   │   │   ├── microsoft_calendar.py   # Microsoft Graph calendar
+│   │   │   ├── chatbot_service.py      # Groq LLM chatbot + sessions + memory
+│   │   │   ├── wellness_report_service.py  # Weekly report aggregation
+│   │   │   └── settings_service.py     # User settings resolution
+│   │   ├── ai/
+│   │   │   ├── emotion_detector.py     # HuggingFace emotion pipeline
+│   │   │   ├── sentiment_analyzer.py   # HuggingFace sentiment pipeline
+│   │   │   ├── nudge_engine.py         # Context-aware nudge generation
+│   │   │   └── wellness_advisor.py     # Wellness advice engine
+│   │   ├── tracker/
+│   │   │   ├── activity_monitor.py     # Keyboard/mouse tracking via pynput
+│   │   │   └── screen_tracker.py       # Active window tracking via psutil
+│   │   ├── notifications/
+│   │   │   └── notification_manager.py # Desktop toasts via plyer
+│   │   └── models/
+│   │       ├── user.py                 # User document shape
+│   │       ├── mood_log.py             # Mood log document shape
+│   │       └── work_session.py         # Work session document shape
+│   └── data/                           # SQLite DB (gitignored, auto-created)
+│       └── local.db
+├── frontend/
+│   ├── package.json
+│   ├── tailwind.config.js
+│   ├── postcss.config.js
+│   ├── .env.example
+│   ├── public/
+│   │   └── index.html                  # HTML shell + Plus Jakarta Sans font
+│   └── src/
+│       ├── index.js                    # ReactDOM.createRoot entry
+│       ├── index.css                   # Tailwind directives + theme CSS vars
+│       ├── App.jsx                     # Router, auth gate, layout, error boundary
+│       ├── pages/
+│       │   ├── AuthPage.jsx            # Login / Register page
+│       │   ├── Dashboard.jsx           # Main wellness dashboard
+│       │   ├── Todos.jsx               # Task management page
+│       │   ├── Reports.jsx             # Analytics + reports (3 tabs, ~1378 lines)
+│       │   ├── CycleMode.jsx           # Cycle/pregnancy tracking page
+│       │   ├── Calendar.jsx            # Meeting timeline + calm exercises
+│       │   ├── Settings.jsx            # User preferences
+│       │   └── Journal.jsx             # Redirects to /reports
+│       ├── components/
+│       │   ├── Common/
+│       │   │   ├── Sidebar.jsx                # Navigation sidebar
+│       │   │   ├── BreakReminderToast.jsx     # Break reminder overlay
+│       │   │   └── StressInterventionToast.jsx # Stress calming overlay
+│       │   ├── Dashboard/
+│       │   │   ├── ProductivityScore.jsx      # Wellness score ring
+│       │   │   ├── ScreenTimeChart.jsx        # Screen time donut
+│       │   │   ├── BreakBalance.jsx           # Break tracker card
+│       │   │   ├── HydrationTracker.jsx       # Water intake card
+│       │   │   ├── FocusTimeline.jsx          # Focus session timeline
+│       │   │   ├── NudgeFeed.jsx              # Active nudges card
+│       │   │   ├── SelfCareTracker.jsx        # Stretch/eye rest card
+│       │   │   └── TodayTasks.jsx             # Quick task widget
+│       │   ├── Reports/
+│       │   │   ├── WellnessScorecard.jsx      # Score trend chart
+│       │   │   ├── WorkHoursChart.jsx         # Daily work hours bar chart
+│       │   │   ├── EmotionChart.jsx           # Emotion distribution chart
+│       │   │   ├── StressHeatmap.jsx          # Hour x Day heatmap grid
+│       │   │   ├── SelfCareMetrics.jsx        # Self-care summary card
+│       │   │   └── WeeklyInsight.jsx          # AI insight card
+│       │   ├── Calendar/
+│       │   │   ├── ConfidenceBreath.jsx       # Guided breathing component
+│       │   │   └── MeetingTimeline.jsx        # Meeting list
+│       │   ├── CycleMode/
+│       │   │   ├── CycleRing.jsx              # SVG cycle donut
+│       │   │   ├── CycleWeekStrip.jsx         # 7-day cycle strip
+│       │   │   ├── EnergyForecast.jsx         # Energy lookahead
+│       │   │   ├── EnergyIndicator.jsx        # Energy level badge
+│       │   │   ├── PeriodCalendarGrid.jsx     # Calendar grid view
+│       │   │   ├── PeriodEntriesList.jsx      # Period entry history
+│       │   │   ├── PeriodEntryModal.jsx       # Add/edit period modal
+│       │   │   ├── PeriodStats.jsx            # Cycle statistics
+│       │   │   ├── PrivateCareTracker.jsx     # Pad change / freshen-up log
+│       │   │   ├── SmartSwitch.jsx            # Cycle <-> Pregnancy toggle
+│       │   │   ├── MotherhoodShield.jsx       # Pregnancy dashboard
+│       │   │   └── AppointmentSync.jsx        # Appointment tracker
+│       │   ├── Journal/
+│       │   │   ├── JournalEntry.jsx           # Entry input form
+│       │   │   ├── EntryHistory.jsx           # Entry list
+│       │   │   ├── AIResponse.jsx             # AI analysis display
+│       │   │   └── EmotionBadge.jsx           # Emotion label badge
+│       │   ├── ChatBot/
+│       │   │   └── ChatBot.jsx                # Floating chatbot widget (~833 lines)
+│       │   ├── Notifications/
+│       │   │   └── NotificationOverlay.jsx    # In-app notification panel
+│       │   └── Settings/
+│       │       └── MealReminderSettings.jsx   # Meal time configuration
+│       ├── context/
+│       │   ├── AuthContext.jsx                # Firebase auth state
+│       │   ├── WellnessContext.jsx            # Dashboard data + polling
+│       │   ├── PageContext.jsx                # Current page context for chatbot
+│       │   └── ThemeContext.jsx               # Dark/light theme toggle
+│       ├── hooks/
+│       │   ├── useBreakReminder.js            # Break interval timer
+│       │   ├── useEmotionAnalysis.js          # Emotion API hook
+│       │   ├── usePeriodTracker.js            # Period entry management
+│       │   ├── usePregnancyMode.js            # Pregnancy mode state
+│       │   ├── useStressDetector.js           # Stress polling hook
+│       │   └── useWellnessPolling.js          # Dashboard data polling
+│       ├── services/
+│       │   ├── api.js                         # Axios client + all API functions
+│       │   ├── firebase.js                    # Firebase app initialization
+│       │   ├── notifications.js               # Web Notifications API
+│       │   ├── mealReminders.js               # Meal reminder scheduler
+│       │   ├── todoReminder.js                # Todo reminder scheduler
+│       │   ├── privateCareReminder.js         # Private care reminder
+│       │   └── eyeRestReminder.js             # Eye rest reminder
+│       └── utils/
+│           └── periodMath.js                  # Date utilities for cycle math
+├── docs/                                      # Product documentation
+└── prototype/                                 # Static HTML prototype
+
+TECH STACK (exact versions):
+
+Backend (Python):
+  flask>=3.0.0, flask-cors>=4.0.0, gunicorn>=21.2.0,
+  transformers>=4.36.0, torch>=2.1.0, google-genai>=1.0.0, groq>=1.0.0,
+  psutil>=5.9.0, pynput>=1.7.6, plyer>=2.1.0, firebase-admin>=6.2.0,
+  google-api-python-client>=2.108.0, google-auth-httplib2>=0.1.1,
+  google-auth-oauthlib>=1.1.0, requests>=2.31.0, python-dotenv>=1.0.0,
+  apscheduler>=3.10.4
+
+Frontend (Node.js/React):
+  react: ^18.2.0, react-dom: ^18.2.0, react-scripts: 5.0.1,
+  react-router-dom: ^6.20.0, axios: ^1.6.0, chart.js: ^4.4.0,
+  react-chartjs-2: ^5.2.0, firebase: ^10.7.0, framer-motion: ^12.38.0,
+  react-hot-toast: ^2.4.1, react-icons: ^4.12.0
+  DevDeps: tailwindcss: ^3.4.0, postcss: ^8.4.32, autoprefixer: ^10.4.16
+
+DATA FLOW:
+  Frontend (React SPA :3000)
+    -> Axios + Firebase Bearer token
+    -> Backend (Flask REST API :5000)
+       -> Firebase Firestore (primary) | SQLite LocalStore (fallback)
+       -> HuggingFace Transformers | Demo mock classifiers
+       -> Groq API (chatbot) | Template responses
+       -> Google Calendar / Microsoft Graph APIs
+       -> pynput (keyboard/mouse), psutil (screen), plyer (desktop toasts)
+
+  Client-side localStorage keys (never sent to server):
+    helix_period_entries, helix_cycle_daily_logs, helix_period_duration,
+    helix_pregnancy_data, helix_pregnancy_setup_done, helix_task_mode,
+    helix_theme, helix_meal_reminders
+
+
+################################################################################
+##                                                                            ##
+##  SECTION 3 — BACKEND SETUP                                                 ##
+##                                                                            ##
+################################################################################
+
+FILE: backend/requirements.txt
+  Create with all dependencies listed above (exact version ranges).
+
+FILE: backend/config/settings.py
+  Create a Config class loading all env vars via python-dotenv:
+    FLASK_ENV (default 'development'), FLASK_PORT (int, 5000),
+    FLASK_DEBUG (bool, True), SECRET_KEY, DEMO_MODE (bool, True),
+    FIREBASE_CREDENTIALS_PATH, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET,
+    GOOGLE_REDIRECT_URI, MS_CLIENT_ID, MS_CLIENT_SECRET, MS_TENANT_ID,
+    MS_REDIRECT_URI, GEMINI_API_KEY, GROQ_API_KEY, EMOTION_MODEL,
+    SENTIMENT_MODEL, MODEL_CACHE_DIR, TRACKER_INTERVAL_SECONDS (int, 30),
+    NUDGE_COOLDOWN_MINUTES (int, 30), IDLE_THRESHOLD_SECONDS (int, 60),
+    FATIGUE_THRESHOLD_MINUTES (int, 120), DESKTOP_NOTIFICATIONS (bool, True).
+
+FILE: backend/app/__init__.py — FLASK APP FACTORY
+  create_app() function that:
+  1. Creates Flask app, loads Config, configures CORS for /api/*
+  2. Adds after_request handler for CORS headers
+  3. Imports and registers 17 blueprints (see directory tree for prefixes)
+  4. Registers GET /api/health endpoint returning
+     {"status":"ok","service":"Infinite Helix API","demo_mode":<bool>}
+  5. Calls init_firebase() from firebase_service
+  6. Calls _init_ai_models(app)
+
+  Module-level: activity_monitor = None (set by run.py)
+
+  _init_ai_models(app):
+    If DEMO_MODE: use _DemoEmotionDetector and _DemoSentimentAnalyzer
+    Else: try loading real HuggingFace models, fallback to demo on error
+
+  _DemoEmotionDetector class (in same file):
+    - _KEYWORDS dict mapping mood -> keyword lists:
+      stress: [stress, overwhelm, tired, exhaust, burnout, deadline, ...]
+      happy: [happy, great, wonderful, excited, love, amazing, ...]
+      angry: [angry, frustrated, annoyed, furious, unfair, hate, ...]
+      fear: [scared, anxious, worried, nervous, afraid, panic, ...]
+    - _PROFILES dict: each mood -> {emotion, confidence, all_emotions}
+    - analyze(text): lowercase, match keywords, return profile or neutral
+
+  _DemoSentimentAnalyzer class (in same file):
+    - _NEGATIVE keywords, _POSITIVE keywords
+    - _REFRAMES list: 7 supportive reframing messages
+    - analyze(text): check keywords, return {sentiment, confidence,
+      all_sentiments, reframe} — rotate reframe for negative
+
+FILE: backend/app/middleware.py
+  require_auth decorator:
+    - Extract Bearer token from Authorization header
+    - Verify via Firebase Admin SDK
+    - On success: set request.uid, request.email
+    - On failure + DEMO_MODE: set request.uid = 'demo-user-001'
+    - On failure + not demo: return 401
+
+FILE: backend/run.py — ENTRY POINT
+  - Load .env, insert backend dir into sys.path
+  - start_background_tracker(): create ActivityMonitor in daemon thread,
+    store in app_module.activity_monitor
+  - main(): create_app(), start tracker, run on 0.0.0.0:5000 with
+    use_reloader=False
+
+FILE: backend/stress_agent.py — STANDALONE STRESS DETECTOR
+  - pynput keyboard listener tracking keystrokes in a deque (last 30s)
+  - Every 10s: compute {keystrokes, backspaces, speed} and POST to
+    http://localhost:5000/api/stress/ingest
+  - Privacy: counts keys only, never records content
+
+
+################################################################################
+##                                                                            ##
+##  SECTION 4 — DATABASE & MODELS                                             ##
+##                                                                            ##
+################################################################################
+
+DUAL-STORAGE STRATEGY:
+  Primary: Firebase Firestore (when credentials available)
+  Fallback: SQLite LocalStore at backend/data/local.db (auto-created)
+  Decision: firebase_service.py checks if Firestore init succeeded;
+  every CRUD function branches accordingly.
+
+FILE: backend/app/services/local_store.py — SQLite Document Store
+  class LocalStore:
+    - Single table "documents" with (collection, doc_id, data TEXT, created_at)
+    - PRIMARY KEY (collection, doc_id)
+    - Thread-safe with threading.Lock and WAL journal mode
+    - Methods: insert, get_all, get_by_id, upsert, delete
+    - Module singleton via get_local_store()
+
+FIRESTORE COLLECTIONS & SCHEMAS:
+  users: uid, email, display_name, photo_url, provider, settings, timestamps
+  journal_entries: user_id, text, emotion, confidence, sentiment, reframe,
+    all_emotions, all_sentiments, timestamp
+  mood_logs: user_id, emotion, sentiment, confidence, source, timestamp
+  hydration_logs: user_id, amount_ml (default 250), timestamp, date
+  screen_time_logs: id="{user_id}_{date}", total_hours, breakdown, updated_at
+  selfcare_logs: user_id, action ('stretch'|'eye_rest'), timestamp, date
+  privatecare_logs: user_id, type, note, timestamp, date, time
+  personal_todos: id, user_id, text, remind_at, completed, date,
+    category ('work'|'personal'|'health'|'meeting'), timestamps
+  calendar_tokens: id="{user_id}_{provider}", tokens, user_info
+  user_settings: user_id, settings object
+  chat_conversations: session-based message history
+
+FILE: backend/app/services/firebase_service.py
+  init_firebase(), get_db(), _local() helper.
+  Function groups: JOURNAL (save, get, get_for_period), HYDRATION (log,
+  get_today, get_for_period), MOOD (save, get_for_period), SCREEN TIME
+  (save, get_history), SELF-CARE (log, get_today, get_for_period),
+  PRIVATE CARE (log, get_logs, get_for_period), ACTIVITY STREAK
+  (get_streak), TODOS (save, get_today, get_by_date, get_upcoming,
+  get_history, toggle, delete), CALENDAR TOKENS (save, get, delete).
+
+FILE: backend/app/models/ — Schema documentation files
+  user.py, mood_log.py, work_session.py — document shape definitions
+
+
+################################################################################
+##                                                                            ##
+##  SECTION 5 — BACKEND ROUTES (17 Blueprints)                                ##
+##                                                                            ##
+################################################################################
+
+Every route requiring auth uses require_auth decorator. In demo mode,
+any Bearer token is accepted and assigned a demo user ID.
+
+1. AUTH — auth_bp (/api/auth)
+   POST /register: verify token, save user doc. POST /sync: update last_login.
+   GET /profile: return user doc.
+
+2. EMOTION — emotion_bp (/api/emotion)
+   POST /analyze: {text} -> emotion_detector.analyze + sentiment_analyzer.analyze
+   -> {emotion, confidence, all_emotions, sentiment, reframe, all_sentiments}
+
+3. SENTIMENT — sentiment_bp (/api/sentiment)
+   POST /analyze: {text} -> {sentiment, confidence, all_sentiments, reframe}
+
+4. JOURNAL — journal_bp (/api/journal)
+   POST /: analyze text + save entry + save mood log.
+   GET /: list entries. GET /<id>: get entry.
+
+5. DASHBOARD — dashboard_bp (/api/dashboard)
+   GET /today: comprehensive metrics — wellness score (weighted: hydration 30%,
+   breaks 30%, self-care 20%, activity 20%), screen time, activity stats,
+   hydration, self-care, mood, streak, focus sessions.
+   GET /screen-history: screen time history for N days.
+
+6. REPORTS — reports_bp (/api/reports)
+   GET /weekly: weekly report via wellness_report_service.
+
+7. TRACKER — tracker_bp (/api/tracker)
+   GET /status, POST /start, POST /stop — activity monitor control.
+
+8. NUDGE — nudge_bp (/api/nudge)
+   POST /generate: {context} -> nudge. GET /pending: undismissed nudges.
+   POST /<id>/dismiss.
+
+9. CALENDAR — calendar_bp (/api/calendar)
+   GET /meetings, GET /next, GET /status, GET /authorize?provider=,
+   GET /google/callback, GET /callback (Microsoft), POST /disconnect,
+   POST /events. Demo mode returns mock meeting data.
+
+10. CYCLE — cycle_bp (/api/cycle)
+    GET /suggestions/<phase>: phase-specific wellness suggestions.
+    POST /phase: set current phase.
+
+11. HYDRATION — hydration_bp (/api/hydration)
+    POST /log: {amount_ml?} default 250. GET /today: {ml_today, entries}.
+
+12. SELF-CARE — selfcare_bp (/api/selfcare)
+    POST /log: {action}. GET /today: {stretch, eye_rest}.
+
+13. PRIVATE CARE — privatecare_bp (/api/privatecare)
+    POST /log: {type, note?}. GET /history. GET /period-history.
+
+14. TODOS — todo_bp (/api/todos)
+    POST /: create. GET /today, GET /date/<date>, GET /upcoming,
+    GET /history. POST /<id>/toggle. DELETE /<id>.
+
+15. USER — user_bp (/api/user)
+    GET /settings. PUT /settings. GET /profile.
+
+16. CHATBOT — chatbot_bp (/api/chat)
+    POST /message: {message, page_context?, session_id?}
+    -> {reply, ai_powered, session_id, quick_replies}.
+    GET /sessions, POST /sessions, DELETE /sessions/<id>,
+    GET /sessions/<id>/messages, GET /history, DELETE /history,
+    GET /quick-replies.
+
+17. STRESS — stress_bp (/api/stress)
+    POST /ingest: store typing metrics in-memory, detect is_stressed.
+    GET /latest. GET /log. POST /resolve.
+    Note: stress data is in-memory only — resets on server restart.
+
+
+################################################################################
+##                                                                            ##
+##  SECTION 6 — BACKEND SERVICES                                              ##
+##                                                                            ##
+################################################################################
+
+FILE: backend/app/services/calendar_service.py
+  CalendarService class orchestrating GoogleCalendar and MicrosoftCalendar
+  providers. Methods: get_authorization_url, handle_callback, get_meetings,
+  get_next_meeting, get_connection_status, disconnect, create_event.
+
+FILE: backend/app/services/calendar_provider.py
+  Base CalendarProvider class defining interface: get_auth_url,
+  exchange_code, get_events, refresh_token, create_event.
+
+FILE: backend/app/services/google_calendar.py
+  GoogleCalendar(CalendarProvider) using google-api-python-client,
+  google-auth-oauthlib. OAuth scope: calendar.readonly.
+
+FILE: backend/app/services/microsoft_calendar.py
+  MicrosoftCalendar(CalendarProvider) using requests + Microsoft Identity
+  Platform. Graph URL: https://graph.microsoft.com/v1.0/me/calendarview.
+
+FILE: backend/app/services/wellness_report_service.py
+  generate_weekly_report(user_id): aggregates 7 days of data into
+  {period, summary, daily_scores, emotion_distribution, work_hours,
+  selfcare_summary, hydration_summary, insights, recommendations}.
+
+FILE: backend/app/services/settings_service.py
+  get_user_settings(user_id): returns settings with defaults
+  {break_interval_minutes:45, hydration_reminder:true,
+  desktop_notifications:true, meal_reminders:{enabled:false,
+  breakfast:'08:00', lunch:'13:00', dinner:'19:00'}, theme:'dark'}.
+  update_user_settings(user_id, settings_update): merge and save.
+
+FILE: backend/app/services/chatbot_service.py (~1700 lines)
+  See Section 11 (Chatbot System) for full details.
+
+
+################################################################################
+##                                                                            ##
+##  SECTION 7 — AI & TRACKING MODULES                                         ##
+##                                                                            ##
+################################################################################
+
+FILE: backend/app/ai/emotion_detector.py
+  EmotionDetector class using HuggingFace pipeline('text-classification',
+  model='j-hartmann/emotion-english-distilroberta-base', top_k=None).
+  analyze(text): truncate to 512 chars, return {emotion, confidence,
+  all_emotions sorted by score desc}.
+
+FILE: backend/app/ai/sentiment_analyzer.py
+  SentimentAnalyzer class using HuggingFace pipeline('sentiment-analysis',
+  model='cardiffnlp/twitter-roberta-base-sentiment', top_k=None).
+  Label mapping: LABEL_0->negative, LABEL_1->neutral, LABEL_2->positive.
+  analyze(text): return {sentiment, confidence, all_sentiments, reframe}
+  where reframe is a rotating supportive message for negative sentiment.
+
+FILE: backend/app/ai/nudge_engine.py
+  NUDGE_TEMPLATES dict with categories: hydration, stretch, eye_rest,
+  breathing, break, posture — each with 4-5 supportive message templates.
+  NudgeEngine class: generate(context) evaluates context (continuous work,
+  screen time, hydration, stretch timing, typing intensity) against
+  thresholds, checks cooldowns, picks highest priority nudge, returns
+  {id, type, message, priority, timestamp, dismissed:false}.
+
+FILE: backend/app/ai/wellness_advisor.py
+  WellnessAdvisor: generate_advice(context) based on score, mood, activity,
+  cycle phase, time of day.
+
+FILE: backend/app/tracker/activity_monitor.py
+  ActivityMonitor class: pynput keyboard.Listener + mouse.Listener in
+  daemon thread. Tracks keystrokes, mouse_clicks, mouse_distance,
+  idle_seconds, continuous_work_minutes, typing_intensity.
+  stats property returns all metrics.
+
+FILE: backend/app/tracker/screen_tracker.py
+  get_screen_data(): psutil process_iter() to categorize running apps
+  (Browsers, IDE/Code, Communication, Office, Other). Returns
+  {active_window, total_hours, breakdown, top_apps}.
+
+FILE: backend/app/notifications/notification_manager.py
+  NotificationManager: send_notification via plyer, send_nudge with
+  type-specific titles. Module singleton.
+
+
+################################################################################
+##                                                                            ##
+##  SECTION 8 — FRONTEND SETUP                                                ##
+##                                                                            ##
+################################################################################
+
+FILE: frontend/package.json
+  name: "infinite-helix-frontend", version: "1.0.0", private: true.
+  scripts: dev: "react-scripts start", build: "react-scripts build".
+  Dependencies and devDependencies as listed in tech stack.
+
+FILE: frontend/postcss.config.js
+  module.exports = { plugins: { tailwindcss: {}, autoprefixer: {} } }
+
+FILE: frontend/tailwind.config.js
+  CRITICAL: Colors use CSS custom properties via helper function:
+    function helixColor(varName) {
+      return `rgb(var(--helix-${varName}) / <alpha-value>)`;
+    }
+  This enables Tailwind alpha modifier support (e.g., bg-helix-accent/50).
+
+  colors.helix: bg, surface, card, accent, accent-dim, pink, pink-dim,
+  sky, mint, amber, red, text, muted, border, border-light.
+  Plus semantic color scales: lavender, blush, sage, rose, gold, sunrise.
+
+  fontFamily: all use '"Plus Jakarta Sans"' as primary.
+  animation: float, pulse-glow, blush-pulse, slide-up, breathe, spin-slow,
+  fade-in.
+  backgroundImage: gradient-radial, mesh (complex radial gradient),
+  lavender-gradient, blush-gradient, sunrise-gradient, sunrise-mesh.
+
+FILE: frontend/public/index.html
+  Google Fonts preconnect + Plus Jakarta Sans (wght 300-700),
+  meta theme-color #030304, title "Infinite Helix", <div id="root">.
+
+FILE: frontend/src/index.css — DESIGN SYSTEM (~518 lines)
+  CRITICAL FILE. Defines the entire visual system.
+
+  DARK THEME (:root) — RGB triplets for Tailwind alpha:
+    --helix-bg: 3 3 4;  --helix-surface: 10 10 13;
+    --helix-card: 18 18 24;  --helix-accent: 107 140 255;
+    --helix-text: 240 240 243;  --helix-muted: 143 143 154;
+    --helix-border: 38 38 47;  (and all others)
+
+  LIGHT THEME (:root.light-mode):
+    --helix-bg: 245 245 250;  --helix-surface: 255 255 255;
+    --helix-card: 255 255 255;  --helix-accent: 75 108 225;
+    --helix-text: 28 28 42;  (and all others)
+
+  Component classes: .bento-card (rounded-2xl, p-5, themed bg/border/shadow),
+  .bento-card-lg (p-6), .glass-card (backdrop-blur), .glow-accent,
+  .glow-pink, .glow-mint, .gradient-text, .bento-label, .helix-input,
+  .helix-badge + color variants (-accent, -pink, -mint, -amber, -red, -sky).
+
+  Keyframe animations: float, pulse-glow, blush-pulse, slide-up, breathe,
+  fade-in.
+
+  CHATBOT THEME (warm amber/coral, contrasts with main blue palette):
+  CSS custom properties --cb-* for chatbot-specific styling.
+  Dark and light mode variants. Classes: .cb-window, .cb-header, .cb-body,
+  .cb-bubble-assistant, .cb-bubble-user, .cb-quick-btn, .cb-input-area,
+  .cb-send-btn, .cb-fab-gradient, .cb-typing-dot, .cb-history-sidebar,
+  and all associated animations (cb-window-in/out, cb-msg-in,
+  cb-dot-bounce, cb-ring-pulse, cb-listening).
+  Mobile: full-screen chatbot on <640px.
+
+  Global: custom scrollbars, smooth transitions on all color properties.
+
+
+################################################################################
+##                                                                            ##
+##  SECTION 9 — FRONTEND AUTH & CONTEXT PROVIDERS                             ##
+##                                                                            ##
+################################################################################
+
+FILE: frontend/src/services/firebase.js
+  Initialize Firebase from REACT_APP_FIREBASE_* env vars.
+  Export auth = getAuth(app). Works even if config is missing (demo mode).
+
+FILE: frontend/src/context/AuthContext.jsx
+  AuthProvider managing: user, loading, isDemo.
+  On mount: onAuthStateChanged; if Firebase not configured, create mock user
+  {uid:'demo-user', displayName:'Demo User', email:'demo@helix.app',
+  getIdToken:()=>'demo-token'}.
+  Exports: signup, login, loginWithGoogle, logout via useAuth() hook.
+
+FILE: frontend/src/context/WellnessContext.jsx
+  WellnessProvider managing: todayMetrics (full dashboard data),
+  trackerStatus, dashboardLoading, nudges.
+  Polls /dashboard/today every 30-60 seconds.
+  Exports: refreshDashboard, logHydration, logSelfCare, dismissNudge
+  via useWellness() hook.
+  IMPORTANT: wraps only authenticated routes, not entire app.
+
+FILE: frontend/src/context/PageContext.jsx
+  Tracks currentPage and pageData for chatbot context awareness.
+  Each page calls updatePageContext() in useEffect with page-specific data.
+  Exports: updatePageContext, getPageContext via usePageContext() hook.
+
+FILE: frontend/src/context/ThemeContext.jsx
+  Manages 'dark'|'light' theme via localStorage 'helix_theme'.
+  Toggles 'light-mode' class on document.documentElement.
+  Exports: theme, toggleTheme, isDark via useTheme() hook.
+
+FILE: frontend/src/App.jsx
+  Structure:
+    <ErrorBoundary>
+      <ThemeProvider>
+        <AuthProvider>
+          <BrowserRouter>
+            <AppRoutes />
+            <ThemedToaster />
+          </BrowserRouter>
+        </AuthProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
+
+  AppRoutes: if loading->spinner; if !user->AuthPage only;
+  if user->wrap in WellnessProvider+PageContextProvider:
+    <Sidebar /> + <main> with Routes + <NotificationOverlay /> +
+    <ChatBot /> + <StressInterventionToast /> + <BreakReminderToast />
+
+  Also defines: ScrollToTop, ErrorBoundary, OfflineBanner,
+  DemoModeBanner, NotFound (404), ThemedToaster.
+
+
+################################################################################
+##                                                                            ##
+##  SECTION 10 — FRONTEND PAGES (8 pages)                                     ##
+##                                                                            ##
+################################################################################
+
+PAGE 1: AuthPage.jsx (/auth)
+  Login/Register tab toggle. Email+password forms. Google OAuth button.
+  Glass-card effect, gradient background.
+
+PAGE 2: Dashboard.jsx (/dashboard)
+  Hero greeting card (time-based), 3-row bento grid:
+  Row 1: ProductivityScore + ScreenTimeChart + BreakBalance
+  Row 2: FocusTimeline + HydrationTracker
+  Row 3: NudgeFeed + SelfCareTracker + TodayTasks
+  Bottom: AI Wellness Engine status bar (green=connected, red=disconnected).
+  Helper functions: getGreeting(), wellnessStatusLine(score).
+
+PAGE 3: Todos.jsx (/todos)
+  Views: today/upcoming/history. Add task form with category selector
+  (work/personal/health/meeting), date picker, time picker.
+  Task cards with toggle, delete, overdue highlighting.
+
+PAGE 4: Reports.jsx (/reports, ~1378 lines)
+  3 tabs: "Body Language" | "Daily" | "Weekly".
+  Body Language: stress event timeline, typing pattern insights, resolution
+  breakdown. Daily: today's metrics, mental load score, printable report
+  (private + manager variants), break tracker section with meal schedule.
+  Weekly: Chart.js charts (WellnessScorecard, WorkHoursChart, EmotionChart,
+  StressHeatmap, SelfCareMetrics, WeeklyInsight), downloadable HTML report
+  with inline SVG charts.
+
+PAGE 5: CycleMode.jsx (/cycle-mode)
+  Two modes with AnimatePresence 3D flip transition.
+  Cycle mode: CycleRing + EnergyForecast, weekly strip, mood/flow/symptom
+  logging, pattern insights, ConfidenceBreath + PrivateCareTracker.
+  Pregnancy mode: MotherhoodShield with trimester tracking.
+
+PAGE 6: Calendar.jsx (/calendar)
+  Calendar connection status, MeetingTimeline, ConfidenceBreath widget.
+
+PAGE 7: Settings.jsx (/settings)
+  Profile, theme toggle, MealReminderSettings, break settings,
+  notification preferences, data & privacy info.
+
+PAGE 8: Journal.jsx (/journal)
+  Simple redirect: <Navigate to="/reports" replace />
+
+
+################################################################################
+##                                                                            ##
+##  SECTION 11 — CHATBOT SYSTEM                                               ##
+##                                                                            ##
+################################################################################
+
+BACKEND: chatbot_service.py (~1700 lines)
+
+  SYSTEM_PROMPT — Helix persona:
+  "You are Helix, a warm and empathetic AI wellness companion..."
+  Persona rules: warm/supportive/professional, short responses (2-4 sentences),
+  acknowledge emotions first, reference user's actual data, never diagnose.
+  SAFETY: crisis detection with India helplines (iCall: 9152987821,
+  Vandrevala: 1860-2662-345, AASRA: 91-22-27546669).
+  Boundaries: only wellness/productivity topics.
+
+  INTENT_PATTERNS (20 categories with regex):
+  distress, wellness_check, greeting, farewell, hydration, emotion, stress,
+  todo, cycle, nutrition, productivity, sleep, exercise, break, meeting,
+  mental_health, workplace, report, help, thanks.
+  "distress" always has highest priority.
+
+  QUICK_REPLY_MAP: intent -> suggested quick replies.
+  Also page-specific quick replies (dashboard, reports, cycle-mode, etc.).
+
+  FALLBACK_TEMPLATES: intent -> template response strings for when Groq
+  API is unavailable. Dynamic data insertion for wellness_check, hydration,
+  todo, cycle intents.
+
+  GroqClient class:
+  Uses Groq API with model 'llama-3.3-70b-versatile'.
+  chat(conversation_history, context_prefix) -> response text or None.
+
+  ChatbotService class:
+  - process_message(message, page_context, session_id, app_context):
+    classify intent -> get/create session -> save user msg -> extract
+    memories -> track emotion -> generate AI or template response ->
+    save assistant msg -> generate quick replies -> return result.
+  - AI response builds rich context from page data, user memory,
+    emotional trajectory, last 12 messages verbatim + older summarized.
+  - Session management: create/list/delete sessions, get messages.
+  - Memory: extracts "my name is X" etc., persists across sessions.
+  - Emotional trajectory: tracks improving/stable/declining trend.
+
+  Module singleton: chatbot_service = ChatbotService()
+
+FRONTEND: ChatBot.jsx (~833 lines)
+  Floating widget in bottom-right corner.
+  Collapsed: circular FAB with pulse animation.
+  Expanded: chat panel with header (session selector, new chat, minimize),
+  message area (auto-scroll, typing indicator), input area with quick
+  reply chips.
+  Warm amber/coral theme (--cb-* CSS vars) contrasting with app's blue.
+  Session management UI: list, switch, create, delete sessions.
+  Mobile: full-screen.
+
+
+################################################################################
+##                                                                            ##
+##  SECTION 12 — FRONTEND COMPONENTS (38+ components)                         ##
+##                                                                            ##
+################################################################################
+
+COMMON:
+  Sidebar.jsx: fixed left nav, collapsed (w-16) / expanded (lg:w-56),
+  6 nav links with icons, active route detection, user avatar, logout.
+  BreakReminderToast.jsx: overlay when break is due, suggested activities.
+  StressInterventionToast.jsx: full-screen calming overlay with guided
+  breathing when stress detected.
+
+DASHBOARD:
+  ProductivityScore.jsx: SVG circle progress ring (0-100), score-based
+  color (>=80 mint, >=60 amber, <60 red), streak, mood, breaks.
+  ScreenTimeChart.jsx: Chart.js Doughnut of screen time by category.
+  BreakBalance.jsx: breaks taken vs suggested progress bar.
+  HydrationTracker.jsx: water glass icons (250ml each, goal 2000ml),
+  "Log Water" button.
+  FocusTimeline.jsx: horizontal timeline of focus session blocks.
+  NudgeFeed.jsx: scrollable nudge list with type-colored icons, dismiss.
+  SelfCareTracker.jsx: stretch + eye rest counters with log buttons.
+  TodayTasks.jsx: top 5 tasks, quick-add input.
+
+REPORTS:
+  WellnessScorecard.jsx: Chart.js Line (score trend, gradient fill).
+  WorkHoursChart.jsx: Chart.js Bar (daily hours, 8h reference line).
+  EmotionChart.jsx: Chart.js Doughnut (emotion distribution).
+  StressHeatmap.jsx: 7x24 grid (days x hours), color-intensity cells.
+  SelfCareMetrics.jsx: stretch/eye rest totals and daily averages.
+  WeeklyInsight.jsx: AI-generated insights + recommendations cards.
+
+CALENDAR:
+  ConfidenceBreath.jsx: guided breathing widget, 4 phases
+  (breathe in 4s, hold 4s, breathe out 6s, rest 2s), animated circle,
+  pregnancy mode variant (deep pelvic breathing, longer exhale, amber theme).
+  MeetingTimeline.jsx: chronological meeting list from calendarAPI.
+
+CYCLE MODE:
+  CycleRing.jsx: SVG donut with 4 phase arcs, current day marker, center text.
+  CycleWeekStrip.jsx: 7-day strip with cycle day numbers.
+  EnergyForecast.jsx: 7-day energy bar chart based on cycle phase.
+  EnergyIndicator.jsx: colored energy level badge.
+  PeriodCalendarGrid.jsx: monthly grid highlighting period days.
+  PeriodEntriesList.jsx: past period entries with edit/delete.
+  PeriodEntryModal.jsx: add/edit period start/end dates.
+  PeriodStats.jsx: avg cycle length, avg period duration, total logged.
+  PrivateCareTracker.jsx: pad change / freshen-up log with API calls.
+  SmartSwitch.jsx: cycle <-> pregnancy toggle pill.
+  MotherhoodShield.jsx: pregnancy dashboard (week count, trimester,
+  due date countdown, appointment countdown, trimester tips).
+  AppointmentSync.jsx: medical appointment date picker + countdown.
+
+JOURNAL:
+  JournalEntry.jsx: text input + submit for journal entries.
+  EntryHistory.jsx: scrollable past entries with emotion badges.
+  AIResponse.jsx: emotion analysis display with confidence bars.
+  EmotionBadge.jsx: small colored badge for emotion label.
+
+NOTIFICATIONS:
+  NotificationOverlay.jsx: slide-in notification panel.
+
+SETTINGS:
+  MealReminderSettings.jsx: 3 time pickers (breakfast/lunch/dinner),
+  per-meal enable toggle, global toggle, save to localStorage + API.
+
+
+################################################################################
+##                                                                            ##
+##  SECTION 13 — FRONTEND HOOKS & SERVICES                                    ##
+##                                                                            ##
+################################################################################
+
+HOOKS:
+
+useStressDetector.js (~261 lines):
+  Polls GET /stress/latest every 5-10s. Determines stress level from
+  typing_speed + delete_ratio + burst_count. Triggers intervention overlay
+  on 'high'. Module-level getStressLog() and getSessionData() for Reports.
+  Returns: {stressLevel, isStressed, metrics, dismiss, snooze,
+  breathingCompleted}.
+
+useBreakReminder.js (~160 lines):
+  Timer-based break reminder. Reads interval from settings (default 45 min).
+  Module-level getBreakLog() and getScheduledBreaks() for Reports.
+  Meal-aware scheduling from localStorage 'helix_meal_reminders'.
+  Returns: {activeReminder, markDone, snoozeReminder, dismissReminder}.
+
+useEmotionAnalysis.js:
+  analyzeText(text) -> {emotion, confidence, sentiment, reframe}.
+
+usePeriodTracker.js:
+  Manages period entries in localStorage 'helix_period_entries'.
+  Computes cycleDay (1-28), nextPeriodInfo, hasEntries.
+  Returns: {entries, addEntry, updateEntry, removeEntry, cycleDay, ...}.
+
+usePregnancyMode.js:
+  Manages 'cycle'|'pregnancy' mode + pregnancy data in localStorage.
+  Computes weeksPregnant, trimester (1-12: T1, 13-26: T2, 27-40: T3),
+  daysUntilDue.
+  Returns: {mode, isPregnancy, toggleMode, pregnancyData, ...}.
+
+useWellnessPolling.js:
+  Utility hook for periodic /dashboard/today + /tracker/status fetching.
+
+SERVICES:
+
+api.js (~149 lines):
+  Axios client with base URL from REACT_APP_API_URL.
+  Request interceptor: gets Firebase ID token, sets Authorization header.
+  Named API modules: authAPI, emotionAPI, sentimentAPI, dashboardAPI,
+  journalAPI, reportsAPI, trackerAPI, nudgeAPI, calendarAPI, chatAPI,
+  cycleAPI, hydrationAPI, selfCareAPI, todoAPI, settingsAPI, privateCareAPI.
+
+firebase.js: Firebase init from env vars.
+
+notifications.js: Web Notifications API wrapper.
+
+mealReminders.js: checks current time against configured meal times,
+  sends notification, prevents duplicates. Storage: 'helix_meal_reminders'.
+
+todoReminder.js: checks todos with remind_at against current time.
+
+privateCareReminder.js: 3-hour interval reminders during period days 1-5.
+
+eyeRestReminder.js: 20-20-20 rule every 20 minutes.
+
+UTILS:
+
+periodMath.js: toIso, startOfDay, daysBetween, addDays,
+  cycleDayFromStart(startIso, targetDate).
+
+
+################################################################################
+##                                                                            ##
+##  SECTION 14 — CYCLE MODE & PREGNANCY TRACKING                              ##
+##                                                                            ##
+################################################################################
+
+PRIVACY: ALL cycle/pregnancy data stored in localStorage ONLY.
+Keys: helix_period_entries, helix_cycle_daily_logs, helix_period_duration,
+helix_pregnancy_data, helix_pregnancy_setup_done, helix_task_mode.
+Privacy badge: shield icon + "Only saved on your device".
+
+28-DAY CYCLE MODEL:
+  Phase 1: Menstrual (Days 1-5) — Low energy, rose-600, rest-focused.
+  Phase 2: Follicular (Days 6-13) — Rising energy, emerald-600.
+  Phase 3: Ovulatory (Days 14-16) — Peak energy, amber-600.
+  Phase 4: Luteal (Days 17-28) — Declining energy, helix-accent.
+
+CycleMode.jsx page structure:
+  CYCLE MODE: privacy badge, CycleRing + EnergyForecast, week strip,
+  mood buttons (Great/Calm/Tired/Low), flow buttons (None/Light/Medium/Heavy,
+  only during days 1-5), symptom toggles (Cramps/Bloating/Headache/etc.),
+  period duration selector (3-7+ days), "Save today" button writing to
+  helix_cycle_daily_logs, pattern insight card, ConfidenceBreath,
+  PrivateCareTracker.
+
+  PREGNANCY MODE: SmartSwitch toggle with AnimatePresence 3D flip
+  (rotateY variants). If no due date: PregnancySetup (amber themed,
+  date picker, "Start" button). If set: MotherhoodShield + ConfidenceBreath
+  (pregnancyMode=true for deep pelvic breathing variant).
+
+
+################################################################################
+##                                                                            ##
+##  SECTION 15 — REPORTS & ANALYTICS                                          ##
+##                                                                            ##
+################################################################################
+
+Reports.jsx (~1378 lines) — 3 tab views:
+
+TAB 1: Digital Body Language
+  Inline DigitalBodyLanguageReport component. Uses getStressLog() and
+  getSessionData() from useStressDetector module. Shows stress event count,
+  resolution rate, peak hours, typing pattern insights, chronological
+  stress event timeline.
+
+TAB 2: Daily Wellness Report
+  Inline DailyWellnessReport. Today's metrics summary, mental load score
+  (from screen time context switches), "Tomorrow's Strategy" collapsible,
+  two download buttons: "Private Report" (full) and "Manager Report"
+  (sanitized, no cycle/emotional data). generateDailyPrintHTML() creates
+  standalone HTML and calls window.print().
+  Also includes BreakTrackerSection: meal schedule, today's break log,
+  7-day summary, scheduled breaks including meal times.
+
+TAB 3: Weekly Report Card
+  Fetches reportsAPI.getWeekly(). Renders chart components:
+  WellnessScorecard (Line), WorkHoursChart (Bar), EmotionChart (Doughnut),
+  StressHeatmap (grid), SelfCareMetrics, WeeklyInsight.
+  "Download Report" calls generatePrintHTML(report, userName) — generates
+  complete standalone HTML with inline SVG charts: polyline score trend,
+  rect bars for work hours, donut arcs for emotions, arc gauges for
+  self-care, HTML table heatmap, insights/recommendations sections,
+  optional cycle phase block, affirmation footer.
+
+Cycle integration: getCycleData() reads localStorage, infers phase/energy.
+Life mode: getLifeMode() from localStorage 'helix_task_mode'.
+
+
+################################################################################
+##                                                                            ##
+##  SECTION 16 — ENVIRONMENT & DEPLOYMENT                                     ##
+##                                                                            ##
+################################################################################
+
+FILE: backend/.env.example
+  FLASK_ENV=development, FLASK_PORT=5000, FLASK_DEBUG=True,
+  SECRET_KEY=helix-dev-secret-key-change-in-production, DEMO_MODE=true,
+  FIREBASE_CREDENTIALS_PATH=./config/firebase-credentials.json,
+  GOOGLE_CLIENT_ID=, GOOGLE_CLIENT_SECRET=,
+  GOOGLE_REDIRECT_URI=http://localhost:5000/api/calendar/google/callback,
+  MS_CLIENT_ID=, MS_CLIENT_SECRET=, MS_TENANT_ID=common,
+  MS_REDIRECT_URI=http://localhost:5000/api/calendar/callback,
+  GROQ_API_KEY=, GEMINI_API_KEY=,
+  EMOTION_MODEL=j-hartmann/emotion-english-distilroberta-base,
+  SENTIMENT_MODEL=cardiffnlp/twitter-roberta-base-sentiment,
+  MODEL_CACHE_DIR=./model_cache, TRACKER_INTERVAL_SECONDS=30,
+  NUDGE_COOLDOWN_MINUTES=30, IDLE_THRESHOLD_SECONDS=60,
+  FATIGUE_THRESHOLD_MINUTES=120, DESKTOP_NOTIFICATIONS=true.
+
+FILE: frontend/.env.example
+  REACT_APP_API_URL=http://localhost:5000/api,
+  REACT_APP_FIREBASE_API_KEY=, REACT_APP_FIREBASE_AUTH_DOMAIN=,
+  REACT_APP_FIREBASE_PROJECT_ID=, REACT_APP_FIREBASE_STORAGE_BUCKET=,
+  REACT_APP_FIREBASE_MESSAGING_SENDER_ID=, REACT_APP_FIREBASE_APP_ID=.
+
+DEMO MODE (DEMO_MODE=true, the default):
+  Backend: mock AI models (keyword-based), SQLite LocalStore, accepts any
+  Bearer token, mock calendar data, template chatbot, 5-min nudge cooldown.
+  Frontend: detects missing Firebase config, creates mock user, shows
+  dismissible "Demo Mode" banner.
+
+FILE: backend/setup_demo.py
+  One-command setup: creates .env with DEMO_MODE=true, installs deps,
+  creates directories, verifies Flask app creation.
+
+.gitignore: __pycache__/, *.pyc, venv/, .env, node_modules/,
+  config/firebase-credentials.json, backend/data/local.db*, model_cache/,
+  .vscode/, .idea/, .DS_Store, Thumbs.db.
+
+QUICK START:
+  Terminal 1 (Backend):
+    cd Infinite_helix/backend
+    python setup_demo.py
+    python run.py
+
+  Terminal 2 (Frontend):
+    cd Infinite_helix/frontend
+    npm install
+    npm run dev
+
+  Open http://localhost:3000 — register with any email/password.
+
+PRODUCTION BUILD:
+  Frontend: npm run build -> frontend/build/
+  Backend (Linux/Mac): gunicorn -w 4 -b 0.0.0.0:5000 "app:create_app()"
+  Backend (Windows): waitress-serve --port=5000 --call "app:create_app"
+
+PLATFORM NOTES:
+  Windows: pynput + psutil work out of box, plyer via win10toast.
+  macOS: pynput needs Accessibility permissions.
+  Linux: pynput needs X11 (not Wayland), plyer needs libnotify.
+  Headless/CI: pynput fails gracefully, all other features work.
+
+
+################################################################################
+##                                                                            ##
+##  SECTION 17 — COMPLETENESS CHECKLIST                                       ##
+##                                                                            ##
+################################################################################
+
+When fully built, the project must have:
+
+Backend:
+  - 1 entry point (run.py)
+  - 1 config module (settings.py)
+  - 1 app factory (__init__.py) with 17 blueprints
+  - 17 route modules (~35 endpoints)
+  - 9 service modules
+  - 4 AI modules
+  - 2 tracker modules
+  - 1 notification module
+  - 3 model schema files
+  - 1 standalone stress agent
+  - 1 setup script
+
+Frontend:
+  - 8 page components
+  - 38+ feature components
+  - 4 context providers
+  - 6 custom hooks
+  - 7 service modules
+  - 1 utility module
+  - 1 complete theme system (CSS variables + Tailwind config)
+
+The app must:
+  - Work immediately in demo mode with zero configuration
+  - Support full Firebase + AI model deployment
+  - Track work behavior without being invasive
+  - Provide supportive, women-centric wellness nudges
+  - Include optional, private cycle tracking (localStorage only)
+  - Offer AI-powered emotional support via chatbot
+  - Generate comprehensive wellness reports
+  - Look beautiful with a dark-first bento-grid design
+  - Have a warm amber/coral chatbot theme contrasting the blue app theme
+  - Include error boundaries, offline detection, and graceful fallbacks
+
+================================================================================
+END OF ALL-IN-ONE BUILD PROMPT
+================================================================================
