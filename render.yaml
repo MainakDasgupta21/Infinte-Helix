@@ -1,0 +1,59 @@
+services:
+  # ── Backend: Flask API ──
+  - type: web
+    name: infinite-helix-api
+    runtime: python
+    region: oregon
+    rootDir: Infinite_helix/backend
+    buildCommand: ./build.sh
+    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 120 "app:create_app()"
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: FLASK_DEBUG
+        value: "False"
+      - key: DEMO_MODE
+        value: "false"
+      - key: DESKTOP_NOTIFICATIONS
+        value: "false"
+      - key: PYTHON_VERSION
+        value: "3.10.12"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: FIREBASE_CREDENTIALS_PATH
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+
+  # ── Frontend: React Static Site ──
+  - type: web
+    name: infinite-helix-frontend
+    runtime: static
+    rootDir: Infinite_helix/frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: build
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: REACT_APP_API_URL
+        sync: false
+      - key: REACT_APP_FIREBASE_API_KEY
+        sync: false
+      - key: REACT_APP_FIREBASE_AUTH_DOMAIN
+        sync: false
+      - key: REACT_APP_FIREBASE_PROJECT_ID
+        sync: false
+      - key: REACT_APP_FIREBASE_STORAGE_BUCKET
+        sync: false
+      - key: REACT_APP_FIREBASE_MESSAGING_SENDER_ID
+        sync: false
+      - key: REACT_APP_FIREBASE_APP_ID
+        sync: false
